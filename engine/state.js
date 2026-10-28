@@ -1,11 +1,13 @@
 import './cards/basic.js';
 import { BASIC_PILE_SIZES } from './cards/basic.js';
 import { getCardDef } from './cards/registry.js';
+import { getCharacter } from './characters.js';
 import { randomInt, shuffleInPlace } from './rng.js';
 
 /** @typedef {{ uid: string, cardId: string, upgraded: boolean }} CardInstance */
 /** @typedef {{
- *  id: string, name: string, maxHp: number, hp: number, stars: number,
+ *  id: string, name: string, characterId: string|null, maxHp: number, hp: number,
+ *  stars: number,
  *  drawPile: CardInstance[], hand: CardInstance[], discard: CardInstance[],
  *  inPlay: CardInstance[], actions: number, buys: number, coins: number,
  *  defense: number
@@ -30,8 +32,9 @@ export function createCardInstance(game, cardId) {
 }
 
 /**
- * 새 게임 상태를 만든다.
- * @param {{ seed: number, players: { id: string, name: string, maxHp: number }[] }} opts
+ * 새 게임 상태를 만든다. characterId 가 있으면 그 캐릭터의 maxHp 를 쓴다.
+ * @param {{ seed: number, players: { id: string, name: string, maxHp?: number,
+ *   characterId?: string|null }[] }} opts
  * @returns {GameState}
  */
 export function createGame({ seed, players }) {
@@ -49,21 +52,26 @@ export function createGame({ seed, players }) {
     activeIndex: 0,
     firstPlayerIndex: 0,
     winner: null,
-    players: players.map((p) => ({
-      id: p.id,
-      name: p.name,
-      maxHp: p.maxHp,
-      hp: p.maxHp,
-      stars: 0,
-      drawPile: [],
-      hand: [],
-      discard: [],
-      inPlay: [],
-      actions: 0,
-      buys: 0,
-      coins: 0,
-      defense: 0,
-    })),
+    players: players.map((p) => {
+      const characterId = p.characterId ?? null;
+      const maxHp = characterId !== null ? getCharacter(characterId).maxHp : p.maxHp;
+      return {
+        id: p.id,
+        name: p.name,
+        characterId,
+        maxHp,
+        hp: maxHp,
+        stars: 0,
+        drawPile: [],
+        hand: [],
+        discard: [],
+        inPlay: [],
+        actions: 0,
+        buys: 0,
+        coins: 0,
+        defense: 0,
+      };
+    }),
     market: {},
     trash: [],
     log: [],
@@ -85,6 +93,22 @@ export function createGame({ seed, players }) {
   }
 
   return game;
+}
+
+/**
+ * 시장에 카드 더미를 추가한다.
+ * @param {GameState} game
+ * @param {string} cardId
+ * @param {number} [count]
+ * @returns {void}
+ */
+export function addMarketPile(game, cardId, count = 8) {
+  if (Object.prototype.hasOwnProperty.call(game.market, cardId)) {
+    throw new Error(`이미 시장에 있는 카드: ${cardId}`);
+  }
+  // 없는 카드 id 면 getCardDef 가 Error 를 던진다.
+  getCardDef(cardId);
+  game.market[cardId] = { count, bought: 0 };
 }
 
 /**
@@ -112,7 +136,8 @@ export function drawCards(game, playerIndex, n) {
 
 /**
  * 현재 구매가를 계산한다.
- * playerIndex 를 주면 그 플레이어가 차례일 때 차례 보정(marketDiscount)을 적용한다.
+ * playerIndex 를 주면 그 플레이어가 차례일 때 차례 보정(marketDiscount)과
+ * 캐릭터 능력(firstWeaponDiscount)을 적용한다.
  * @param {GameState} game
  * @param {string} cardId
  * @param {number} [playerIndex]
@@ -128,6 +153,27 @@ export function getPurchasePrice(game, cardId, playerIndex) {
   }
   if (playerIndex !== undefined && game.turnState && playerIndex === game.activeIndex) {
     price -= game.turnState.mods?.marketDiscount ?? 0;
+    price -= firstWeaponDiscount(game, cardId, playerIndex);
   }
   return Math.max(0, price);
+}
+
+/**
+ * 캐릭터의 '첫 무기 구매 할인' 값을 구한다.
+ * 이번 차례 아직 무기카드를 사지 않았고 대상 카드가 무기일 때만 적용된다.
+ * @param {GameState} game
+ * @param {string} cardId
+ * @param {number} playerIndex
+ * @returns {number}
+ */
+function firstWeaponDiscount(game, cardId, playerIndex) {
+  const player = game.players[playerIndex];
+  if (!player || !player.characterId) return 0;
+  const ability = getCharacter(player.characterId).ability ?? {};
+  const discount = ability.firstWeaponDiscount ?? 0;
+  if (discount <= 0) return 0;
+  if (getCardDef(cardId).type !== 'weapon') return 0;
+  const bought = game.turnState.bought ?? [];
+  const boughtWeapon = bought.some((id) => getCardDef(id).type === 'weapon');
+  return boughtWeapon ? 0 : discount;
 }

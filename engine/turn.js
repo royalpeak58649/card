@@ -1,6 +1,7 @@
 import './cards/basic.js';
 import { getCardDef } from './cards/registry.js';
 import { createCardInstance, drawCards, getPurchasePrice } from './state.js';
+import { getCharacter } from './characters.js';
 import { MAX_STARS, runEffects } from './effects.js';
 import { resolveChoice } from './choices.js';
 import { evalCond } from './conditions.js';
@@ -255,6 +256,19 @@ function revertTempUpgrades(game, playerIndex) {
 }
 
 /**
+ * 공격 플레이어 캐릭터의 공격 보너스 목록을 돌려준다.
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {Record<string, any>[]}
+ */
+function characterAttackBonuses(game, playerIndex) {
+  const characterId = game.players[playerIndex].characterId;
+  if (!characterId) return [];
+  const ability = getCharacter(characterId).ability ?? {};
+  return ability.attackBonuses ?? [];
+}
+
+/**
  * 공격단계를 끝내고 피해를 적용한다.
  * @param {GameState} game
  * @param {number} playerIndex
@@ -263,7 +277,8 @@ function revertTempUpgrades(game, playerIndex) {
 function resolveAttack(game, playerIndex) {
   const turnState = game.turnState;
   let total = turnState.attackDamage;
-  for (const bonus of turnState.attackBonuses ?? []) {
+  const bonuses = (turnState.attackBonuses ?? []).concat(characterAttackBonuses(game, playerIndex));
+  for (const bonus of bonuses) {
     if (bonus.cond !== undefined && !evalCond(game, { playerIndex, cardUid: '' }, bonus.cond)) {
       continue;
     }
