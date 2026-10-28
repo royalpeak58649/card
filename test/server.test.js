@@ -128,6 +128,7 @@ test('두 클라이언트: create → join → state', async () => {
   try {
     a.send({ t: 'create', name: '가' });
     const joinedA = await a.next('joined');
+    await a.next('state'); // 혼자 들어왔을 때의 상태(view 없음)
     assert.equal(joinedA.you, 0);
     assert.equal(joinedA.room.length, 4);
     assert.match(joinedA.room, /^[A-HJ-NP-Z]{4}$/);
@@ -157,6 +158,7 @@ test('캐릭터 선택과 드래프트를 거쳐 대전 시작', async () => {
   try {
     a.send({ t: 'create', name: '가' });
     const joinedA = await a.next('joined');
+    await a.next('state'); // 혼자 들어왔을 때의 상태(view 없음)
     b.send({ t: 'join', room: joinedA.room, name: '나' });
     await b.next('joined');
     await a.next('state');
@@ -194,6 +196,7 @@ test('차례가 아닌 쪽의 조작은 error 이고 상대에게는 아무 것�
   try {
     a.send({ t: 'create', name: '가' });
     const joinedA = await a.next('joined');
+    await a.next('state'); // 혼자 들어왔을 때의 상태(view 없음)
     b.send({ t: 'join', room: joinedA.room, name: '나' });
     await b.next('joined');
     await a.next('state');
@@ -275,6 +278,7 @@ test('rejoin: 끊긴 뒤 token 으로 같은 자리에 다시 앉는다', async 
   try {
     a.send({ t: 'create', name: '가' });
     const joinedA = await a.next('joined');
+    await a.next('state'); // 혼자 들어왔을 때의 상태(view 없음)
     b.send({ t: 'join', room: joinedA.room, name: '나' });
     await b.next('joined');
     await a.next('state');
