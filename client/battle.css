@@ -871,3 +871,20 @@ button.bt-tile:hover {
   border-color: #e05a5a;
   color: #b42323;
 }
+
+/* 겹친 손패에서는 지금 낼 수 있는 카드를 위로 올려 가리지 않게 한다 */
+.bt-hand-card:has(.card:not(.disabled)) {
+  z-index: 3;
+}
+.bt-hand-card:hover {
+  z-index: 6;
+}
+
+/* 상대 손패 뒷면은 한 줄로, 많으면 겹친다 */
+.bt-opp-hand {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.bt-opp-hand > * + * {
+  margin-left: -34px;
+}

@@ -292,7 +292,7 @@ function buy(game, playerIndex, cardId) {
  * @param {GameState} game
  * @param {number} playerIndex
  * @param {number} [amount]
- * @returns {void}
+ * @returns {number} 실제로 갚은 양
  */
 function payDebt(game, playerIndex, amount) {
   if (game.phase !== 'buy') throw new Error('빚은 구매단계에만 갚을 수 있습니다');
@@ -306,6 +306,7 @@ function payDebt(game, playerIndex, amount) {
   const paid = Math.min(amount ?? Infinity, player.coins, debt);
   player.coins -= paid;
   player.debt = debt - paid;
+  return paid;
 }
 
 /**
@@ -614,6 +615,8 @@ export function applyAction(game, playerIndex, action) {
   assertCanAct(game, playerIndex, action);
 
   const snapshot = JSON.stringify(game);
+  /** @type {number|undefined} 이번 조작으로 실제 갚은 빚(로그용) */
+  let debtPaid;
   // 로그의 turn 은 조작을 처리하기 전의 차례 번호로 기록한다.
   const turnBefore = game.turn;
 
@@ -636,7 +639,7 @@ export function applyAction(game, playerIndex, action) {
         break;
       }
       case 'payDebt': {
-        payDebt(game, playerIndex, action.amount);
+        debtPaid = payDebt(game, playerIndex, action.amount);
         break;
       }
       case 'upgrade': {
@@ -677,7 +680,7 @@ export function applyAction(game, playerIndex, action) {
     } else if (action.type === 'buy') {
       entry.cardId = action.cardId;
     } else if (action.type === 'payDebt') {
-      entry.amount = action.amount;
+      entry.amount = debtPaid;
     } else if (action.type === 'upgrade') {
       const upgraded = game.players[playerIndex].hand.find((c) => c.uid === action.uid);
       if (upgraded) entry.cardId = upgraded.cardId;

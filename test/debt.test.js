@@ -210,7 +210,7 @@ test('payDebt: 원으로 갚고, 다 갚으면 구매 가능', () => {
   assert.equal(game.players[first].debt, 0);
   const logEntry = game.log[game.log.length - 1];
   assert.equal(logEntry.type, 'payDebt');
-  assert.equal(logEntry.amount, undefined);
+  assert.equal(logEntry.amount, 2); // 실제로 갚은 양
 
   // 이제 구매할 수 있다.
   applyAction(game, first, { type: 'buy', cardId: 'stone' });
