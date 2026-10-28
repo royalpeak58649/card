@@ -197,6 +197,110 @@ export const NEURO_CARDS = {
     effects: [{ op: 'addAttackBonus', perAction: 1, cap: 4 }],
     upgradedEffects: [{ op: 'addAttackBonus', perAction: 1, cap: 6 }],
   },
+  nu_mirror: {
+    id: 'nu_mirror',
+    name: '미러 프로토콜',
+    type: 'action',
+    actionCost: 1,
+    cost: 5,
+    text: '이번 차례 직전에 낸 행동카드의 효과를 한 번 더 발동한다',
+    upgradedText: '같은 효과, +1 행동력',
+    effects: [
+      {
+        op: 'repeatPrevAction'
+      }
+    ],
+    upgradedEffects: [
+      {
+        op: 'repeatPrevAction'
+      },
+      {
+        op: 'gainActions',
+        n: 1
+      }
+    ]
+  },
+  nu_loopback: {
+    id: 'nu_loopback',
+    name: '루프백',
+    type: 'action',
+    actionCost: 0,
+    cost: 3,
+    text: '+1 행동력. 버린 더미의 행동카드 1장을 뽑을 덱 맨 위에 둔다',
+    upgradedText: '+1 행동력. 그 카드를 손으로 가져온다',
+    effects: [
+      {
+        op: 'gainActions',
+        n: 1
+      },
+      {
+        op: 'retrieveFromDiscard',
+        n: 1,
+        filter: 'action',
+        to: 'deckTop',
+        min: 1
+      }
+    ],
+    upgradedEffects: [
+      {
+        op: 'gainActions',
+        n: 1
+      },
+      {
+        op: 'retrieveFromDiscard',
+        n: 1,
+        filter: 'action',
+        to: 'hand',
+        min: 1
+      }
+    ]
+  },
+  nu_reverb: {
+    id: 'nu_reverb',
+    name: '잔향',
+    type: 'money',
+    cost: 4,
+    text: '+1원. 이번 차례 같은 이름의 행동카드를 2장 이상 냈다면 +3원',
+    upgradedText: '+2원. 같은 조건 +3원',
+    effects: [
+      {
+        op: 'gainCoins',
+        n: 1
+      },
+      {
+        op: 'if',
+        cond: {
+          stat: 'maxSameAction',
+          gte: 2
+        },
+        then: [
+          {
+            op: 'gainCoins',
+            n: 3
+          }
+        ]
+      }
+    ],
+    upgradedEffects: [
+      {
+        op: 'gainCoins',
+        n: 2
+      },
+      {
+        op: 'if',
+        cond: {
+          stat: 'maxSameAction',
+          gte: 2
+        },
+        then: [
+          {
+            op: 'gainCoins',
+            n: 3
+          }
+        ]
+      }
+    ]
+  },
 };
 
 /** @type {Record<string, import('../characters.js').FactionDef>} */
@@ -205,7 +309,7 @@ export const NEURO_FACTIONS = {
     id: 'neuro',
     name: '뉴로 연합',
     cardIds: ['nu_synapse', 'nu_sync', 'nu_overload', 'nu_recursion', 'nu_emp'],
-    characterIds: ['jin', 'gemini'],
+    characterIds: ['jin', 'gemini', 'echo'],
   },
 };
 
@@ -234,6 +338,23 @@ export const NEURO_CHARACTERS = {
       },
     },
     abilityText: '경기 중 1번 발동: 이번 차례 동안 피해를 주는 행동카드가 +2 피해',
+  },
+  echo: {
+    id: 'echo',
+    name: '에코',
+    factionId: 'neuro',
+    maxHp: 52,
+    cardIds: [
+      'nu_mirror',
+      'nu_loopback',
+      'nu_reverb'
+    ],
+    ability: {
+      doubleFirstCostlyAction: {
+        minOwnTurn: 4
+      }
+    },
+    abilityText: '내 4번째 차례부터, 매 차례 처음 내는 ⚡1 행동카드의 효과가 2번 발동'
   },
 };
 

@@ -178,6 +178,89 @@ export const LIGAND_CARDS = {
       { op: 'gainCoinsPerStat', stat: 'starsSpent', per: 1, max: 5 },
     ],
   },
+  lg_constellShield: {
+    id: 'lg_constellShield',
+    name: '별자리 방패',
+    type: 'action',
+    actionCost: 0,
+    cost: 4,
+    text: '지금 가진 별 1개당 방어 +1 (최대 5)',
+    upgradedText: '최대 7',
+    effects: [
+      {
+        op: 'addDefense',
+        perStat: {
+          stat: 'stars',
+          per: 1
+        },
+        max: 5
+      }
+    ],
+    upgradedEffects: [
+      {
+        op: 'addDefense',
+        perStat: {
+          stat: 'stars',
+          per: 1
+        },
+        max: 7
+      }
+    ]
+  },
+  lg_starWeight: {
+    id: 'lg_starWeight',
+    name: '별의 무게',
+    type: 'weapon',
+    cost: 6,
+    text: '지금 가진 별 1개당 1 피해 (최대 6, 별은 쓰지 않음)',
+    upgradedText: '같은 효과 +2 피해',
+    effects: [
+      {
+        op: 'damagePerStat',
+        stat: 'stars',
+        per: 1,
+        max: 6
+      }
+    ],
+    upgradedEffects: [
+      {
+        op: 'damagePerStat',
+        stat: 'stars',
+        per: 1,
+        max: 6,
+        plus: 2
+      }
+    ]
+  },
+  lg_galaxyVault: {
+    id: 'lg_galaxyVault',
+    name: '은하 저장고',
+    type: 'action',
+    actionCost: 1,
+    cost: 5,
+    text: '별 +2, +1 카드',
+    upgradedText: '별 +2, +2 카드',
+    effects: [
+      {
+        op: 'gainStars',
+        n: 2
+      },
+      {
+        op: 'draw',
+        n: 1
+      }
+    ],
+    upgradedEffects: [
+      {
+        op: 'gainStars',
+        n: 2
+      },
+      {
+        op: 'draw',
+        n: 2
+      }
+    ]
+  },
 };
 
 /** @type {Record<string, import('../characters.js').FactionDef>} */
@@ -186,7 +269,7 @@ export const LIGAND_FACTIONS = {
     id: 'ligand',
     name: '리간드 왕국',
     cardIds: ['lg_offering', 'lg_ritual', 'lg_blessing', 'lg_meteor', 'lg_observatory'],
-    characterIds: ['jace', 'elena'],
+    characterIds: ['jace', 'elena', 'astra'],
   },
 };
 
@@ -213,6 +296,35 @@ export const LIGAND_CHARACTERS = {
       ],
     },
     abilityText: '이번 차례 별을 3개 이상 썼다면 차례 끝에 별 +1',
+  },
+  astra: {
+    id: 'astra',
+    name: '별지기 아스트라',
+    factionId: 'ligand',
+    maxHp: 54,
+    cardIds: [
+      'lg_constellShield',
+      'lg_starWeight',
+      'lg_galaxyVault'
+    ],
+    ability: {
+      maxStars: 7,
+      startTriggers: [
+        {
+          cond: {
+            stat: 'stars',
+            gte: 5
+          },
+          effects: [
+            {
+              op: 'gainCoins',
+              n: 1
+            }
+          ]
+        }
+      ]
+    },
+    abilityText: '별 최대치가 7. 차례 시작 시 별이 5개 이상이면 +1원'
   },
 };
 

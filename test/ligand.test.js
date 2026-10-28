@@ -84,7 +84,7 @@ test('진영 ligand: 카드 5장, 캐릭터 jace(55)·elena(52), 11장 모두 �
   const faction = getFaction('ligand');
   assert.equal(faction.name, '리간드 왕국');
   assert.equal(faction.cardIds.length, 5);
-  assert.deepEqual(faction.characterIds, ['jace', 'elena']);
+  assert.deepEqual(faction.characterIds, ['jace', 'elena', 'astra']);
 
   const jace = getCharacter('jace');
   assert.equal(jace.factionId, 'ligand');

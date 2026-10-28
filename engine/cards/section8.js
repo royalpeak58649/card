@@ -189,6 +189,106 @@ export const SECTION8_CARDS = {
       { op: 'addAttackBonus', perWeapon: 1 },
     ],
   },
+  s8_trench: {
+    id: 's8_trench',
+    name: '참호 구축',
+    type: 'action',
+    actionCost: 0,
+    cost: 3,
+    text: '방어 +3',
+    upgradedText: '방어 +5, +1 카드',
+    effects: [
+      {
+        op: 'addDefense',
+        n: 3
+      }
+    ],
+    upgradedEffects: [
+      {
+        op: 'addDefense',
+        n: 5
+      },
+      {
+        op: 'draw',
+        n: 1
+      }
+    ]
+  },
+  s8_suppress: {
+    id: 's8_suppress',
+    name: '제압 사격',
+    type: 'weapon',
+    cost: 5,
+    text: '2 피해. 이번 차례 방어를 얻었다면 +2 피해',
+    upgradedText: '3 피해. 이번 차례 방어를 얻었다면 +2 피해',
+    effects: [
+      {
+        op: 'damage',
+        n: 2
+      },
+      {
+        op: 'if',
+        cond: {
+          stat: 'defenseGained',
+          gte: 1
+        },
+        then: [
+          {
+            op: 'damage',
+            n: 2
+          }
+        ]
+      }
+    ],
+    upgradedEffects: [
+      {
+        op: 'damage',
+        n: 3
+      },
+      {
+        op: 'if',
+        cond: {
+          stat: 'defenseGained',
+          gte: 1
+        },
+        then: [
+          {
+            op: 'damage',
+            n: 2
+          }
+        ]
+      }
+    ]
+  },
+  s8_cutSupply: {
+    id: 's8_cutSupply',
+    name: '보급선 차단',
+    type: 'action',
+    actionCost: 1,
+    cost: 5,
+    text: '상대의 뽑을 덱 맨 위 2장을 버리게 한다. +1원',
+    upgradedText: '3장, +1원',
+    effects: [
+      {
+        op: 'opponentMillTop',
+        n: 2
+      },
+      {
+        op: 'gainCoins',
+        n: 1
+      }
+    ],
+    upgradedEffects: [
+      {
+        op: 'opponentMillTop',
+        n: 3
+      },
+      {
+        op: 'gainCoins',
+        n: 1
+      }
+    ]
+  },
 };
 
 /** @type {Record<string, import('../characters.js').FactionDef>} */
@@ -197,7 +297,7 @@ export const SECTION8_FACTIONS = {
     id: 'section8',
     name: 'Section 8',
     cardIds: ['s8_supplyOrder', 's8_logistics', 's8_opFunds', 's8_maintenance', 's8_serviceSmg'],
-    characterIds: ['hayun', 'kangjin'],
+    characterIds: ['hayun', 'kangjin', 'doyun'],
   },
 };
 
@@ -227,6 +327,30 @@ export const SECTION8_CHARACTERS = {
     cardIds: ['s8_breakthrough', 's8_loot', 's8_heavyMg'],
     ability: { attackBonuses: [{ flat: 2, cond: { stat: 'weaponsPlayed', gte: 3 } }] },
     abilityText: '공격단계에 무기카드를 3장 이상 냈다면 +2 피해',
+  },
+  doyun: {
+    id: 'doyun',
+    name: '방어선 지휘관 도윤',
+    factionId: 'section8',
+    maxHp: 60,
+    cardIds: [
+      's8_trench',
+      's8_suppress',
+      's8_cutSupply'
+    ],
+    ability: {
+      endTriggers: [
+        {
+          effects: [
+            {
+              op: 'addDefense',
+              n: 2
+            }
+          ]
+        }
+      ]
+    },
+    abilityText: '내 차례가 끝날 때 방어 +2 (상대의 다음 공격 피해 -2)'
   },
 };
 

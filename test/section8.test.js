@@ -96,11 +96,11 @@ function attackWith(game, playerIndex, cardIds) {
   return hpBefore - opponent.hp;
 }
 
-test('진영 section8: 카드 5장, 캐릭터 2명, 13장 모두 정의와 문구가 있다', () => {
+test('진영 section8: 카드 5장, 캐릭터 3명, 14장 모두 정의와 문구가 있다', () => {
   const faction = getFaction('section8');
   assert.equal(faction.name, 'Section 8');
   assert.equal(faction.cardIds.length, 5);
-  assert.deepEqual(faction.characterIds, ['hayun', 'kangjin']);
+  assert.deepEqual(faction.characterIds, ['hayun', 'kangjin', 'doyun']);
 
   const allIds = [...faction.cardIds];
   for (const characterId of faction.characterIds) {
@@ -110,8 +110,8 @@ test('진영 section8: 카드 5장, 캐릭터 2명, 13장 모두 정의와 문�
     assert.equal(typeof character.abilityText, 'string');
     allIds.push(...character.cardIds);
   }
-  assert.equal(allIds.length, 11);
-  assert.equal(new Set(allIds).size, 11);
+  assert.equal(allIds.length, 14);
+  assert.equal(new Set(allIds).size, 14);
   for (const id of allIds) {
     assert.ok(id.startsWith('s8_'), id);
     const def = getCardDef(id);

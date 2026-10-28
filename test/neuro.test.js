@@ -96,7 +96,7 @@ test('진영 neuro: 카드 5장, 캐릭터 2명, 11장 모두 정의와 문구�
   const faction = getFaction('neuro');
   assert.equal(faction.name, '뉴로 연합');
   assert.equal(faction.cardIds.length, 5);
-  assert.deepEqual(faction.characterIds, ['jin', 'gemini']);
+  assert.deepEqual(faction.characterIds, ['jin', 'gemini', 'echo']);
 
   const jin = getCharacter('jin');
   assert.equal(jin.factionId, 'neuro');
