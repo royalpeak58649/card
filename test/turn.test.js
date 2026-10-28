@@ -142,11 +142,11 @@ test('행동카드는 행동력을 쓰고, 부족하면 Error', () => {
   const draw2b = createCardInstance(game, 'test_draw2');
   player.hand.push(draw2b);
   assert.throws(() => applyAction(game, first, { type: 'playCard', uid: draw2b.uid }), Error);
-  assert.equal(player.actions, 0);
+  assert.equal(game.players[first].actions, 0);
 
   applyAction(game, first, { type: 'playCard', uid: free.uid });
-  assert.equal(player.actions, 1);
-  assert.equal(player.coins, 1);
+  assert.equal(game.players[first].actions, 1);
+  assert.equal(game.players[first].coins, 1);
   assert.equal(game.turnState.actionsPlayed, 2);
 });
 
@@ -161,23 +161,23 @@ test('구매 규칙', () => {
 
   const before = JSON.parse(JSON.stringify(game));
   assert.throws(() => applyAction(game, first, { type: 'buy', cardId: 'rifle' }), Error);
-  assert.equal(player.coins, before.players[first].coins);
-  assert.equal(player.buys, before.players[first].buys);
+  assert.equal(game.players[first].coins, before.players[first].coins);
+  assert.equal(game.players[first].buys, before.players[first].buys);
   assert.deepEqual(game.market, before.market);
 
   // 금괴를 넣어 원을 맞춘다
   const gold = createCardInstance(game, 'gold');
-  player.hand.push(gold);
+  game.players[first].hand.push(gold);
   applyAction(game, first, { type: 'playCard', uid: gold.uid });
-  assert.equal(player.coins, 8);
+  assert.equal(game.players[first].coins, 8);
 
   applyAction(game, first, { type: 'buy', cardId: 'rifle' });
-  assert.equal(player.coins, 8 - getPurchasePrice(game, 'rifle'));
-  assert.equal(player.buys, 0);
+  assert.equal(game.players[first].coins, 8 - getPurchasePrice(game, 'rifle'));
+  assert.equal(game.players[first].buys, 0);
   assert.equal(game.market.rifle.bought, 1);
   assert.equal(game.market.rifle.count, 11);
-  assert.equal(player.discard.length, 1);
-  assert.equal(player.discard[0].cardId, 'rifle');
+  assert.equal(game.players[first].discard.length, 1);
+  assert.equal(game.players[first].discard[0].cardId, 'rifle');
   assert.deepEqual(game.turnState.bought, ['rifle']);
 
   assert.throws(() => applyAction(game, first, { type: 'buy', cardId: 'stone' }), Error);

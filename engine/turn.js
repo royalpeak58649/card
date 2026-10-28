@@ -13,10 +13,18 @@ import { MAX_STARS, runEffects } from './effects.js';
 /** @typedef {{ type: 'playCard', uid: string }
  *  | { type: 'playAllMoney' }
  *  | { type: 'buy', cardId: string }
+ *  | { type: 'upgrade', uid: string, mode: 'temp'|'perm' }
  *  | { type: 'endPhase' }} Action */
 
 /** 차례 시작 시 뽑는 장수 */
 const HAND_SIZE = 5;
+
+/** 일시 강화 비용(별) */
+const TEMP_UPGRADE_COST = 1;
+/** 영구 강화 비용(별) */
+const PERM_UPGRADE_COST = 4;
+/** 한 차례 최대 일시 강화 장수 */
+const MAX_TEMP_UPGRADES = 3;
 
 /**
  * 새 turnState 를 만든다.
@@ -166,6 +174,60 @@ function buy(game, playerIndex, cardId) {
 }
 
 /**
+ * 손패의 카드를 별로 강화한다(검사 → 변경 순서).
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @param {string} uid
+ * @param {'temp'|'perm'} mode
+ * @returns {void}
+ */
+function upgradeCard(game, playerIndex, uid, mode) {
+  if (mode !== 'temp' && mode !== 'perm') {
+    throw new Error(`알 수 없는 강화 방식: ${mode}`);
+  }
+  const player = game.players[playerIndex];
+  const card = findInHand(game, playerIndex, uid);
+  const def = getCardDef(card.cardId);
+  if (def.basic === true) throw new Error(`기본 카드는 강화할 수 없습니다: ${card.cardId}`);
+  if (!def.upgradedEffects) throw new Error(`강화판이 없는 카드: ${card.cardId}`);
+  if (card.upgraded) throw new Error(`이미 강화된 카드: ${uid}`);
+
+  const cost = mode === 'temp' ? TEMP_UPGRADE_COST : PERM_UPGRADE_COST;
+  if (player.stars < cost) throw new Error('별이 부족합니다');
+  if (mode === 'temp' && game.turnState.tempUpgrades >= MAX_TEMP_UPGRADES) {
+    throw new Error('일시 강화는 한 차례에 3장까지입니다');
+  }
+
+  // 여기서부터 상태 변경
+  player.stars -= cost;
+  game.turnState.starsSpent += cost;
+  card.upgraded = true;
+  if (mode === 'temp') {
+    card.tempUpgraded = true;
+    game.turnState.tempUpgrades += 1;
+  }
+}
+
+/**
+ * 일시 강화를 모두 되돌린다(영구 강화는 유지).
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {void}
+ */
+function revertTempUpgrades(game, playerIndex) {
+  const player = game.players[playerIndex];
+  const zones = [player.hand, player.inPlay, player.discard, player.drawPile, game.trash];
+  for (const zone of zones) {
+    for (const card of zone) {
+      if (card.tempUpgraded === true) {
+        card.upgraded = false;
+        delete card.tempUpgraded;
+      }
+    }
+  }
+}
+
+/**
  * 공격단계를 끝내고 피해를 적용한다.
  * @param {GameState} game
  * @param {number} playerIndex
@@ -192,6 +254,7 @@ function resolveAttack(game, playerIndex) {
  */
 function endTurn(game, playerIndex) {
   const player = game.players[playerIndex];
+  revertTempUpgrades(game, playerIndex);
   player.discard.push(...player.inPlay, ...player.hand);
   player.inPlay = [];
   player.hand = [];
@@ -215,47 +278,66 @@ export function applyAction(game, playerIndex, action) {
   assertCanAct(game, playerIndex);
   if (!action || typeof action !== 'object') throw new Error('잘못된 조작입니다');
 
-  switch (action.type) {
-    case 'playCard': {
-      playCard(game, playerIndex, action.uid);
-      break;
-    }
-    case 'playAllMoney': {
-      if (game.phase !== 'buy') throw new Error('재화카드는 구매단계에만 낼 수 있습니다');
-      const uids = game.players[playerIndex].hand
-        .filter((c) => getCardDef(c.cardId).type === 'money')
-        .map((c) => c.uid);
-      for (const uid of uids) playCard(game, playerIndex, uid);
-      break;
-    }
-    case 'buy': {
-      buy(game, playerIndex, action.cardId);
-      break;
-    }
-    case 'endPhase': {
-      if (game.phase === 'action') {
-        game.phase = 'buy';
-      } else if (game.phase === 'buy') {
-        game.phase = 'attack';
-      } else if (game.phase === 'attack') {
-        resolveAttack(game, playerIndex);
-        if (game.phase !== 'gameOver') endTurn(game, playerIndex);
-      } else {
-        throw new Error(`알 수 없는 단계: ${game.phase}`);
-      }
-      break;
-    }
-    default:
-      throw new Error(`알 수 없는 조작: ${action.type}`);
-  }
+  const snapshot = JSON.stringify(game);
+  // 로그의 turn 은 조작을 처리하기 전의 차례 번호로 기록한다.
+  const turnBefore = game.turn;
 
-  /** @type {{ turn: number, p: number, type: string, cardId?: string }} */
-  const entry = { turn: game.turn, p: playerIndex, type: action.type };
-  if (action.type === 'playCard') {
-    const played = game.players[playerIndex].inPlay.find((c) => c.uid === action.uid);
-    if (played) entry.cardId = played.cardId;
-  } else if (action.type === 'buy') {
-    entry.cardId = action.cardId;
+  try {
+    switch (action.type) {
+      case 'playCard': {
+        playCard(game, playerIndex, action.uid);
+        break;
+      }
+      case 'playAllMoney': {
+        if (game.phase !== 'buy') throw new Error('재화카드는 구매단계에만 낼 수 있습니다');
+        const uids = game.players[playerIndex].hand
+          .filter((c) => getCardDef(c.cardId).type === 'money')
+          .map((c) => c.uid);
+        for (const uid of uids) playCard(game, playerIndex, uid);
+        break;
+      }
+      case 'buy': {
+        buy(game, playerIndex, action.cardId);
+        break;
+      }
+      case 'upgrade': {
+        upgradeCard(game, playerIndex, action.uid, action.mode);
+        break;
+      }
+      case 'endPhase': {
+        if (game.phase === 'action') {
+          game.phase = 'buy';
+        } else if (game.phase === 'buy') {
+          game.phase = 'attack';
+        } else if (game.phase === 'attack') {
+          resolveAttack(game, playerIndex);
+          if (game.phase !== 'gameOver') endTurn(game, playerIndex);
+        } else {
+          throw new Error(`알 수 없는 단계: ${game.phase}`);
+        }
+        break;
+      }
+      default:
+        throw new Error(`알 수 없는 조작: ${action.type}`);
+    }
+
+    /** @type {{ turn: number, p: number, type: string, cardId?: string, mode?: string }} */
+    const entry = { turn: turnBefore, p: playerIndex, type: action.type };
+    if (action.type === 'playCard') {
+      const played = game.players[playerIndex].inPlay.find((c) => c.uid === action.uid);
+      if (played) entry.cardId = played.cardId;
+    } else if (action.type === 'buy') {
+      entry.cardId = action.cardId;
+    } else if (action.type === 'upgrade') {
+      const upgraded = game.players[playerIndex].hand.find((c) => c.uid === action.uid);
+      if (upgraded) entry.cardId = upgraded.cardId;
+      entry.mode = action.mode;
+    }
+    game.log.push(entry);
+  } catch (err) {
+    // 실패한 조작은 흔적을 남기지 않는다(객체 참조는 유지).
+    for (const key of Object.keys(game)) delete game[key];
+    Object.assign(game, JSON.parse(snapshot));
+    throw err;
   }
-  game.log.push(entry);
 }
