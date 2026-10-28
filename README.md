@@ -16,6 +16,8 @@ Docker 로 띄우기:
 
 ```bash
 docker compose up -d --build   # 8080 포트
+docker compose --profile tunnel up -d --build   # + 공개 HTTPS 주소(Cloudflare 임시 터널)
+docker compose logs tunnel | grep trycloudflare  # 주소 확인
 ```
 
 ## 개발

@@ -4,3 +4,12 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
+
+  # 공개 HTTPS 주소가 필요할 때: docker compose --profile tunnel up -d
+  # 주소는 `docker compose logs tunnel` 에 https://....trycloudflare.com 으로 나온다(재시작하면 바뀜).
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --url http://game:8080
+    depends_on: [game]
+    restart: unless-stopped
+    profiles: [tunnel]
