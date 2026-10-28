@@ -2,6 +2,7 @@ import './cards/basic.js';
 import { getCardDef } from './cards/registry.js';
 import { createCardInstance, drawCards, getPurchasePrice } from './state.js';
 import { MAX_STARS, runEffects } from './effects.js';
+import { resolveChoice } from './choices.js';
 
 /** @typedef {import('./state.js').GameState} GameState */
 /** @typedef {import('./state.js').CardInstance} CardInstance */
@@ -14,6 +15,7 @@ import { MAX_STARS, runEffects } from './effects.js';
  *  | { type: 'playAllMoney' }
  *  | { type: 'buy', cardId: string }
  *  | { type: 'upgrade', uid: string, mode: 'temp'|'perm' }
+ *  | { type: 'choose', selection: string[] }
  *  | { type: 'endPhase' }} Action */
 
 /** 차례 시작 시 뽑는 장수 */
@@ -71,17 +73,26 @@ export function startGame(game) {
     throw new Error(`게임을 시작할 수 없는 단계: ${game.phase}`);
   }
   game.activeIndex = game.firstPlayerIndex;
+  game.pending = null;
   startTurn(game);
 }
 
 /**
+ * 조작할 수 있는 상태인지 검사한다. 'choose' 는 선택 대기 중인 플레이어 기준.
  * @param {GameState} game
  * @param {number} playerIndex
+ * @param {Action} action
  * @returns {void}
  */
-function assertCanAct(game, playerIndex) {
+function assertCanAct(game, playerIndex, action) {
   if (game.phase === 'gameOver') throw new Error('게임이 끝났습니다');
   if (game.phase === 'setup') throw new Error('게임이 아직 시작되지 않았습니다');
+  if (action && action.type === 'choose') {
+    if (!game.pending) throw new Error('대기 중인 선택이 없습니다');
+    if (playerIndex !== game.pending.playerIndex) throw new Error('선택할 차례가 아닙니다');
+    return;
+  }
+  if (game.pending) throw new Error('먼저 선택을 끝내야 합니다');
   if (playerIndex !== game.activeIndex) throw new Error('차례가 아닙니다');
 }
 
@@ -140,7 +151,7 @@ function playCard(game, playerIndex, uid) {
   player.inPlay.push(card);
 
   const effects = card.upgraded && def.upgradedEffects ? def.upgradedEffects : def.effects;
-  runEffects(game, { playerIndex, card }, effects);
+  runEffects(game, { playerIndex, cardUid: card.uid }, effects);
 
   if (def.type === 'money') game.turnState.moneyPlayed += 1;
   if (def.type === 'weapon') game.turnState.weaponsPlayed += 1;
@@ -275,8 +286,8 @@ function endTurn(game, playerIndex) {
  * @returns {void}
  */
 export function applyAction(game, playerIndex, action) {
-  assertCanAct(game, playerIndex);
   if (!action || typeof action !== 'object') throw new Error('잘못된 조작입니다');
+  assertCanAct(game, playerIndex, action);
 
   const snapshot = JSON.stringify(game);
   // 로그의 turn 은 조작을 처리하기 전의 차례 번호로 기록한다.
@@ -302,6 +313,10 @@ export function applyAction(game, playerIndex, action) {
       }
       case 'upgrade': {
         upgradeCard(game, playerIndex, action.uid, action.mode);
+        break;
+      }
+      case 'choose': {
+        resolveChoice(game, playerIndex, action.selection);
         break;
       }
       case 'endPhase': {

@@ -260,7 +260,7 @@ test('모르는 action type 은 Error', () => {
 test('모르는 op 는 Error', () => {
   const { game, first } = startedGame();
   assert.throws(
-    () => runEffects(game, { playerIndex: first, card: null }, [{ op: '없는효과', n: 1 }]),
+    () => runEffects(game, { playerIndex: first, cardUid: 'c0' }, [{ op: '없는효과', n: 1 }]),
     /알 수 없는 효과/,
   );
 });

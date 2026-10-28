@@ -14,7 +14,8 @@ import { randomInt, shuffleInPlace } from './rng.js';
  *  phase: string, activeIndex: number, firstPlayerIndex: number,
  *  winner: number|null, players: PlayerState[],
  *  market: Record<string, { count: number, bought: number }>,
- *  trash: CardInstance[], log: string[]
+ *  trash: CardInstance[], log: string[],
+ *  pending: import('./choices.js').PendingChoice|null
  * }} GameState */
 
 /**
