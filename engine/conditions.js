@@ -13,6 +13,7 @@ const STAT_KEYS = [
   'damageDealt',
   'tempUpgrades',
   'upgradedPlayed',
+  'defenseGained',
 ];
 
 /** 손패 종류 검사에 쓸 수 있는 종류 */
@@ -38,7 +39,23 @@ function countUpgradedOwned(game, playerIndex) {
 }
 
 /**
- * stat 값을 읽는다. turnState 숫자 필드, 'boughtWeapons', 'stars', 'upgradedOwned'.
+ * cardId 목록에서 가장 많이 나온 cardId 의 개수(없으면 0).
+ * @param {string[]} cardIds
+ * @returns {number}
+ */
+function maxSameAction(cardIds) {
+  /** @type {Record<string, number>} */
+  const counts = {};
+  let max = 0;
+  for (const cardId of cardIds) {
+    counts[cardId] = (counts[cardId] ?? 0) + 1;
+    if (counts[cardId] > max) max = counts[cardId];
+  }
+  return max;
+}
+
+/**
+ * stat 값을 읽는다. turnState 숫자 필드, 'boughtWeapons', 'stars', 'upgradedOwned', 'maxSameAction'.
  * @param {GameState} game
  * @param {number} playerIndex
  * @param {string} stat
@@ -56,6 +73,9 @@ export function getStat(game, playerIndex, stat) {
   }
   if (stat === 'upgradedOwned') {
     return countUpgradedOwned(game, playerIndex);
+  }
+  if (stat === 'maxSameAction') {
+    return maxSameAction(turnState.playedActionIds ?? []);
   }
   if (!STAT_KEYS.includes(stat)) throw new Error(`알 수 없는 조건 stat: ${stat}`);
   return turnState[stat] ?? 0;
