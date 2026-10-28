@@ -1,5 +1,6 @@
 import { drawCards, createCardInstance } from './state.js';
 import { getCardDef } from './cards/registry.js';
+import { getCharacter, getFaction } from './characters.js';
 import { requestChoice, registerChoice } from './choices.js';
 import { evalCond, getStat } from './conditions.js';
 import { shuffleInPlace } from './rng.js';
@@ -8,8 +9,26 @@ import { shuffleInPlace } from './rng.js';
 /** @typedef {{ playerIndex: number, cardUid: string }} EffectContext */
 /** @typedef {(game: import('./state.js').GameState, ctx: EffectContext, effect: Effect) => void} OpFn */
 
-/** 별 최대치 */
+/** 별 최대치(캐릭터 ability.maxStars 가 없을 때) */
 export const MAX_STARS = 5;
+
+/**
+ * 플레이어의 별 최대치. 캐릭터 ability.maxStars 가 숫자면 그 값, 아니면 MAX_STARS.
+ * @param {import('./state.js').GameState} game
+ * @param {number} playerIndex
+ * @returns {number}
+ */
+export function maxStarsOf(game, playerIndex) {
+  const player = game.players[playerIndex];
+  const characterId = player?.characterId;
+  if (!characterId) return MAX_STARS;
+  const character = getCharacter(characterId);
+  const maxStars = character.ability?.maxStars;
+  if (typeof maxStars === 'number') return maxStars;
+  // 캐릭터 정의에 maxStars 가 없으면 진영 정의의 값을 쓴다.
+  const factionMax = character.factionId ? getFaction(character.factionId).maxStars : undefined;
+  return typeof factionMax === 'number' ? factionMax : MAX_STARS;
+}
 
 /** @type {Record<string, OpFn>} */
 const ops = {};
@@ -173,7 +192,8 @@ registerOp('gainBuys', (game, ctx, effect) => {
 
 registerOp('gainStars', (game, ctx, effect) => {
   const player = game.players[ctx.playerIndex];
-  player.stars = Math.min(MAX_STARS, player.stars + (effect.n ?? 0));
+  const max = maxStarsOf(game, ctx.playerIndex);
+  player.stars = Math.min(max, player.stars + (effect.n ?? 0));
 });
 
 registerOp('trashFromHand', (game, ctx, effect) => {
@@ -362,7 +382,25 @@ registerOp('heal', (game, ctx, effect) => {
 
 registerOp('addDefense', (game, ctx, effect) => {
   const player = game.players[ctx.playerIndex];
-  player.defense = (player.defense ?? 0) + (effect.n ?? 0);
+  let amount;
+  if (effect.perStat !== undefined) {
+    const per = effect.perStat.per ?? 0;
+    const value = getStat(game, ctx.playerIndex, effect.perStat.stat);
+    amount = Math.min(effect.max ?? Infinity, per * value);
+  } else {
+    amount = effect.n ?? 0;
+  }
+  player.defense = (player.defense ?? 0) + amount;
+  if (game.turnState) {
+    game.turnState.defenseGained = (game.turnState.defenseGained ?? 0) + amount;
+  }
+});
+
+registerOp('damagePerStat', (game, ctx, effect) => {
+  const per = effect.per ?? 1;
+  const value = getStat(game, ctx.playerIndex, effect.stat);
+  const amount = Math.min(effect.max ?? Infinity, per * value) + (effect.plus ?? 0);
+  game.turnState.attackDamage += amount;
 });
 
 registerOp('discardFromHand', (game, ctx, effect) => {

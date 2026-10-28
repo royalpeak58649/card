@@ -2,7 +2,7 @@ import './cards/basic.js';
 import { getCardDef } from './cards/registry.js';
 import { createCardInstance, drawCards, getPurchasePrice } from './state.js';
 import { getCharacter } from './characters.js';
-import { MAX_STARS, runEffects } from './effects.js';
+import { maxStarsOf, runEffects } from './effects.js';
 import { resolveChoice } from './choices.js';
 import { evalCond, getStat } from './conditions.js';
 
@@ -16,7 +16,9 @@ import { evalCond, getStat } from './conditions.js';
  *  endTriggers: { cond?: Record<string, any>, effects: import('./effects.js').Effect[],
  *    ctx: import('./effects.js').EffectContext }[],
  *  trashAtCleanup: string[],
- *  opponentStarGiven: boolean
+ *  opponentStarGiven: boolean,
+ *  defenseGained: number,
+ *  playedActionIds: string[]
  * }} TurnState */
 /** @typedef {{ type: 'playCard', uid: string }
  *  | { type: 'playAllMoney' }
@@ -57,6 +59,8 @@ function createTurnState() {
     endTriggers: [],
     trashAtCleanup: [],
     opponentStarGiven: false,
+    defenseGained: 0,
+    playedActionIds: [],
   };
 }
 
@@ -71,13 +75,14 @@ function startTurn(game) {
   player.turnsTaken = (player.turnsTaken ?? 0) + 1;
   // 경기 첫 차례(선공의 첫 차례)에는 별을 받지 않는다.
   if (game.turn !== 1) {
-    player.stars = Math.min(MAX_STARS, player.stars + 1);
+    player.stars = Math.min(maxStarsOf(game, game.activeIndex), player.stars + 1);
   }
   player.actions = 1;
   player.buys = 1;
   player.coins = 0;
   game.turnState = createTurnState();
   game.phase = 'action';
+  runCharacterStartTriggers(game, game.activeIndex);
 }
 
 /**
@@ -173,6 +178,7 @@ function playCard(game, playerIndex, uid) {
   if (def.type === 'weapon') game.turnState.weaponsPlayed += 1;
   if (def.type === 'action') {
     game.turnState.actionsPlayed += 1;
+    game.turnState.playedActionIds.push(card.cardId);
     triggerOpponentActionStar(game, playerIndex);
   }
   if (card.upgraded === true) game.turnState.upgradedPlayed += 1;
@@ -202,7 +208,7 @@ function triggerOpponentActionStar(game, playerIndex) {
   const passive = getCharacter(opponent.characterId).ability?.opponentActionStar;
   if (!passive) return;
   if (turnState.actionsPlayed !== passive.threshold) return;
-  opponent.stars = Math.min(MAX_STARS, opponent.stars + (passive.stars ?? 0));
+  opponent.stars = Math.min(maxStarsOf(game, 1 - playerIndex), opponent.stars + (passive.stars ?? 0));
   turnState.opponentStarGiven = true;
 }
 
@@ -475,6 +481,26 @@ function runEndTriggers(game, playerIndex) {
     }
   }
   runCharacterEndTriggers(game, playerIndex);
+}
+
+/**
+ * 캐릭터의 차례 시작 발동(startTriggers)을 처리한다.
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {void}
+ */
+function runCharacterStartTriggers(game, playerIndex) {
+  const characterId = game.players[playerIndex].characterId;
+  if (!characterId) return;
+  const triggers = getCharacter(characterId).ability?.startTriggers ?? [];
+  const ctx = { playerIndex, cardUid: '' };
+  for (const trigger of triggers) {
+    if (trigger.cond !== undefined && !evalCond(game, ctx, trigger.cond)) continue;
+    runEffects(game, ctx, trigger.effects ?? []);
+    if (game.pending) {
+      throw new Error('차례 시작 효과에는 선택형 효과를 쓸 수 없습니다');
+    }
+  }
 }
 
 /**

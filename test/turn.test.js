@@ -86,6 +86,8 @@ test('startGame 후 첫 차례 상태', () => {
     endTriggers: [],
     trashAtCleanup: [],
     opponentStarGiven: false,
+    defenseGained: 0,
+    playedActionIds: [],
   });
 });
 
