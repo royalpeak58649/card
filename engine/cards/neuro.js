@@ -92,13 +92,28 @@ export const NEURO_CARDS = {
     type: 'action',
     actionCost: 1,
     cost: 4,
-    text: '+3 행동력',
-    upgradedText: '+3 행동력, +1 카드',
-    effects: [{ op: 'gainActions', n: 3 }],
-    upgradedEffects: [
-      { op: 'gainActions', n: 3 },
-      { op: 'draw', n: 1 },
+    text: '+3 행동력, +1 카드',
+    upgradedText: '+3 행동력, +2 카드',
+    effects: [
+      {
+        op: 'gainActions',
+        n: 3
+      },
+      {
+        op: 'draw',
+        n: 1
+      }
     ],
+    upgradedEffects: [
+      {
+        op: 'gainActions',
+        n: 3
+      },
+      {
+        op: 'draw',
+        n: 2
+      }
+    ]
   },
   nu_runaway: {
     id: 'nu_runaway',
@@ -106,49 +121,115 @@ export const NEURO_CARDS = {
     type: 'action',
     actionCost: 0,
     cost: 3,
-    text: '+1 행동력. 이번 차례 행동카드를 4장 이상 냈다면 +2 카드',
-    upgradedText: '+1 행동력. 이번 차례 행동카드를 3장 이상 냈다면 +2 카드',
+    text: '+1 행동력. 이번 차례 행동카드를 3장 이상 냈다면 +2 카드',
+    upgradedText: '+1 행동력. 이번 차례 행동카드를 2장 이상 냈다면 +2 카드',
     effects: [
-      { op: 'gainActions', n: 1 },
-      { op: 'if', cond: { stat: 'actionsPlayed', gte: 4 }, then: [{ op: 'draw', n: 2 }] },
+      {
+        op: 'gainActions',
+        n: 1
+      },
+      {
+        op: 'if',
+        cond: {
+          stat: 'actionsPlayed',
+          gte: 3
+        },
+        then: [
+          {
+            op: 'draw',
+            n: 2
+          }
+        ]
+      }
     ],
     upgradedEffects: [
-      { op: 'gainActions', n: 1 },
-      { op: 'if', cond: { stat: 'actionsPlayed', gte: 3 }, then: [{ op: 'draw', n: 2 }] },
-    ],
+      {
+        op: 'gainActions',
+        n: 1
+      },
+      {
+        op: 'if',
+        cond: {
+          stat: 'actionsPlayed',
+          gte: 2
+        },
+        then: [
+          {
+            op: 'draw',
+            n: 2
+          }
+        ]
+      }
+    ]
   },
   nu_chain: {
     id: 'nu_chain',
     name: '연쇄 반응',
     type: 'action',
     actionCost: 0,
-    cost: 6,
-    text: '차례 끝에 이번 차례 낸 행동카드가 3장 이상이면 별 +1, 6장 이상이면 별 +1 더',
-    upgradedText: '차례 끝에 이번 차례 낸 행동카드가 2장 이상이면 별 +1, 5장 이상이면 별 +1 더',
+    cost: 5,
+    text: '차례 끝에 이번 차례 낸 행동카드가 2장 이상이면 별 +1, 4장 이상이면 별 +1 더',
+    upgradedText: '같은 효과, +1 카드',
     effects: [
       {
         op: 'addEndTrigger',
-        cond: { stat: 'actionsPlayed', gte: 3 },
-        effects: [{ op: 'gainStars', n: 1 }],
+        cond: {
+          stat: 'actionsPlayed',
+          gte: 2
+        },
+        effects: [
+          {
+            op: 'gainStars',
+            n: 1
+          }
+        ]
       },
       {
         op: 'addEndTrigger',
-        cond: { stat: 'actionsPlayed', gte: 6 },
-        effects: [{ op: 'gainStars', n: 1 }],
-      },
+        cond: {
+          stat: 'actionsPlayed',
+          gte: 4
+        },
+        effects: [
+          {
+            op: 'gainStars',
+            n: 1
+          }
+        ]
+      }
     ],
     upgradedEffects: [
       {
-        op: 'addEndTrigger',
-        cond: { stat: 'actionsPlayed', gte: 2 },
-        effects: [{ op: 'gainStars', n: 1 }],
+        op: 'draw',
+        n: 1
       },
       {
         op: 'addEndTrigger',
-        cond: { stat: 'actionsPlayed', gte: 5 },
-        effects: [{ op: 'gainStars', n: 1 }],
+        cond: {
+          stat: 'actionsPlayed',
+          gte: 2
+        },
+        effects: [
+          {
+            op: 'gainStars',
+            n: 1
+          }
+        ]
       },
-    ],
+      {
+        op: 'addEndTrigger',
+        cond: {
+          stat: 'actionsPlayed',
+          gte: 4
+        },
+        effects: [
+          {
+            op: 'gainStars',
+            n: 1
+          }
+        ]
+      }
+    ]
   },
 
   // 캐릭터 gemini
@@ -177,25 +258,56 @@ export const NEURO_CARDS = {
     actionCost: 1,
     cost: 5,
     dealsDamage: true,
-    text: '3 피해',
-    upgradedText: '4 피해, +1 카드',
-    effects: [{ op: 'damage', n: 3 }],
-    upgradedEffects: [
-      { op: 'damage', n: 4 },
-      { op: 'draw', n: 1 },
+    text: '3 피해, +1 카드',
+    upgradedText: '4 피해, +1 카드, +1 행동력',
+    effects: [
+      {
+        op: 'damage',
+        n: 3
+      },
+      {
+        op: 'draw',
+        n: 1
+      }
     ],
+    upgradedEffects: [
+      {
+        op: 'damage',
+        n: 4
+      },
+      {
+        op: 'draw',
+        n: 1
+      },
+      {
+        op: 'gainActions',
+        n: 1
+      }
+    ]
   },
   nu_resonance: {
     id: 'nu_resonance',
     name: '공명',
     type: 'action',
     actionCost: 0,
-    cost: 6,
+    cost: 5,
     dealsDamage: true,
-    text: '이번 차례 낸 행동카드 1장당 +1 피해 (최대 +4)',
-    upgradedText: '이번 차례 낸 행동카드 1장당 +1 피해 (최대 +6)',
-    effects: [{ op: 'addAttackBonus', perAction: 1, cap: 4 }],
-    upgradedEffects: [{ op: 'addAttackBonus', perAction: 1, cap: 6 }],
+    text: '이번 차례 낸 행동카드 1장당 +1 피해 (최대 +5)',
+    upgradedText: '최대 +7',
+    effects: [
+      {
+        op: 'addAttackBonus',
+        perAction: 1,
+        cap: 5
+      }
+    ],
+    upgradedEffects: [
+      {
+        op: 'addAttackBonus',
+        perAction: 1,
+        cap: 7
+      }
+    ]
   },
   nu_mirror: {
     id: 'nu_mirror',
@@ -319,7 +431,7 @@ export const NEURO_CHARACTERS = {
     id: 'jin',
     name: '진',
     factionId: 'neuro',
-    maxHp: 54,
+    maxHp: 56,
     cardIds: ['nu_barrage', 'nu_runaway', 'nu_chain'],
     ability: { opponentActionStar: { threshold: 6, stars: 1 } },
     abilityText: '상대가 한 차례에 행동카드를 6장 이상 내면 별 +1 (한 차례에 한 번)',
@@ -328,7 +440,7 @@ export const NEURO_CHARACTERS = {
     id: 'gemini',
     name: '제미니아노',
     factionId: 'neuro',
-    maxHp: 50,
+    maxHp: 52,
     cardIds: ['nu_thought', 'nu_brainwave', 'nu_resonance'],
     ability: {
       activeAbility: {

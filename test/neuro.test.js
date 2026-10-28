@@ -100,11 +100,11 @@ test('진영 neuro: 카드 5장, 캐릭터 2명, 11장 모두 정의와 문구�
 
   const jin = getCharacter('jin');
   assert.equal(jin.factionId, 'neuro');
-  assert.equal(jin.maxHp, 54);
+  assert.equal(jin.maxHp, 56);
   assert.equal(jin.cardIds.length, 3);
   const gemini = getCharacter('gemini');
   assert.equal(gemini.factionId, 'neuro');
-  assert.equal(gemini.maxHp, 50);
+  assert.equal(gemini.maxHp, 52);
   assert.equal(gemini.cardIds.length, 3);
 
   const allIds = [...faction.cardIds, ...jin.cardIds, ...gemini.cardIds];
@@ -217,12 +217,13 @@ test('전자기 펄스: 4번째 행동카드로 내면 4 피해, 첫 번째면 2
   assert.equal(g2.players[s2].hp, 20 - 2);
 });
 
-test('난사 프로토콜: 행동력 +3 / 폭주 연산: 4번째로 내면 +2 카드', () => {
+test('난사 프로토콜: 행동력 +3, +1 카드 / 폭주 연산: 3번째로 내면 +2 카드', () => {
   const { game, first } = startedGame();
   const player = game.players[first];
   const [barrage] = setHand(game, first, ['nu_barrage']);
   applyAction(game, first, { type: 'playCard', uid: barrage.uid });
   assert.equal(player.actions, 3);
+  assert.equal(player.hand.length, 1);
 
   const { game: g2, first: f2 } = startedGame();
   const p2 = g2.players[f2];
@@ -232,17 +233,23 @@ test('난사 프로토콜: 행동력 +3 / 폭주 연산: 4번째로 내면 +2 �
   // 시냅스 점화 3장이 1장씩 뽑고(3) 폭주 연산이 +2 카드(조건 충족)
   assert.equal(p2.hand.length, 3 + 2);
 
-  // 3번째로 내면 조건(4장 이상) 불충족
+  // 3번째로 내도 조건(3장 이상) 충족
   const { game: g3, first: f3 } = startedGame();
   const p3 = g3.players[f3];
   setHand(g3, f3, ['nu_synapse', 'nu_synapse', 'nu_runaway']);
   playAll(g3, f3);
   assert.equal(g3.turnState.actionsPlayed, 3);
-  // 시냅스 점화 2장이 뽑은 2장만 남고 폭주 연산의 +2 카드는 없음
-  assert.equal(p3.hand.length, 2);
+  assert.equal(p3.hand.length, 2 + 2);
+
+  // 2번째로 내면 조건 불충족: 시냅스 점화가 뽑은 1장만 남는다
+  const { game: g4, first: f4 } = startedGame();
+  const p4 = g4.players[f4];
+  setHand(g4, f4, ['nu_synapse', 'nu_runaway']);
+  playAll(g4, f4);
+  assert.equal(p4.hand.length, 1);
 });
 
-test('연쇄 반응: 행동카드 3장이면 별 +1, 6장이면 +2', () => {
+test('연쇄 반응: 행동카드 2~3장이면 별 +1, 4장 이상이면 +2', () => {
   const { game, first } = startedGame();
   const player = game.players[first];
   player.stars = 0;
