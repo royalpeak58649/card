@@ -168,8 +168,8 @@ export const VINCENT_CARDS = {
     type: 'action',
     actionCost: 0,
     cost: 3,
-    text: '+2 카드, +1 행동력, 빚 +2',
-    upgradedText: '+3 카드, +1 행동력, 빚 +2',
+    text: '+2 카드, +1 행동력, 빚 +1',
+    upgradedText: '+3 카드, +1 행동력, 빚 +1',
     effects: [
       {
         op: 'draw',
@@ -181,7 +181,7 @@ export const VINCENT_CARDS = {
       },
       {
         op: 'gainDebt',
-        n: 2
+        n: 1
       }
     ],
     upgradedEffects: [
@@ -195,7 +195,7 @@ export const VINCENT_CARDS = {
       },
       {
         op: 'gainDebt',
-        n: 2
+        n: 1
       }
     ]
   },
@@ -274,7 +274,7 @@ export const VINCENT_CARDS = {
     id: 'vc_blameShift',
     name: '책임 전가',
     type: 'action',
-    actionCost: 1,
+    actionCost: 0,
     cost: 4,
     text: '내 빚을 최대 3까지 상대에게 넘긴다',
     upgradedText: '최대 5',

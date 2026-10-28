@@ -120,12 +120,12 @@ test('상환 계획: +2원, 빚 1을 없앤다 / 강제 집행: 빚이 없을 �
   assert.equal(attackDamage(g2.game, g2.first), 4);
 });
 
-test('라임: 선지급(+2 카드 +1 행동력 빚 +2) 후 빚이 남으면 차례 끝 6장', () => {
+test('라임: 선지급(+2 카드 +1 행동력 빚 +1) 후 빚이 남으면 차례 끝 6장', () => {
   const { game, first } = gameWith('lime');
   const [adv] = setHand(game, first, ['vc_advance']);
   play(game, first, adv);
   assert.equal(me(game, first).actions, 2);
-  assert.equal(me(game, first).debt, 2);
+  assert.equal(me(game, first).debt, 1);
   passTurn(game, first);
   assert.equal(me(game, first).hand.length, 6);
 });

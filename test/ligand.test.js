@@ -269,7 +269,7 @@ test('엘레나: 별 3개를 쓴 차례 끝 별 +1, 성광 폭발은 별 2개에
   assert.equal(game2.players[second2].hp, 20 - 4);
 });
 
-test('별의 계약: pay 면 +2 카드 +1 행동력, 별 -1', () => {
+test('별의 계약: pay 면 +2 카드 +2 행동력, 별 -1', () => {
   const { game, first } = startedGame(12345, ['elena', null]);
   const player = game.players[first];
   player.stars = 2;
@@ -281,7 +281,7 @@ test('별의 계약: pay 면 +2 카드 +1 행동력, 별 -1', () => {
   assert.equal(player.stars, 1);
   assert.equal(game.turnState.starsSpent, 1);
   assert.equal(player.hand.length, 2);
-  assert.equal(player.actions, 2);
+  assert.equal(player.actions, 3);
 });
 
 test('성운 금화: 별 3개를 쓴 뒤 +4원', () => {

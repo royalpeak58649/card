@@ -90,17 +90,36 @@ export const LIGAND_CARDS = {
     type: 'action',
     actionCost: 0,
     cost: 3,
-    text: '손패 1장을 별 없이 일시 강화, +1 카드',
-    upgradedText: '손패 1장을 별 없이 일시 강화, +1 카드, +1 행동력',
+    text: '손패 1장을 별 없이 일시 강화, +1 카드, +1 행동력',
+    upgradedText: '손패 1장을 별 없이 일시 강화, +2 카드, +1 행동력',
     effects: [
-      { op: 'freeUpgrade', n: 1 },
-      { op: 'draw', n: 1 },
+      {
+        op: 'freeUpgrade',
+        n: 1
+      },
+      {
+        op: 'draw',
+        n: 1
+      },
+      {
+        op: 'gainActions',
+        n: 1
+      }
     ],
     upgradedEffects: [
-      { op: 'freeUpgrade', n: 1 },
-      { op: 'draw', n: 1 },
-      { op: 'gainActions', n: 1 },
-    ],
+      {
+        op: 'freeUpgrade',
+        n: 1
+      },
+      {
+        op: 'draw',
+        n: 2
+      },
+      {
+        op: 'gainActions',
+        n: 1
+      }
+    ]
   },
   lg_masterSword: {
     id: 'lg_masterSword',
@@ -155,12 +174,40 @@ export const LIGAND_CARDS = {
     type: 'action',
     actionCost: 0,
     cost: 3,
-    text: '별 1개를 쓸 수 있다. 그렇게 했다면 +2 카드, +1 행동력',
-    upgradedText: '별 1개를 쓸 수 있다. 그렇게 했다면 +2 카드, +2 행동력',
-    effects: [{ op: 'payStars', n: 1, then: [{ op: 'draw', n: 2 }, { op: 'gainActions', n: 1 }] }],
-    upgradedEffects: [
-      { op: 'payStars', n: 1, then: [{ op: 'draw', n: 2 }, { op: 'gainActions', n: 2 }] },
+    text: '별 1개를 쓸 수 있다. 그렇게 했다면 +2 카드, +2 행동력',
+    upgradedText: '별 1개를 쓸 수 있다. 그렇게 했다면 +3 카드, +2 행동력',
+    effects: [
+      {
+        op: 'payStars',
+        n: 1,
+        then: [
+          {
+            op: 'draw',
+            n: 2
+          },
+          {
+            op: 'gainActions',
+            n: 2
+          }
+        ]
+      }
     ],
+    upgradedEffects: [
+      {
+        op: 'payStars',
+        n: 1,
+        then: [
+          {
+            op: 'draw',
+            n: 3
+          },
+          {
+            op: 'gainActions',
+            n: 2
+          }
+        ]
+      }
+    ]
   },
   lg_nebulaCoin: {
     id: 'lg_nebulaCoin',
@@ -236,7 +283,7 @@ export const LIGAND_CARDS = {
     id: 'lg_galaxyVault',
     name: '은하 저장고',
     type: 'action',
-    actionCost: 1,
+    actionCost: 0,
     cost: 5,
     text: '별 +2, +1 카드',
     upgradedText: '별 +2, +2 카드',
