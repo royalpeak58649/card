@@ -16,7 +16,9 @@ const BASE_VALUES = {
  * 캐릭터별 조정값. { [characterId]: { [cardId]: value } }
  * tools/tune.js 가 이 객체 리터럴을 다시 써서 갱신한다.
  */
+// TUNED-START (tools/tune.js 가 이 사이를 다시 쓴다)
 export const TUNED = {};
+// TUNED-END
 
 /**
  * 카드의 기본 가치.
