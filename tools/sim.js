@@ -1,159 +1,91 @@
 // AI 끼리 대전시켜 밸런스를 확인하는 시뮬레이터.
-// 사용법: node tools/sim.js --games 500 --seed 1
-import {
-  createGame,
-  startGame,
-  applyAction,
-  addMarketPile,
-  getCardDef,
-  getFaction,
-  getCharacter,
-  allCharacterIds,
-  NEUTRAL_CARD_IDS,
-} from '../engine/index.js';
-import { chooseAiAction } from '../engine/ai.js';
-
-/** 캐릭터 후보 */
-const CHARACTER_IDS = allCharacterIds();
-/** 한 플레이어가 시장에 넣는 진영 카드 종류 수 */
-const FACTION_PICKS = 4;
-/** 한 플레이어가 시장에 넣는 중립 카드 종류 수 */
-const NEUTRAL_PICKS = 2;
-/** 이 차례 수를 넘으면 무승부 */
-const MAX_TURNS = 200;
-/** 이 조작 수를 넘으면 무승부 */
-const MAX_ACTIONS = 10000;
-
-/**
- * mulberry32 시드 난수기를 만든다.
- * @param {number} seed
- * @returns {() => number} [0, 1) 실수
- */
-function mulberry32(seed) {
-  let state = seed >>> 0;
-  return function next() {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/**
- * 0 이상 n 미만의 정수.
- * @param {() => number} rand
- * @param {number} n
- * @returns {number}
- */
-function randInt(rand, n) {
-  return Math.floor(rand() * n);
-}
-
-/**
- * 배열에서 중복 없이 n 개를 뽑는다(원본은 바꾸지 않는다).
- * @template T
- * @param {() => number} rand
- * @param {T[]} arr
- * @param {number} n
- * @returns {T[]}
- */
-function sample(rand, arr, n) {
-  const pool = arr.slice();
-  const picked = [];
-  while (picked.length < n && pool.length > 0) {
-    picked.push(pool.splice(randInt(rand, pool.length), 1)[0]);
-  }
-  return picked;
-}
+// 사용법: node tools/sim.js --games 500 --seed 1 [--ai smart|basic] [--workers N]
+import os from 'node:os';
+import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
+import { getCardDef, getCharacter } from '../engine/index.js';
+import { playMatch, mulberry32, randInt, CHARACTER_IDS } from './match.js';
 
 /**
  * 명령줄 인자를 읽는다.
  * @param {string[]} argv
- * @returns {{ games: number, seed: number }}
+ * @returns {{ games: number, seed: number, ai: 'smart'|'basic', workers: number }}
  */
 function parseArgs(argv) {
   let games = 500;
   let seed = 1;
+  let ai = 'smart';
+  let workers = os.availableParallelism();
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--games' && argv[i + 1] !== undefined) {
       games = Number(argv[++i]);
     } else if (arg === '--seed' && argv[i + 1] !== undefined) {
       seed = Number(argv[++i]);
+    } else if (arg === '--ai' && argv[i + 1] !== undefined) {
+      ai = argv[++i];
+    } else if (arg === '--workers' && argv[i + 1] !== undefined) {
+      workers = Number(argv[++i]);
     }
   }
   if (!Number.isFinite(games) || games < 1) games = 500;
   if (!Number.isFinite(seed)) seed = 1;
-  return { games: Math.floor(games), seed: Math.floor(seed) };
+  if (ai !== 'basic') ai = 'smart';
+  if (!Number.isFinite(workers) || workers < 1) workers = 1;
+  return { games: Math.floor(games), seed: Math.floor(seed), ai, workers: Math.floor(workers) };
 }
 
 /**
- * 한 판을 끝까지 둔다.
+ * 판 하나를 돌린다. 판 i 의 seed 는 기본 seed + i 로 정해 워커 수와 무관하게 같은 결과가 나온다.
  * @param {number} seed
- * @returns {{
- *   winner: number|null, turns: number, actions: number,
- *   firstPlayerIndex: number, characterIds: string[],
- *   stocked: string[][], finalDecks: string[][]
- * }}
+ * @param {'smart'|'basic'} ai
+ * @returns {ReturnType<typeof playMatch>}
  */
-export function playGame(seed) {
+function runOne(seed, ai) {
   const rand = mulberry32(seed);
   const characterIds = [
     CHARACTER_IDS[randInt(rand, CHARACTER_IDS.length)],
     CHARACTER_IDS[randInt(rand, CHARACTER_IDS.length)],
   ];
+  return playMatch({ seed, characterIds, ai: [ai, ai] });
+}
 
-  const game = createGame({
-    seed,
-    players: [
-      { id: 'a', name: 'A', characterId: characterIds[0] },
-      { id: 'b', name: 'B', characterId: characterIds[1] },
-    ],
-  });
-
-  /** @type {string[][]} */
-  const stocked = [[], []];
-  for (let p = 0; p < 2; p++) {
-    const character = getCharacter(characterIds[p]);
-    const factionCards = getFaction(character.factionId).cardIds;
-    const candidates = [...factionCards, ...character.cardIds];
-    const picks = [
-      ...sample(rand, candidates, FACTION_PICKS),
-      ...sample(rand, NEUTRAL_CARD_IDS, NEUTRAL_PICKS),
-    ];
-    for (const cardId of picks) {
-      if (Object.prototype.hasOwnProperty.call(game.market, cardId)) continue;
-      addMarketPile(game, cardId);
-      stocked[p].push(cardId);
-    }
+/**
+ * 판들을 워커에 나눠 돌린다. 결과는 판 번호 순서대로 모인다.
+ * @param {{ games: number, seed: number, ai: 'smart'|'basic', workers: number }} opts
+ * @returns {Promise<ReturnType<typeof playMatch>[]>}
+ */
+async function runGames({ games, seed, ai, workers }) {
+  const count = Math.min(workers, games);
+  if (count <= 1) {
+    const results = [];
+    for (let i = 0; i < games; i++) results.push(runOne(seed + i, ai));
+    return results;
   }
 
-  startGame(game);
-
-  let actions = 0;
-  while (game.phase !== 'gameOver' && game.turn <= MAX_TURNS && actions < MAX_ACTIONS) {
-    const playerIndex = game.pending ? game.pending.playerIndex : game.activeIndex;
-    const action = chooseAiAction(game, playerIndex);
-    if (!action) break;
-    applyAction(game, playerIndex, action);
-    actions++;
+  /** @type {Promise<{ index: number, result: ReturnType<typeof playMatch> }[]>[]} */
+  const jobs = [];
+  for (let w = 0; w < count; w++) {
+    const indices = [];
+    for (let i = w; i < games; i += count) indices.push(i);
+    jobs.push(
+      new Promise((resolve, reject) => {
+        const worker = new Worker(new URL(import.meta.url), {
+          workerData: { indices, seed, ai },
+        });
+        worker.once('message', (message) => resolve(message));
+        worker.once('error', reject);
+        worker.once('exit', (code) => {
+          if (code !== 0) reject(new Error(`워커 종료 코드 ${code}`));
+        });
+      }),
+    );
   }
 
-  const finalDecks = game.players.map((player) =>
-    [...player.drawPile, ...player.hand, ...player.discard, ...player.inPlay].map((c) => c.cardId),
-  );
-
-  return {
-    winner: game.phase === 'gameOver' ? game.winner : null,
-    draw: game.phase === 'gameOver' && game.draw === true,
-    turns: game.turn,
-    actions,
-    firstPlayerIndex: game.firstPlayerIndex,
-    characterIds,
-    stocked,
-    finalDecks,
-  };
+  const chunks = await Promise.all(jobs);
+  /** @type {ReturnType<typeof playMatch>[]} */
+  const results = new Array(games);
+  for (const chunk of chunks) for (const { index, result } of chunk) results[index] = result;
+  return results;
 }
 
 /**
@@ -168,11 +100,12 @@ function pct(wins, games) {
 }
 
 /**
- * 시뮬레이션을 돌리고 결과를 출력한다.
- * @param {{ games: number, seed: number }} opts
+ * 판별 결과를 집계해 출력한다.
+ * @param {ReturnType<typeof playMatch>[]} results
+ * @param {{ games: number, seed: number, ai: 'smart'|'basic', workers: number }} opts
  * @returns {void}
  */
-export function runSim({ games, seed }) {
+function report(results, { games, seed, ai, workers }) {
   let draws = 0;
   let totalTurns = 0;
   let firstWins = 0;
@@ -192,8 +125,7 @@ export function runSim({ games, seed }) {
     return entry;
   };
 
-  for (let i = 0; i < games; i++) {
-    const result = playGame(seed + i);
+  for (const result of results) {
     totalTurns += result.turns;
 
     for (let p = 0; p < 2; p++) {
@@ -216,12 +148,12 @@ export function runSim({ games, seed }) {
 
     for (let p = 0; p < 2; p++) {
       const won = result.winner === p;
-      for (const cardId of result.stocked[p]) {
+      for (const cardId of result.factionIds[p]) {
         const entry = cardEntry(cardId);
         entry.stocked += 1;
         if (won) entry.stockedWins += 1;
       }
-      const deck = new Set(result.finalDecks[p]);
+      const deck = new Set(result.deckIds[p]);
       for (const cardId of deck) {
         const entry = cardEntry(cardId);
         entry.held += 1;
@@ -230,6 +162,7 @@ export function runSim({ games, seed }) {
     }
   }
 
+  console.log(`AI: ${ai}, 워커 ${workers}개`);
   console.log(`총 판수: ${games} (seed ${seed})`);
   console.log(`무승부: ${draws}`);
   console.log(`평균 차례 수: ${(totalTurns / games).toFixed(1)}`);
@@ -261,7 +194,19 @@ export function runSim({ games, seed }) {
   }
 }
 
-const isMain = process.argv[1] && process.argv[1].endsWith('sim.js');
-if (isMain) {
-  runSim(parseArgs(process.argv.slice(2)));
+/**
+ * 시뮬레이션을 돌리고 결과를 출력한다.
+ * @param {{ games: number, seed: number, ai?: 'smart'|'basic', workers?: number }} opts
+ * @returns {Promise<void>}
+ */
+export async function runSim({ games, seed, ai = 'smart', workers = 1 }) {
+  const results = await runGames({ games, seed, ai, workers });
+  report(results, { games, seed, ai, workers });
+}
+
+if (!isMainThread && workerData && Array.isArray(workerData.indices)) {
+  const { indices, seed, ai } = workerData;
+  parentPort.postMessage(indices.map((index) => ({ index, result: runOne(seed + index, ai) })));
+} else if (process.argv[1] && process.argv[1].endsWith('sim.js')) {
+  await runSim(parseArgs(process.argv.slice(2)));
 }
