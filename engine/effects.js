@@ -66,6 +66,12 @@ export function runEffects(game, ctx, effects) {
       if (Array.isArray(branch)) queue.unshift(...branch);
       continue;
     }
+    if (op === 'repeatPrevAction') {
+      // 직전 행동카드의 효과를 큐 맨 앞에 끼워 넣는다(재귀 호출하지 않는다).
+      const repeated = prevActionEffects(game);
+      if (repeated) queue.unshift(...repeated);
+      continue;
+    }
     if (!Object.prototype.hasOwnProperty.call(ops, op)) {
       throw new Error(`알 수 없는 효과: ${op}`);
     }
@@ -75,6 +81,39 @@ export function runEffects(game, ctx, effects) {
       return;
     }
   }
+}
+
+/**
+ * 효과 목록 안에(중첩 if 포함) repeatPrevAction 이 있는지 검사한다.
+ * @param {Effect[]} effects
+ * @returns {boolean}
+ */
+function containsRepeatPrevAction(effects) {
+  if (!Array.isArray(effects)) return false;
+  for (const effect of effects) {
+    if (!effect) continue;
+    if (effect.op === 'repeatPrevAction') return true;
+    if (effect.op === 'if') {
+      if (containsRepeatPrevAction(effect.then) || containsRepeatPrevAction(effect.else)) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * repeatPrevAction 으로 다시 실행할 직전 행동카드의 효과 목록을 구한다.
+ * 직전 행동카드가 없거나, 그 효과에 repeatPrevAction 이 있으면 null(무한 반복 방지).
+ * @param {import('./state.js').GameState} game
+ * @returns {Effect[]|null}
+ */
+function prevActionEffects(game) {
+  const prevAction = game.turnState?.prevAction;
+  if (!prevAction) return null;
+  const def = getCardDef(prevAction.cardId);
+  const effects = prevAction.upgraded === true && def.upgradedEffects ? def.upgradedEffects : def.effects;
+  if (!Array.isArray(effects) || effects.length === 0) return null;
+  if (containsRepeatPrevAction(effects)) return null;
+  return effects;
 }
 
 /**

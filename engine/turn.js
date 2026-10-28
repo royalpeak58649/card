@@ -18,7 +18,10 @@ import { evalCond, getStat } from './conditions.js';
  *  trashAtCleanup: string[],
  *  opponentStarGiven: boolean,
  *  defenseGained: number,
- *  playedActionIds: string[]
+ *  playedActionIds: string[],
+ *  lastAction: { cardId: string, upgraded: boolean } | null,
+ *  prevAction: { cardId: string, upgraded: boolean } | null,
+ *  echoUsed: boolean
  * }} TurnState */
 /** @typedef {{ type: 'playCard', uid: string }
  *  | { type: 'playAllMoney' }
@@ -61,6 +64,9 @@ function createTurnState() {
     opponentStarGiven: false,
     defenseGained: 0,
     playedActionIds: [],
+    lastAction: null,
+    prevAction: null,
+    echoUsed: false,
   };
 }
 
@@ -179,18 +185,43 @@ function playCard(game, playerIndex, uid) {
   if (def.type === 'action') {
     game.turnState.actionsPlayed += 1;
     game.turnState.playedActionIds.push(card.cardId);
+    // 직전 행동카드 기록(효과 실행 전에 남긴다).
+    game.turnState.prevAction = game.turnState.lastAction;
+    game.turnState.lastAction = { cardId: card.cardId, upgraded: card.upgraded === true };
     triggerOpponentActionStar(game, playerIndex);
   }
   if (card.upgraded === true) game.turnState.upgradedPlayed += 1;
 
   const effects = card.upgraded && def.upgradedEffects ? def.upgradedEffects : def.effects;
-  runEffects(game, { playerIndex, cardUid: card.uid }, effects);
+  const doubled = shouldDoubleFirstCostlyAction(game, playerIndex, def, actionCost);
+  if (doubled) game.turnState.echoUsed = true;
+  runEffects(game, { playerIndex, cardUid: card.uid }, doubled ? effects.concat(effects) : effects);
 
   // 피해를 주는 행동카드는 차례 보정만큼 공격 피해를 더한다.
   const actionDamageBonus = game.turnState.mods.actionDamageBonus ?? 0;
   if (def.type === 'action' && def.dealsDamage === true && actionDamageBonus > 0) {
     game.turnState.attackDamage += actionDamageBonus;
   }
+}
+
+/**
+ * 캐릭터 패시브 ability.doubleFirstCostlyAction: { minOwnTurn } 발동 여부.
+ * 내 차례 minOwnTurn 번째부터, 그 차례 처음 내는 행동력 1 이상 행동카드만 두 번 실행한다.
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @param {import('./cards/registry.js').CardDef} def
+ * @param {number} actionCost
+ * @returns {boolean}
+ */
+function shouldDoubleFirstCostlyAction(game, playerIndex, def, actionCost) {
+  if (def.type !== 'action' || actionCost < 1) return false;
+  if (game.turnState.echoUsed === true) return false;
+  const characterId = game.players[playerIndex].characterId;
+  if (!characterId) return false;
+  const passive = getCharacter(characterId).ability?.doubleFirstCostlyAction;
+  if (!passive) return false;
+  const minOwnTurn = passive.minOwnTurn ?? 0;
+  return (game.players[playerIndex].turnsTaken ?? 0) >= minOwnTurn;
 }
 
 /**
