@@ -256,6 +256,13 @@ function chooseBuyPhase(game, playerIndex) {
   const moneyInHand = player.hand.some((card) => getCardDef(card.cardId).type === 'money');
   if (moneyInHand) return { type: 'playAllMoney' };
 
+  // 빚: 원이 있으면 먼저 갚고, 다 못 갚았으면(채무 동결이 없는 한) 살 수 없으니 넘어간다.
+  const ignoreDebt = (game.turnState?.mods?.ignoreDebt ?? 0) > 0;
+  if ((player.debt ?? 0) > 0 && !ignoreDebt) {
+    if (player.coins > 0) return { type: 'payDebt' };
+    return { type: 'endPhase' };
+  }
+
   if (player.buys < 1) return { type: 'endPhase' };
 
   const allCards = [...player.drawPile, ...player.hand, ...player.discard, ...player.inPlay];

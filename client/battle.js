@@ -248,6 +248,8 @@ function logText(entry, you) {
       return `${entry.turn}턴 · ${who}: 재화 모두 내기`;
     case 'choose':
       return `${entry.turn}턴 · ${who}: 선택 완료`;
+    case 'payDebt':
+      return `${entry.turn}턴 · ${who}: 빚 ${entry.amount ?? ''} 갚음`;
     case 'activateAbility':
       return `${entry.turn}턴 · ${who}: 캐릭터 능력 발동!`;
     default:
@@ -288,6 +290,9 @@ function playerSummary(player, opts = {}) {
 
   const defense = el('div', 'bt-defense');
   if ((player.defense ?? 0) > 0) defense.textContent = `🛡 ${player.defense}`;
+  if ((player.debt ?? 0) > 0) {
+    defense.appendChild(el('span', 'bt-debt', ` 💸 빚 ${player.debt}`));
+  }
 
   const namePanel = el('div', 'bt-name', characterName(player.characterId));
   const character = safeCharacter(player.characterId);
@@ -403,6 +408,7 @@ function leftColumn(g, me, onToggleMarket) {
     { icon: '🛒', label: '구매', value: me.buys },
     { icon: '💰', label: '원', value: me.coins },
   ];
+  if ((me.debt ?? 0) > 0) rows.push({ icon: '💸', label: '빚', value: me.debt });
   for (const row of rows) {
     const item = el('div', 'bt-res');
     item.append(el('span', 'bt-res-icon', row.icon));
@@ -523,6 +529,12 @@ function actionButtons(g, me, ctx) {
     box.appendChild(button('구매단계로', 'btn small primary', () => sendGame(ctx.net, { type: 'endPhase' }), !canAct));
   } else if (g.phase === 'buy') {
     box.appendChild(button('공격단계로', 'btn small primary', () => sendGame(ctx.net, { type: 'endPhase' }), !canAct));
+    if ((me.debt ?? 0) > 0) {
+      const pay = Math.min(me.debt, me.coins ?? 0);
+      box.appendChild(
+        button(`💸 빚 갚기 (${pay})`, 'btn small bt-debt-btn', () => sendGame(ctx.net, { type: 'payDebt' }), !canAct || pay <= 0),
+      );
+    }
     const hasMoney = (me.hand || []).some((c) => safeCardDef(cardIdOf(c))?.type === 'money');
     if (hasMoney) {
       box.appendChild(
@@ -607,6 +619,10 @@ function marketDrawer(g, me, ctx) {
   drawer.appendChild(head);
 
   const body = el('div', 'bt-drawer-body');
+  const debtBlocked = (me.debt ?? 0) > 0 && !((g.turnState?.mods?.ignoreDebt ?? 0) > 0);
+  if (debtBlocked) {
+    body.appendChild(el('div', 'bt-debt-warning', `💸 빚 ${me.debt}을(를) 다 갚기 전에는 구매할 수 없습니다`));
+  }
   const marketIds = Object.keys(g.market || {});
   for (const type of MARKET_GROUPS) {
     const ids = marketIds.filter((id) => safeCardDef(id)?.type === type);
@@ -617,7 +633,7 @@ function marketDrawer(g, me, ctx) {
       const slot = g.market[cardId];
       const price = displayPrice(g, cardId, ctx.you, ctx.myTurn);
       const soldOut = (slot.count ?? 0) <= 0;
-      const affordable = ctx.canAct && g.phase === 'buy' && me.buys >= 1 && me.coins >= price;
+      const affordable = ctx.canAct && g.phase === 'buy' && me.buys >= 1 && me.coins >= price && !debtBlocked;
       const disabled = soldOut || !affordable;
       const cardEl = renderCard(cardId, {
         price,
