@@ -843,3 +843,13 @@ button.bt-tile:hover {
   font-size: 11px;
   opacity: 0.7;
 }
+
+/* 손패가 아주 많을 때 */
+.bt-hand.very-crowded .bt-hand-card {
+  margin-right: -66px;
+}
+@media (max-width: 700px) {
+  .bt-hand.very-crowded .bt-hand-card {
+    margin-right: -56px;
+  }
+}
