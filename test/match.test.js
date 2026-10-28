@@ -225,3 +225,27 @@ test('viewFor: draft 중 상대 cardIds 는 null, pending 은 상대에게 가�
   assert.equal(own.game.pending.rest, undefined);
   assert.equal(own.game.pending.data, undefined);
 });
+
+test('viewFor: 내 선택지가 가려진 덱의 카드여도 optionCards 로 종류를 알려준다', async () => {
+  const { createMatch, applyMatchAction, viewFor, createCardInstance, NEUTRAL_CARD_IDS } = await import('../engine/index.js');
+  const match = createMatch({ seed: 7, players: [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }] });
+  applyMatchAction(match, 0, { type: 'selectCharacter', characterId: 'hayun' });
+  applyMatchAction(match, 1, { type: 'selectCharacter', characterId: 'kangjin' });
+  applyMatchAction(match, 0, { type: 'draft', cardIds: ['s8_supplyOrder', 's8_logistics', 's8_opFunds', 's8_maintenance'] });
+  applyMatchAction(match, 1, { type: 'draft', cardIds: ['s8_supplyOrder', 's8_logistics', 's8_opFunds', 's8_maintenance'] });
+  const game = match.game;
+  const p = game.activeIndex;
+  const informant = createCardInstance(game, 'n_informant');
+  game.players[p].hand.push(informant);
+  applyMatchAction(match, p, { type: 'game', action: { type: 'playCard', uid: informant.uid } });
+  assert.equal(game.pending.kind, 'reorderTop');
+  const mine = viewFor(match, p);
+  assert.equal(Object.keys(mine.game.pending.optionCards).length, game.pending.options.length);
+  for (const uid of game.pending.options) {
+    assert.equal(mine.game.pending.optionCards[uid], game.players[p].drawPile.find((c) => c.uid === uid).cardId);
+  }
+  const theirs = viewFor(match, 1 - p);
+  assert.equal(theirs.game.pending.optionCards, undefined);
+  assert.equal(theirs.game.pending.options, undefined);
+  assert.ok(NEUTRAL_CARD_IDS.includes('n_informant'));
+});

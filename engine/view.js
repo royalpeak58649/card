@@ -25,6 +25,20 @@ export function viewFor(match, viewerIndex) {
   }
 
   if (view.game) {
+    // 내 선택지가 카드 uid 라면 어떤 카드인지 알려준다(덱 위 카드처럼 가려진 구역의 카드도 포함).
+    const ownPending = match.game.pending;
+    if (ownPending && ownPending.playerIndex === viewerIndex) {
+      /** @type {Record<string, string>} */
+      const optionCards = {};
+      const zones = match.game.players.flatMap((p) => [p.hand, p.drawPile, p.discard, p.inPlay]).concat([match.game.trash]);
+      for (const zone of zones) {
+        for (const card of zone) {
+          if (ownPending.options.includes(card.uid)) optionCards[card.uid] = card.cardId;
+        }
+      }
+      view.game.pending.optionCards = optionCards;
+    }
+
     delete view.game.seed;
     delete view.game.rngState;
 
