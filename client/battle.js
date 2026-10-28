@@ -219,10 +219,10 @@ function canUpgradeCard(card) {
  * @param {number} stars
  * @returns {HTMLElement}
  */
-function starRow(stars) {
+function starRow(stars, max = MAX_STARS) {
   const row = el('div', 'bt-stars');
-  const filled = Math.max(0, Math.min(MAX_STARS, stars || 0));
-  for (let i = 0; i < MAX_STARS; i++) {
+  const filled = Math.max(0, Math.min(max, stars || 0));
+  for (let i = 0; i < max; i++) {
     row.appendChild(el('span', i < filled ? 'bt-star on' : 'bt-star', '★'));
   }
   return row;
@@ -298,7 +298,8 @@ function playerSummary(player, opts = {}) {
     }
   }
 
-  box.append(tiles, hp, starRow(player.stars), defense, namePanel);
+  const maxStars = safeCharacter(player.characterId)?.ability?.maxStars ?? MAX_STARS;
+  box.append(tiles, hp, starRow(player.stars, maxStars), defense, namePanel);
 
   if (opts.active) box.appendChild(el('div', 'bt-turn-tag', '상대 차례 진행중'));
   if (opts.opponent && opts.connected === false) {
