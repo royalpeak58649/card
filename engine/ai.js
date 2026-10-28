@@ -178,7 +178,9 @@ function choosePending(game, playerIndex) {
 function chooseActionPhase(game, playerIndex) {
   const player = game.players[playerIndex];
 
-  if (player.stars >= PERM_UPGRADE_MIN_STARS) {
+  const character = player.characterId ? getCharacter(player.characterId) : null;
+  const permCost = character?.ability?.permUpgradeCost ?? PERM_UPGRADE_COST;
+  if (player.stars >= Math.min(PERM_UPGRADE_MIN_STARS, permCost)) {
     const candidates = player.hand.filter(canUpgrade);
     if (candidates.length > 0) {
       let best = candidates[0];
@@ -195,6 +197,18 @@ function chooseActionPhase(game, playerIndex) {
     const actionCost = def.actionCost ?? 0;
     return actionCost === 0 || player.actions >= actionCost;
   });
+  // 별이 2개 이상 남으면 손패의 강화 가능한 카드를 일시 강화한다(한 차례 3장까지).
+  if (player.stars >= 2 && (game.turnState?.tempUpgrades ?? 0) < 3) {
+    const candidates = player.hand.filter(canUpgrade);
+    if (candidates.length > 0) {
+      let best = candidates[0];
+      for (const card of candidates) {
+        if (getCardDef(card.cardId).cost > getCardDef(best.cardId).cost) best = card;
+      }
+      return { type: 'upgrade', uid: best.uid, mode: 'temp' };
+    }
+  }
+
   // 발동형 능력: 피해를 주는 행동카드를 낼 수 있으면 먼저 발동한다.
   if (player.characterId && player.abilityUsed !== true) {
     const ability = getCharacter(player.characterId).ability?.activeAbility;
