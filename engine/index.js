@@ -19,3 +19,5 @@ export {
 } from './characters.js';
 export { registerCards, getCardDef, allCardIds } from './cards/registry.js';
 export { NEUTRAL_CARD_IDS } from './cards/neutral.js';
+export { createMatch, getCandidates, applyMatchAction } from './match.js';
+export { viewFor } from './view.js';
