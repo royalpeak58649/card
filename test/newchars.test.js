@@ -71,6 +71,13 @@ test('도윤: 체력 60, 차례 끝 방어 +2로 상대 공격 2 감소', () => 
   assert.equal(attackDamage(game, first), 1);
 });
 
+test('도윤: 무기를 낸 차례에는 차례 끝 방어가 붙지 않는다', () => {
+  const { game, first } = gameWith('doyun');
+  setHand(game, first, ['pistol']);
+  attackDamage(game, first); // 권총을 내고 차례 종료
+  assert.equal(me(game, first).defense, 0);
+});
+
 test('참호 구축 + 제압 사격: 방어를 얻은 차례에 4 피해', () => {
   const { game, first } = gameWith('doyun');
   const [trench] = setHand(game, first, ['s8_trench', 's8_suppress']);

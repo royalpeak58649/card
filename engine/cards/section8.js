@@ -341,6 +341,10 @@ export const SECTION8_CHARACTERS = {
     ability: {
       endTriggers: [
         {
+          cond: {
+            stat: 'weaponsPlayed',
+            eq: 0,
+          },
           effects: [
             {
               op: 'addDefense',
@@ -350,7 +354,7 @@ export const SECTION8_CHARACTERS = {
         }
       ]
     },
-    abilityText: '내 차례가 끝날 때 방어 +2 (상대의 다음 공격 피해 -2)'
+    abilityText: '이번 차례 무기카드를 내지 않았다면, 차례가 끝날 때 방어 +2 (상대의 다음 공격 피해 -2)'
   },
 };
 
