@@ -34,7 +34,10 @@ const SECTION8_PILE_IDS = [
  * @param {number} [seed]
  */
 function startedGame(characters = [{}, {}], seed = 12345) {
-  const players = characters.map((c, i) => ({
+  // 선공은 seed 로 정해지므로, characters[0] 이 항상 선공 플레이어에게 가도록 순서를 맞춘다.
+  const probe = createGame({ seed, players: [{ id: 'a', name: 'a', maxHp: 1 }, { id: 'b', name: 'b', maxHp: 1 }] });
+  const ordered = probe.firstPlayerIndex === 0 ? characters : [characters[1], characters[0]];
+  const players = ordered.map((c, i) => ({
     id: 'p' + i,
     name: '플레이어' + i,
     maxHp: 20,
@@ -69,11 +72,11 @@ function addToHand(game, playerIndex, cardId) {
   return card;
 }
 
-/** 선공이 3번 endPhase 해서 후공 차례로 넘긴다. */
+/** 현재 단계가 어디든 차례가 상대에게 넘어갈 때까지 endPhase 한다. */
 function passTurn(game, playerIndex) {
-  applyAction(game, playerIndex, { type: 'endPhase' });
-  applyAction(game, playerIndex, { type: 'endPhase' });
-  applyAction(game, playerIndex, { type: 'endPhase' });
+  while (game.activeIndex === playerIndex && game.phase !== 'gameOver') {
+    applyAction(game, playerIndex, { type: 'endPhase' });
+  }
 }
 
 /**
