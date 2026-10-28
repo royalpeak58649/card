@@ -14,6 +14,8 @@ const MAX_TEMP_UPGRADES = 3;
 const TEMP_UPGRADE_COST = 1;
 /** 영구 강화 비용(별) */
 const PERM_UPGRADE_COST = 4;
+/** 카드가 아닌 선택지 키워드의 표시 이름 */
+const KEYWORD_LABELS = { trash: '제거', discard: '버리기', pay: '★ 별 사용', skip: '사용 안 함' };
 /** 세션 저장 키(client/net.js 와 같다) */
 const SESSION_KEY = 'cardDuel.session';
 
@@ -453,7 +455,8 @@ function handCard(g, me, card, ctx) {
     if (upgradeMenuUid === card.uid) {
       const menu = el('div', 'bt-upgrade-menu');
       const tempOk = me.stars >= TEMP_UPGRADE_COST && (g.turnState?.tempUpgrades ?? 0) < MAX_TEMP_UPGRADES;
-      const permOk = me.stars >= PERM_UPGRADE_COST;
+      const permCost = safeCharacter(me.characterId)?.ability?.permUpgradeCost ?? PERM_UPGRADE_COST;
+      const permOk = me.stars >= permCost;
       menu.appendChild(
         button(`일시 강화 ★${TEMP_UPGRADE_COST}`, 'bt-menu-btn', () => {
           upgradeMenuUid = null;
@@ -461,7 +464,7 @@ function handCard(g, me, card, ctx) {
         }, !tempOk),
       );
       menu.appendChild(
-        button(`영구 강화 ★${PERM_UPGRADE_COST}`, 'bt-menu-btn', () => {
+        button(`영구 강화 ★${permCost}`, 'bt-menu-btn', () => {
           upgradeMenuUid = null;
           sendGame(ctx.net, { type: 'upgrade', uid: card.uid, mode: 'perm' });
         }, !permOk),
@@ -669,8 +672,8 @@ function discardDrawer(me, rerender) {
  * @returns {HTMLElement}
  */
 function choiceItem(option, g, me, pending, opts) {
-  if (option === 'trash' || option === 'discard') {
-    const label = option === 'trash' ? '제거' : '버리기';
+  if (Object.prototype.hasOwnProperty.call(KEYWORD_LABELS, option)) {
+    const label = KEYWORD_LABELS[option];
     const btn = button(label, 'btn small', opts.onClick, opts.disabled);
     if (opts.selected) btn.classList.add('toggle-on');
     return btn;
@@ -726,13 +729,14 @@ function choiceModal(g, me, pending, ctx) {
   modal.appendChild(el('div', 'bt-modal-title', pending.prompt || '선택하세요'));
   const min = pending.min ?? 0;
   const max = pending.max ?? 0;
-  modal.appendChild(el('div', 'bt-modal-sub', `${min}~${max} 장 선택`));
+  const keywordOnly = (pending.options || []).every((o) => Object.prototype.hasOwnProperty.call(KEYWORD_LABELS, o));
+  modal.appendChild(el('div', 'bt-modal-sub', keywordOnly ? '하나를 고르세요' : `${min}~${max} 장 선택`));
   if (pending.kind === 'reorderTop') {
     modal.appendChild(el('div', 'bt-modal-hint', '먼저 고른 카드가 맨 위'));
   }
 
   const options = Array.isArray(pending.options) ? pending.options : [];
-  const single = options.includes('discard');
+  const single = options.some((o) => o === 'discard' || o === 'pay');
   const limit = single ? 1 : max;
 
   const row = el('div', 'bt-modal-cards');
