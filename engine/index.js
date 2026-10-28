@@ -1,6 +1,7 @@
 // 서버·클라이언트는 이 파일만 import 한다. 카드·진영·캐릭터 등록도 여기서 일어난다.
 import './cards/basic.js';
 import './cards/section8.js';
+import './cards/neutral.js';
 
 export {
   createGame,
@@ -17,3 +18,4 @@ export {
   getCharacter,
 } from './characters.js';
 export { registerCards, getCardDef, allCardIds } from './cards/registry.js';
+export { NEUTRAL_CARD_IDS } from './cards/neutral.js';

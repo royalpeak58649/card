@@ -356,6 +356,93 @@ registerOp('addDefense', (game, ctx, effect) => {
   player.defense = (player.defense ?? 0) + (effect.n ?? 0);
 });
 
+registerOp('discardFromHand', (game, ctx, effect) => {
+  const player = game.players[ctx.playerIndex];
+  requestChoice(game, ctx, {
+    kind: 'discardFromHand',
+    prompt: '버릴 카드를 고르세요',
+    options: player.hand.map((c) => c.uid),
+    min: effect.min ?? 0,
+    max: effect.n ?? 0,
+    data: { thenIfAny: effect.thenIfAny ?? [] },
+  });
+});
+
+registerChoice('discardFromHand', (game, pending, selection) => {
+  for (const uid of selection) {
+    game.players[pending.playerIndex].discard.push(takeFromHand(game, pending.playerIndex, uid));
+  }
+  // 1장 이상 버렸을 때만 후속 효과를 남은 효과보다 먼저 실행한다.
+  const thenIfAny = pending.data.thenIfAny ?? [];
+  if (selection.length > 0 && thenIfAny.length > 0) {
+    pending.rest.unshift(...thenIfAny);
+  }
+});
+
+registerOp('reorderTop', (game, ctx, effect) => {
+  const player = game.players[ctx.playerIndex];
+  const n = Math.max(0, effect.n ?? 0);
+  // drawPile 배열 끝쪽 n 장이 맨 위(다음에 뽑힐 카드)다.
+  const top = player.drawPile.slice(Math.max(0, player.drawPile.length - n));
+  if (top.length === 0) return;
+  const trashUpTo = Math.max(0, effect.trashUpTo ?? 0);
+  if (trashUpTo > 0) {
+    requestChoice(game, ctx, {
+      kind: 'reorderTopTrash',
+      prompt: '제거할 카드를 고르세요',
+      options: top.map((c) => c.uid),
+      min: 0,
+      max: trashUpTo,
+      data: { top: top.map((c) => c.uid) },
+    });
+    return;
+  }
+  requestReorder(game, ctx, top.map((c) => c.uid));
+});
+
+registerChoice('reorderTopTrash', (game, pending, selection) => {
+  const player = game.players[pending.playerIndex];
+  for (const uid of selection) {
+    const index = player.drawPile.findIndex((c) => c.uid === uid);
+    if (index < 0) throw new Error(`뽑을 덱에 없는 카드: ${uid}`);
+    game.trash.push(player.drawPile.splice(index, 1)[0]);
+  }
+  const remaining = (pending.data.top ?? []).filter((uid) => !selection.includes(uid));
+  requestReorder(game, pending.ctx, remaining);
+});
+
+/**
+ * 남은 카드의 순서를 묻는다. 1장 이하면 순서 선택을 건너뛴다.
+ * @param {import('./state.js').GameState} game
+ * @param {EffectContext} ctx
+ * @param {string[]} uids
+ * @returns {void}
+ */
+function requestReorder(game, ctx, uids) {
+  if (uids.length <= 1) return;
+  requestChoice(game, ctx, {
+    kind: 'reorderTop',
+    prompt: '덱 맨 위 순서를 정하세요(먼저 고른 카드가 맨 위)',
+    options: uids,
+    min: uids.length,
+    max: uids.length,
+  });
+}
+
+registerChoice('reorderTop', (game, pending, selection) => {
+  const player = game.players[pending.playerIndex];
+  const cards = [];
+  for (const uid of selection) {
+    const index = player.drawPile.findIndex((c) => c.uid === uid);
+    if (index < 0) throw new Error(`뽑을 덱에 없는 카드: ${uid}`);
+    cards.push(player.drawPile.splice(index, 1)[0]);
+  }
+  // selection[0] 이 맨 위가 되도록 뒤에서부터 끝에 쌓는다.
+  for (let i = cards.length - 1; i >= 0; i--) {
+    player.drawPile.push(cards[i]);
+  }
+});
+
 registerOp('opponentMillTop', (game, ctx, effect) => {
   const opponent = game.players[1 - ctx.playerIndex];
   const n = effect.n ?? 0;
