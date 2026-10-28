@@ -229,8 +229,8 @@ test('난사 프로토콜: 행동력 +3 / 폭주 연산: 4번째로 내면 +2 �
   setHand(g2, f2, ['nu_synapse', 'nu_synapse', 'nu_synapse', 'nu_runaway']);
   playAll(g2, f2);
   assert.equal(g2.turnState.actionsPlayed, 4);
-  // 4장을 내고 1장 남은 상태에서 폭주 연산의 +2 카드
-  assert.equal(p2.hand.length, 1 + 2);
+  // 시냅스 점화 3장이 1장씩 뽑고(3) 폭주 연산이 +2 카드(조건 충족)
+  assert.equal(p2.hand.length, 3 + 2);
 
   // 3번째로 내면 조건(4장 이상) 불충족
   const { game: g3, first: f3 } = startedGame();
@@ -238,7 +238,9 @@ test('난사 프로토콜: 행동력 +3 / 폭주 연산: 4번째로 내면 +2 �
   setHand(g3, f3, ['nu_synapse', 'nu_synapse', 'nu_runaway']);
   playAll(g3, f3);
   assert.equal(g3.turnState.actionsPlayed, 3);
-  assert.equal(p3.hand.length, 0);});
+  // 시냅스 점화 2장이 뽑은 2장만 남고 폭주 연산의 +2 카드는 없음
+  assert.equal(p3.hand.length, 2);
+});
 
 test('연쇄 반응: 행동카드 3장이면 별 +1, 6장이면 +2', () => {
   const { game, first } = startedGame();
