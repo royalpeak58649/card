@@ -122,8 +122,8 @@ test('에코 패시브: 내 4번째 차례부터 그 차례 첫 ⚡1 행동카�
   }
   assert.equal(me(game, first).turnsTaken, 4);
   const [thought] = setHand(game, first, ['nu_thought']);
-  play(game, first, thought); // 1 피해, +1 행동력 → 두 번
-  assert.equal(game.turnState.attackDamage, 2);
+  play(game, first, thought); // 2 피해, +1 행동력 → 두 번
+  assert.equal(game.turnState.attackDamage, 4);
   assert.equal(me(game, first).actions, 2);
 });
 

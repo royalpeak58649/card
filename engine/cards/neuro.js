@@ -90,14 +90,14 @@ export const NEURO_CARDS = {
     id: 'nu_barrage',
     name: '난사 프로토콜',
     type: 'action',
-    actionCost: 1,
+    actionCost: 0,
     cost: 4,
-    text: '+3 행동력, +1 카드',
-    upgradedText: '+3 행동력, +2 카드',
+    text: '+2 행동력, +1 카드',
+    upgradedText: '+2 행동력, +2 카드',
     effects: [
       {
         op: 'gainActions',
-        n: 3
+        n: 2
       },
       {
         op: 'draw',
@@ -107,7 +107,7 @@ export const NEURO_CARDS = {
     upgradedEffects: [
       {
         op: 'gainActions',
-        n: 3
+        n: 2
       },
       {
         op: 'draw',
@@ -168,21 +168,13 @@ export const NEURO_CARDS = {
     type: 'action',
     actionCost: 0,
     cost: 5,
-    text: '차례 끝에 이번 차례 낸 행동카드가 2장 이상이면 별 +1, 4장 이상이면 별 +1 더',
+    text: '이번 차례 낸 행동카드 1장당 +1 피해 (공격 끝에 계산, 최대 +5). 4장 이상이면 차례 끝에 별 +1',
     upgradedText: '같은 효과, +1 카드',
     effects: [
       {
-        op: 'addEndTrigger',
-        cond: {
-          stat: 'actionsPlayed',
-          gte: 2
-        },
-        effects: [
-          {
-            op: 'gainStars',
-            n: 1
-          }
-        ]
+        op: 'addAttackBonus',
+        perAction: 1,
+        cap: 5
       },
       {
         op: 'addEndTrigger',
@@ -204,17 +196,9 @@ export const NEURO_CARDS = {
         n: 1
       },
       {
-        op: 'addEndTrigger',
-        cond: {
-          stat: 'actionsPlayed',
-          gte: 2
-        },
-        effects: [
-          {
-            op: 'gainStars',
-            n: 1
-          }
-        ]
+        op: 'addAttackBonus',
+        perAction: 1,
+        cap: 5
       },
       {
         op: 'addEndTrigger',
@@ -240,16 +224,28 @@ export const NEURO_CARDS = {
     actionCost: 1,
     cost: 3,
     dealsDamage: true,
-    text: '1 피해, +1 행동력',
-    upgradedText: '2 피해, +1 행동력',
+    text: '2 피해, +1 행동력',
+    upgradedText: '3 피해, +1 행동력',
     effects: [
-      { op: 'damage', n: 1 },
-      { op: 'gainActions', n: 1 },
+      {
+        op: 'damage',
+        n: 2
+      },
+      {
+        op: 'gainActions',
+        n: 1
+      }
     ],
     upgradedEffects: [
-      { op: 'damage', n: 2 },
-      { op: 'gainActions', n: 1 },
-    ],
+      {
+        op: 'damage',
+        n: 3
+      },
+      {
+        op: 'gainActions',
+        n: 1
+      }
+    ]
   },
   nu_brainwave: {
     id: 'nu_brainwave',
@@ -258,12 +254,12 @@ export const NEURO_CARDS = {
     actionCost: 1,
     cost: 5,
     dealsDamage: true,
-    text: '3 피해, +1 카드',
-    upgradedText: '4 피해, +1 카드, +1 행동력',
+    text: '4 피해, +1 카드',
+    upgradedText: '5 피해, +1 카드, +1 행동력',
     effects: [
       {
         op: 'damage',
-        n: 3
+        n: 4
       },
       {
         op: 'draw',
@@ -273,7 +269,7 @@ export const NEURO_CARDS = {
     upgradedEffects: [
       {
         op: 'damage',
-        n: 4
+        n: 5
       },
       {
         op: 'draw',

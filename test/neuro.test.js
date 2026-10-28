@@ -249,15 +249,17 @@ test('난사 프로토콜: 행동력 +3, +1 카드 / 폭주 연산: 3번째로 �
   assert.equal(p4.hand.length, 1);
 });
 
-test('연쇄 반응: 행동카드 2~3장이면 별 +1, 4장 이상이면 +2', () => {
-  const { game, first } = startedGame();
+test('연쇄 반응: 낸 행동카드 1장당 +1 피해(최대 +5), 4장 이상이면 차례 끝 별 +1', () => {
+  const { game, first, second } = startedGame();
   const player = game.players[first];
   player.stars = 0;
   setHand(game, first, ['nu_chain', 'nu_synapse', 'nu_synapse']);
   playAll(game, first);
   assert.equal(game.turnState.actionsPlayed, 3);
+  const hpBefore = game.players[second].hp;
   passTurn(game, first);
-  assert.equal(player.stars, 1);
+  assert.equal(hpBefore - game.players[second].hp, 3); // 행동카드 3장 → +3 피해
+  assert.equal(player.stars, 0); // 4장 미만이라 별 없음
 
   const { game: g2, first: f2 } = startedGame();
   const p2 = g2.players[f2];
@@ -267,8 +269,10 @@ test('연쇄 반응: 행동카드 2~3장이면 별 +1, 4장 이상이면 +2', ()
   const sixth = addToHand(g2, f2, 'nu_synapse');
   applyAction(g2, f2, { type: 'playCard', uid: sixth.uid });
   assert.equal(g2.turnState.actionsPlayed, 6);
+  const hp2 = g2.players[1 - f2].hp;
   passTurn(g2, f2);
-  assert.equal(p2.stars, 2);
+  assert.equal(hp2 - g2.players[1 - f2].hp, 5); // 6장이지만 최대 +5
+  assert.equal(p2.stars, 1);
 });
 
 test('진 패시브: 상대가 6번째 행동카드를 내면 진 별 +1', () => {
@@ -294,13 +298,13 @@ test('제미니아노: 발동 뒤 피해 행동카드가 +2, 공명도 +2 를 �
 
   const thought = addToHand(game, first, 'nu_thought');
   applyAction(game, first, { type: 'playCard', uid: thought.uid });
-  // 1 + 2 = 3
-  assert.equal(game.turnState.attackDamage, 3);
+  // 2 + 2 = 4
+  assert.equal(game.turnState.attackDamage, 4);
 
   const brainwave = addToHand(game, first, 'nu_brainwave');
   applyAction(game, first, { type: 'playCard', uid: brainwave.uid });
-  // 3 + (3 + 2) = 8
-  assert.equal(game.turnState.attackDamage, 8);
+  // 4 + (4 + 2) = 10
+  assert.equal(game.turnState.attackDamage, 10);
 
   const { game: g2, first: f2, second: s2 } = startedGame(12345, ['gemini', null]);
   applyAction(g2, f2, { type: 'activateAbility' });
@@ -308,14 +312,14 @@ test('제미니아노: 발동 뒤 피해 행동카드가 +2, 공명도 +2 를 �
   playAll(g2, f2);
   assert.equal(g2.turnState.actionsPlayed, 3);
   resolveAttackNow(g2, f2);
-  // 사고 전파 1+2, 뇌파 공격 3+2, 공명 0+2 + perAction 1 × 3 = 3 → 3 + 5 + 5 = 13
-  assert.equal(g2.players[s2].hp, 20 - 13);
+  // 사고 전파 2+2, 뇌파 공격 4+2, 공명 0+2 + perAction 1 × 3 = 3 → 4 + 6 + 5 = 15
+  assert.equal(g2.players[s2].hp, 20 - 15);
 });
 
-test('사고 전파 + 뇌파 공격(발동 없이) → 4 피해', () => {
+test('사고 전파 + 뇌파 공격(발동 없이) → 6 피해', () => {
   const { game, first, second } = startedGame(12345, ['gemini', null]);
   setHand(game, first, ['nu_thought', 'nu_brainwave']);
   playAll(game, first);
   resolveAttackNow(game, first);
-  assert.equal(game.players[second].hp, 20 - 4);
+  assert.equal(game.players[second].hp, 20 - 6);
 });
