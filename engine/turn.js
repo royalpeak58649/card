@@ -3,13 +3,18 @@ import { getCardDef } from './cards/registry.js';
 import { createCardInstance, drawCards, getPurchasePrice } from './state.js';
 import { MAX_STARS, runEffects } from './effects.js';
 import { resolveChoice } from './choices.js';
+import { evalCond } from './conditions.js';
 
 /** @typedef {import('./state.js').GameState} GameState */
 /** @typedef {import('./state.js').CardInstance} CardInstance */
 /** @typedef {{
  *  attackDamage: number, moneyPlayed: number, weaponsPlayed: number,
  *  actionsPlayed: number, bought: string[], starsSpent: number,
- *  tempUpgrades: number, damageDealt: number
+ *  tempUpgrades: number, damageDealt: number,
+ *  mods: Record<string, number>, attackBonuses: Record<string, any>[],
+ *  endTriggers: { cond?: Record<string, any>, effects: import('./effects.js').Effect[],
+ *    ctx: import('./effects.js').EffectContext }[],
+ *  trashAtCleanup: string[]
  * }} TurnState */
 /** @typedef {{ type: 'playCard', uid: string }
  *  | { type: 'playAllMoney' }
@@ -42,6 +47,10 @@ function createTurnState() {
     starsSpent: 0,
     tempUpgrades: 0,
     damageDealt: 0,
+    mods: { weaponBuyRefund: 0, marketDiscount: 0 },
+    attackBonuses: [],
+    endTriggers: [],
+    trashAtCleanup: [],
   };
 }
 
@@ -172,7 +181,7 @@ function buy(game, playerIndex, cardId) {
   const slot = game.market[cardId];
   if (!slot) throw new Error(`시장에 없는 카드: ${cardId}`);
   if (slot.count <= 0) throw new Error(`시장 더미가 비었습니다: ${cardId}`);
-  const price = getPurchasePrice(game, cardId);
+  const price = getPurchasePrice(game, cardId, playerIndex);
   if (player.coins < price) throw new Error('원이 부족합니다');
 
   // 여기서부터 상태 변경
@@ -182,6 +191,13 @@ function buy(game, playerIndex, cardId) {
   slot.bought += 1;
   player.discard.push(createCardInstance(game, cardId));
   game.turnState.bought.push(cardId);
+
+  // 무기 구매 환급은 한 차례에 한 번만 적용된다.
+  const refund = game.turnState.mods.weaponBuyRefund ?? 0;
+  if (getCardDef(cardId).type === 'weapon' && refund > 0) {
+    player.coins += refund;
+    game.turnState.mods.weaponBuyRefund = 0;
+  }
 }
 
 /**
@@ -245,10 +261,25 @@ function revertTempUpgrades(game, playerIndex) {
  * @returns {void}
  */
 function resolveAttack(game, playerIndex) {
-  const damage = game.turnState.attackDamage;
-  game.turnState.damageDealt = damage;
+  const turnState = game.turnState;
+  let total = turnState.attackDamage;
+  for (const bonus of turnState.attackBonuses ?? []) {
+    if (bonus.cond !== undefined && !evalCond(game, { playerIndex, cardUid: '' }, bonus.cond)) {
+      continue;
+    }
+    let amount = (bonus.flat ?? 0) + (bonus.perWeapon ?? 0) * turnState.weaponsPlayed;
+    if (bonus.cap !== undefined) amount = Math.min(amount, bonus.cap);
+    total += amount;
+  }
+
   const opponentIndex = 1 - playerIndex;
   const opponent = game.players[opponentIndex];
+  const defense = opponent.defense ?? 0;
+  const damage = Math.max(0, total - defense);
+  // 공격이 해결되면 상대 방어는 소모된다(무기를 내지 않았어도).
+  opponent.defense = 0;
+
+  turnState.damageDealt = damage;
   opponent.hp -= damage;
   if (opponent.hp <= 0) {
     opponent.hp = 0;
@@ -265,8 +296,18 @@ function resolveAttack(game, playerIndex) {
  */
 function endTurn(game, playerIndex) {
   const player = game.players[playerIndex];
+  runEndTriggers(game, playerIndex);
   revertTempUpgrades(game, playerIndex);
-  player.discard.push(...player.inPlay, ...player.hand);
+  const trashed = new Set(game.turnState.trashAtCleanup ?? []);
+  const toDiscard = [];
+  for (const card of [...player.inPlay, ...player.hand]) {
+    if (trashed.has(card.uid)) {
+      game.trash.push(card);
+    } else {
+      toDiscard.push(card);
+    }
+  }
+  player.discard.push(...toDiscard);
   player.inPlay = [];
   player.hand = [];
   drawCards(game, playerIndex, HAND_SIZE);
@@ -276,6 +317,23 @@ function endTurn(game, playerIndex) {
   game.activeIndex = 1 - playerIndex;
   game.turn += 1;
   startTurn(game);
+}
+
+/**
+ * 차례 끝 발동 효과를 순서대로 처리한다. 선택형 효과는 쓸 수 없다.
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {void}
+ */
+function runEndTriggers(game, playerIndex) {
+  const triggers = game.turnState.endTriggers ?? [];
+  for (const trigger of triggers) {
+    if (trigger.cond !== undefined && !evalCond(game, trigger.ctx, trigger.cond)) continue;
+    runEffects(game, trigger.ctx, trigger.effects);
+    if (game.pending) {
+      throw new Error('차례 끝 효과에는 선택형 효과를 쓸 수 없습니다');
+    }
+  }
 }
 
 /**

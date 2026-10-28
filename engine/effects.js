@@ -1,6 +1,8 @@
 import { drawCards, createCardInstance } from './state.js';
 import { getCardDef } from './cards/registry.js';
 import { requestChoice, registerChoice } from './choices.js';
+import { evalCond } from './conditions.js';
+import { shuffleInPlace } from './rng.js';
 
 /** @typedef {{ op: string, n?: number }} Effect */
 /** @typedef {{ playerIndex: number, cardUid: string }} EffectContext */
@@ -39,6 +41,12 @@ export function runEffects(game, ctx, effects) {
   while (queue.length > 0) {
     const effect = queue.shift();
     const op = effect && effect.op;
+    if (op === 'if') {
+      // 조건에 맞는 가지를 큐 맨 앞에 끼워 넣는다(재귀 호출하지 않는다).
+      const branch = evalCond(game, ctx, effect.cond) ? effect.then : effect.else;
+      if (Array.isArray(branch)) queue.unshift(...branch);
+      continue;
+    }
     if (!Object.prototype.hasOwnProperty.call(ops, op)) {
       throw new Error(`알 수 없는 효과: ${op}`);
     }
@@ -302,3 +310,61 @@ function finishExchange(game, ctx, data, place) {
     data: { to: 'hand' },
   });
 }
+
+registerOp('addMod', (game, ctx, effect) => {
+  const mods = game.turnState.mods;
+  mods[effect.key] = (mods[effect.key] ?? 0) + (effect.n ?? 0);
+});
+
+registerOp('addAttackBonus', (game, ctx, effect) => {
+  /** @type {Record<string, any>} */
+  const bonus = {};
+  if (effect.flat !== undefined) bonus.flat = effect.flat;
+  if (effect.perWeapon !== undefined) bonus.perWeapon = effect.perWeapon;
+  if (effect.cap !== undefined) bonus.cap = effect.cap;
+  if (effect.cond !== undefined) bonus.cond = effect.cond;
+  game.turnState.attackBonuses.push(bonus);
+});
+
+registerOp('addEndTrigger', (game, ctx, effect) => {
+  game.turnState.endTriggers.push({
+    cond: effect.cond,
+    effects: effect.effects ?? [],
+    ctx: { playerIndex: ctx.playerIndex, cardUid: ctx.cardUid },
+  });
+});
+
+registerOp('trashSelfAtCleanup', (game, ctx) => {
+  game.turnState.trashAtCleanup.push(ctx.cardUid);
+});
+
+registerOp('gainCard', (game, ctx, effect) => {
+  const slot = game.market[effect.cardId];
+  if (!slot || slot.count <= 0) return;
+  // "얻기"는 구매가 아니므로 bought 는 늘리지 않는다.
+  slot.count -= 1;
+  putCard(game, ctx.playerIndex, createCardInstance(game, effect.cardId), effect.to ?? 'discard');
+});
+
+registerOp('heal', (game, ctx, effect) => {
+  const player = game.players[ctx.playerIndex];
+  player.hp = Math.min(player.maxHp, player.hp + (effect.n ?? 0));
+});
+
+registerOp('addDefense', (game, ctx, effect) => {
+  const player = game.players[ctx.playerIndex];
+  player.defense = (player.defense ?? 0) + (effect.n ?? 0);
+});
+
+registerOp('opponentMillTop', (game, ctx, effect) => {
+  const opponent = game.players[1 - ctx.playerIndex];
+  const n = effect.n ?? 0;
+  for (let i = 0; i < n; i++) {
+    if (opponent.drawPile.length === 0) {
+      if (opponent.discard.length === 0) break;
+      opponent.drawPile = shuffleInPlace(game, opponent.discard);
+      opponent.discard = [];
+    }
+    opponent.discard.push(opponent.drawPile.pop());
+  }
+});

@@ -7,7 +7,8 @@ import { randomInt, shuffleInPlace } from './rng.js';
 /** @typedef {{
  *  id: string, name: string, maxHp: number, hp: number, stars: number,
  *  drawPile: CardInstance[], hand: CardInstance[], discard: CardInstance[],
- *  inPlay: CardInstance[], actions: number, buys: number, coins: number
+ *  inPlay: CardInstance[], actions: number, buys: number, coins: number,
+ *  defense: number
  * }} PlayerState */
 /** @typedef {{
  *  seed: number, rngState: number, nextUid: number, turn: number,
@@ -61,6 +62,7 @@ export function createGame({ seed, players }) {
       actions: 0,
       buys: 0,
       coins: 0,
+      defense: 0,
     })),
     market: {},
     trash: [],
@@ -110,11 +112,13 @@ export function drawCards(game, playerIndex, n) {
 
 /**
  * 현재 구매가를 계산한다.
+ * playerIndex 를 주면 그 플레이어가 차례일 때 차례 보정(marketDiscount)을 적용한다.
  * @param {GameState} game
  * @param {string} cardId
+ * @param {number} [playerIndex]
  * @returns {number}
  */
-export function getPurchasePrice(game, cardId) {
+export function getPurchasePrice(game, cardId, playerIndex) {
   const def = getCardDef(cardId);
   const slot = game.market[cardId];
   if (!slot) throw new Error(`시장에 없는 카드: ${cardId}`);
@@ -122,5 +126,8 @@ export function getPurchasePrice(game, cardId) {
   if (def.surchargeFirst !== undefined && slot.bought < def.surchargeFirst) {
     price += 1;
   }
-  return price;
+  if (playerIndex !== undefined && game.turnState && playerIndex === game.activeIndex) {
+    price -= game.turnState.mods?.marketDiscount ?? 0;
+  }
+  return Math.max(0, price);
 }
