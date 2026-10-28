@@ -1,5 +1,5 @@
 // 캐릭터 선택(stage 'select')와 카드 입고(stage 'draft') 화면.
-import { getCharacter, getFaction, getCandidates } from '/engine/index.js';
+import { getCharacter, getFaction, getCandidates, allFactionIds } from '/engine/index.js';
 import { renderCard } from './cards.js';
 
 /** 입고할 카드 종류 수 */
@@ -76,39 +76,31 @@ export function renderSelect(root, state, net) {
   const layout = document.createElement('div');
   layout.className = 'select-layout';
 
-  // 진영 이름은 내가 고른 캐릭터(없으면 상대) 기준으로 보여준다.
-  const factionId = myPick.characterId
-    ? getCharacter(myPick.characterId).factionId
-    : oppPick.characterId
-      ? getCharacter(oppPick.characterId).factionId
-      : null;
-
-  if (factionId) {
+  // 모든 진영과 그 캐릭터를 보여준다(진영이 늘어나도 그대로 동작).
+  for (const factionId of allFactionIds()) {
+    const faction = getFaction(factionId);
     const factionName = document.createElement('div');
     factionName.className = 'faction-name';
-    factionName.textContent = getFaction(factionId).name;
+    factionName.textContent = faction.name;
     layout.appendChild(factionName);
-  }
 
-  const grid = document.createElement('div');
-  grid.className = 'character-grid';
-
-  const faction = factionId ? getFaction(factionId) : null;
-  const characterIds = faction ? faction.characterIds : [];
-  for (const characterId of characterIds) {
-    const character = getCharacter(characterId);
-    const chosen = myPick.characterId === characterId;
-    grid.appendChild(
-      characterCard(character, {
-        chosen,
-        disabled: myPick.characterId !== null,
-        onClick: () => {
-          net.send({ t: 'action', action: { type: 'selectCharacter', characterId } });
-        },
-      }),
-    );
+    const grid = document.createElement('div');
+    grid.className = 'character-grid';
+    for (const characterId of faction.characterIds) {
+      const character = getCharacter(characterId);
+      const chosen = myPick.characterId === characterId;
+      grid.appendChild(
+        characterCard(character, {
+          chosen,
+          disabled: myPick.characterId !== null,
+          onClick: () => {
+            net.send({ t: 'action', action: { type: 'selectCharacter', characterId } });
+          },
+        }),
+      );
+    }
+    layout.appendChild(grid);
   }
-  layout.appendChild(grid);
 
   if (myPick.characterId) {
     const waiting = document.createElement('div');

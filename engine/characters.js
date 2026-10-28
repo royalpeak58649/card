@@ -42,6 +42,14 @@ export function getFaction(id) {
 }
 
 /**
+ * 등록된 모든 진영 id.
+ * @returns {string[]}
+ */
+export function allFactionIds() {
+  return Object.keys(factions);
+}
+
+/**
  * 캐릭터 정의를 등록한다. 같은 id 가 이미 있으면 Error.
  * @param {Record<string, CharacterDef>} defs
  * @returns {void}

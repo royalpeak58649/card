@@ -14,6 +14,7 @@ export { startGame, applyAction } from './turn.js';
 export {
   registerFactions,
   getFaction,
+  allFactionIds,
   registerCharacters,
   getCharacter,
 } from './characters.js';
