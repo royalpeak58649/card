@@ -80,7 +80,7 @@ function toAttack(game, playerIndex) {
   applyAction(game, playerIndex, { type: 'endPhase' }); // attack
 }
 
-test('진영 ligand: 카드 5장, 캐릭터 jace(55)·elena(52), 11장 모두 정의와 문구가 있다', () => {
+test('진영 ligand: 카드 5장, 캐릭터 jace(55)·elena(54), 11장 모두 정의와 문구가 있다', () => {
   const faction = getFaction('ligand');
   assert.equal(faction.name, '리간드 왕국');
   assert.equal(faction.cardIds.length, 5);
@@ -92,7 +92,7 @@ test('진영 ligand: 카드 5장, 캐릭터 jace(55)·elena(52), 11장 모두 �
   assert.equal(jace.cardIds.length, 3);
   const elena = getCharacter('elena');
   assert.equal(elena.factionId, 'ligand');
-  assert.equal(elena.maxHp, 52);
+  assert.equal(elena.maxHp, 54);
   assert.equal(elena.cardIds.length, 3);
 
   const allIds = [...faction.cardIds, ...jace.cardIds, ...elena.cardIds];

@@ -103,43 +103,18 @@ export const TUNED = {
     "assaultRifle": 8.15
   },
   "jace": {
-    "lg_offering": 4.06,
-    "lg_ritual": 0.29,
-    "lg_blessing": 2.43,
-    "lg_meteor": 5.71,
-    "lg_observatory": 2.68,
-    "lg_masterSword": 6.63,
-    "lg_collection": 2.15,
-    "silver": 3.23,
-    "gold": 4.92,
-    "rifle": 4.3,
-    "assaultRifle": 3.72
-  },
-  "elena": {
-    "lg_offering": 1.1,
-    "lg_ritual": 0.87,
-    "lg_blessing": 1.86,
-    "lg_meteor": 6.32,
-    "lg_observatory": 3.94,
-    "lg_starburst": 5.5,
-    "lg_nebulaCoin": 4.71,
-    "silver": 2.54,
-    "gold": 4.43,
-    "rifle": 4.63,
-    "assaultRifle": 8.21
-  },
-  "astra": {
-    "lg_offering": 3.71,
-    "lg_ritual": 1.09,
-    "lg_blessing": 2.06,
-    "lg_meteor": 4.94,
-    "lg_observatory": 3.02,
-    "lg_constellShield": 1.14,
-    "lg_starWeight": 6.02,
-    "silver": 3.18,
-    "gold": 4.42,
-    "rifle": 4.15,
-    "assaultRifle": 4.73
+    "lg_offering": 4.89,
+    "lg_ritual": -0.69,
+    "lg_blessing": 1.52,
+    "lg_meteor": 6.79,
+    "lg_observatory": 4.54,
+    "lg_hone": 3.57,
+    "lg_masterSword": 5.89,
+    "lg_collection": 2.55,
+    "silver": 2.08,
+    "gold": 3.34,
+    "rifle": 3.72,
+    "assaultRifle": 3.69
   },
   "lime": {
     "vc_usury": 3.5,
@@ -155,17 +130,18 @@ export const TUNED = {
     "assaultRifle": 7.48
   },
   "sol": {
-    "vc_usury": 2.26,
-    "vc_creditLoan": 3.46,
-    "vc_bond": 2.51,
-    "vc_repayPlan": 1.82,
-    "vc_seizure": 5.65,
-    "vc_bankruptcy": 2.06,
-    "vc_freeze": 3.58,
-    "silver": 1.3,
-    "gold": 3.08,
-    "rifle": 1.91,
-    "assaultRifle": 7.63
+    "vc_usury": 3.06,
+    "vc_creditLoan": 3.68,
+    "vc_bond": 3.68,
+    "vc_repayPlan": 0.7,
+    "vc_seizure": 6.42,
+    "vc_blameShift": 1.91,
+    "vc_bankruptcy": 2.57,
+    "vc_freeze": 4.04,
+    "silver": 2.01,
+    "gold": 3.27,
+    "rifle": 2.39,
+    "assaultRifle": 7.59
   },
   "argus": {
     "vc_usury": 2.12,
@@ -180,6 +156,34 @@ export const TUNED = {
     "gold": 3.99,
     "rifle": 2.75,
     "assaultRifle": 7
+  },
+  "elena": {
+    "lg_offering": 3.14,
+    "lg_ritual": 1.71,
+    "lg_blessing": 2.25,
+    "lg_meteor": 5.8,
+    "lg_observatory": 2.9,
+    "lg_starburst": 4.04,
+    "lg_pact": 0.74,
+    "lg_nebulaCoin": 2.92,
+    "silver": 2.43,
+    "gold": 4.02,
+    "rifle": 3.8,
+    "assaultRifle": 5.78
+  },
+  "astra": {
+    "lg_offering": 2.95,
+    "lg_ritual": 1.31,
+    "lg_blessing": 2.08,
+    "lg_meteor": 5.2,
+    "lg_observatory": 1.32,
+    "lg_constellShield": 4.21,
+    "lg_starWeight": 5.36,
+    "lg_galaxyVault": 4.13,
+    "silver": 3.27,
+    "gold": 3.29,
+    "rifle": 2.21,
+    "assaultRifle": 6.67
   }
 };
 // TUNED-END

@@ -457,7 +457,7 @@ export const VINCENT_CHARACTERS = {
     id: 'lime',
     name: '라임',
     factionId: 'vincent',
-    maxHp: 52,
+    maxHp: 54,
     cardIds: [
       'vc_advance',
       'vc_leverage',
@@ -472,7 +472,7 @@ export const VINCENT_CHARACTERS = {
     id: 'sol',
     name: '솔',
     factionId: 'vincent',
-    maxHp: 54,
+    maxHp: 56,
     cardIds: [
       'vc_blameShift',
       'vc_bankruptcy',

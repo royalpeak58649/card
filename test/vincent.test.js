@@ -58,12 +58,12 @@ function attackDamage(game, p) {
   return before - me(game, 1 - p).hp;
 }
 
-test('빈센트 공화국: 카드 5장, 캐릭터 3명(라임 52·솔 54·아르거스 56), 14장 모두 문구와 강화판', () => {
+test('빈센트 공화국: 카드 5장, 캐릭터 3명(라임 54·솔 56·아르거스 56), 14장 모두 문구와 강화판', () => {
   const faction = getFaction('vincent');
   assert.equal(faction.name, '빈센트 공화국');
   assert.equal(faction.cardIds.length, 5);
   assert.deepEqual(faction.characterIds, ['lime', 'sol', 'argus']);
-  assert.deepEqual(faction.characterIds.map((c) => getCharacter(c).maxHp), [52, 54, 56]);
+  assert.deepEqual(faction.characterIds.map((c) => getCharacter(c).maxHp), [54, 56, 56]);
   const ids = [...faction.cardIds, ...faction.characterIds.flatMap((c) => getCharacter(c).cardIds)];
   assert.equal(new Set(ids).size, 14);
   for (const id of ids) {

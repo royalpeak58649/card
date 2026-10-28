@@ -283,7 +283,7 @@ export const LIGAND_CARDS = {
     id: 'lg_galaxyVault',
     name: '은하 저장고',
     type: 'action',
-    actionCost: 0,
+    actionCost: 1,
     cost: 5,
     text: '별 +2, +1 카드',
     upgradedText: '별 +2, +2 카드',
@@ -335,7 +335,7 @@ export const LIGAND_CHARACTERS = {
     id: 'elena',
     name: '엘레나',
     factionId: 'ligand',
-    maxHp: 52,
+    maxHp: 54,
     cardIds: ['lg_starburst', 'lg_pact', 'lg_nebulaCoin'],
     ability: {
       endTriggers: [
