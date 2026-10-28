@@ -148,6 +148,13 @@ registerOp('gainCoins', (game, ctx, effect) => {
   game.players[ctx.playerIndex].coins += effect.n ?? 0;
 });
 
+registerOp('gainCoinsPerStat', (game, ctx, effect) => {
+  const value = game.turnState[effect.stat] ?? 0;
+  const per = effect.per ?? 1;
+  const max = effect.max ?? Infinity;
+  game.players[ctx.playerIndex].coins += Math.min(max, per * value);
+});
+
 registerOp('damage', (game, ctx, effect) => {
   game.turnState.attackDamage += effect.n ?? 0;
 });
@@ -321,6 +328,7 @@ registerOp('addAttackBonus', (game, ctx, effect) => {
   const bonus = {};
   if (effect.flat !== undefined) bonus.flat = effect.flat;
   if (effect.perWeapon !== undefined) bonus.perWeapon = effect.perWeapon;
+  if (effect.perAction !== undefined) bonus.perAction = effect.perAction;
   if (effect.cap !== undefined) bonus.cap = effect.cap;
   if (effect.cond !== undefined) bonus.cond = effect.cond;
   game.turnState.attackBonuses.push(bonus);

@@ -79,10 +79,11 @@ test('startGame 후 첫 차례 상태', () => {
     starsSpent: 0,
     tempUpgrades: 0,
     damageDealt: 0,
-    mods: { weaponBuyRefund: 0, marketDiscount: 0 },
+    mods: { weaponBuyRefund: 0, marketDiscount: 0, actionDamageBonus: 0 },
     attackBonuses: [],
     endTriggers: [],
     trashAtCleanup: [],
+    opponentStarGiven: false,
   });
 });
 

@@ -15,13 +15,15 @@ import { evalCond } from './conditions.js';
  *  mods: Record<string, number>, attackBonuses: Record<string, any>[],
  *  endTriggers: { cond?: Record<string, any>, effects: import('./effects.js').Effect[],
  *    ctx: import('./effects.js').EffectContext }[],
- *  trashAtCleanup: string[]
+ *  trashAtCleanup: string[],
+ *  opponentStarGiven: boolean
  * }} TurnState */
 /** @typedef {{ type: 'playCard', uid: string }
  *  | { type: 'playAllMoney' }
  *  | { type: 'buy', cardId: string }
  *  | { type: 'upgrade', uid: string, mode: 'temp'|'perm' }
  *  | { type: 'choose', selection: string[] }
+ *  | { type: 'activateAbility' }
  *  | { type: 'endPhase' }} Action */
 
 /** 차례 시작 시 뽑는 장수 */
@@ -48,10 +50,11 @@ function createTurnState() {
     starsSpent: 0,
     tempUpgrades: 0,
     damageDealt: 0,
-    mods: { weaponBuyRefund: 0, marketDiscount: 0 },
+    mods: { weaponBuyRefund: 0, marketDiscount: 0, actionDamageBonus: 0 },
     attackBonuses: [],
     endTriggers: [],
     trashAtCleanup: [],
+    opponentStarGiven: false,
   };
 }
 
@@ -161,12 +164,41 @@ function playCard(game, playerIndex, uid) {
   player.hand.splice(player.hand.indexOf(card), 1);
   player.inPlay.push(card);
 
+  // 낸 카드 수는 효과 실행 전에 센다(방금 낸 카드 자신도 조건에 포함된다).
+  if (def.type === 'money') game.turnState.moneyPlayed += 1;
+  if (def.type === 'weapon') game.turnState.weaponsPlayed += 1;
+  if (def.type === 'action') {
+    game.turnState.actionsPlayed += 1;
+    triggerOpponentActionStar(game, playerIndex);
+  }
+
   const effects = card.upgraded && def.upgradedEffects ? def.upgradedEffects : def.effects;
   runEffects(game, { playerIndex, cardUid: card.uid }, effects);
 
-  if (def.type === 'money') game.turnState.moneyPlayed += 1;
-  if (def.type === 'weapon') game.turnState.weaponsPlayed += 1;
-  if (def.type === 'action') game.turnState.actionsPlayed += 1;
+  // 피해를 주는 행동카드는 차례 보정만큼 공격 피해를 더한다.
+  const actionDamageBonus = game.turnState.mods.actionDamageBonus ?? 0;
+  if (def.type === 'action' && def.dealsDamage === true && actionDamageBonus > 0) {
+    game.turnState.attackDamage += actionDamageBonus;
+  }
+}
+
+/**
+ * 상대 캐릭터의 '상대가 행동카드를 N장째 낼 때' 패시브를 처리한다.
+ * 한 차례에 한 번만 발동한다.
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {void}
+ */
+function triggerOpponentActionStar(game, playerIndex) {
+  const turnState = game.turnState;
+  if (turnState.opponentStarGiven === true) return;
+  const opponent = game.players[1 - playerIndex];
+  if (!opponent.characterId) return;
+  const passive = getCharacter(opponent.characterId).ability?.opponentActionStar;
+  if (!passive) return;
+  if (turnState.actionsPlayed !== passive.threshold) return;
+  opponent.stars = Math.min(MAX_STARS, opponent.stars + (passive.stars ?? 0));
+  turnState.opponentStarGiven = true;
 }
 
 /**
@@ -281,12 +313,15 @@ function resolveAttack(game, playerIndex) {
   const bonuses = (turnState.attackBonuses ?? []).concat(characterAttackBonuses(game, playerIndex));
   // 캐릭터 능력의 조건은 '이번 공격단계에 낸 무기 수'를 기준으로 본다.
   const weaponsPlayed = turnState.weaponsPlayed;
+  const actionsPlayed = turnState.actionsPlayed;
   const condCtx = { playerIndex, cardUid: '' };
   for (const bonus of bonuses) {
     if (bonus.cond !== undefined && !evalCond(game, condCtx, bonus.cond)) {
       continue;
     }
-    let amount = (bonus.flat ?? 0) + (bonus.perWeapon ?? 0) * weaponsPlayed;
+    let amount = (bonus.flat ?? 0)
+      + (bonus.perWeapon ?? 0) * weaponsPlayed
+      + (bonus.perAction ?? 0) * actionsPlayed;
     if (bonus.cap !== undefined) amount = Math.min(amount, bonus.cap);
     total += amount;
   }
@@ -301,6 +336,29 @@ function resolveAttack(game, playerIndex) {
   turnState.damageDealt = damage;
   // 승패는 라운드 끝(후공 차례 종료)에만 판정하므로 hp 는 음수 그대로 둔다.
   opponent.hp -= damage;
+}
+
+/**
+ * 캐릭터의 발동형 능력을 쓴다(검사 → 변경 순서).
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {void}
+ */
+function activateAbility(game, playerIndex) {
+  if (game.phase !== 'action' && game.phase !== 'buy' && game.phase !== 'attack') {
+    throw new Error(`능력을 쓸 수 없는 단계: ${game.phase}`);
+  }
+  const player = game.players[playerIndex];
+  if (!player.characterId) throw new Error('캐릭터가 없습니다');
+  const ability = getCharacter(player.characterId).ability?.activeAbility;
+  if (!ability) throw new Error('발동형 능력이 없습니다');
+  if (ability.oncePerGame === true && player.abilityUsed === true) {
+    throw new Error('이미 사용한 능력입니다');
+  }
+
+  // 여기서부터 상태 변경
+  player.abilityUsed = true;
+  runEffects(game, { playerIndex, cardUid: '' }, ability.effects ?? []);
 }
 
 /**
@@ -420,6 +478,10 @@ export function applyAction(game, playerIndex, action) {
       }
       case 'choose': {
         resolveChoice(game, playerIndex, action.selection);
+        break;
+      }
+      case 'activateAbility': {
+        activateAbility(game, playerIndex);
         break;
       }
       case 'endPhase': {
