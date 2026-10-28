@@ -26,6 +26,7 @@ import { evalCond, getStat } from './conditions.js';
 /** @typedef {{ type: 'playCard', uid: string }
  *  | { type: 'playAllMoney' }
  *  | { type: 'buy', cardId: string }
+ *  | { type: 'payDebt', amount?: number }
  *  | { type: 'upgrade', uid: string, mode: 'temp'|'perm' }
  *  | { type: 'choose', selection: string[] }
  *  | { type: 'activateAbility' }
@@ -56,7 +57,13 @@ function createTurnState() {
     tempUpgrades: 0,
     upgradedPlayed: 0,
     damageDealt: 0,
-    mods: { weaponBuyRefund: 0, marketDiscount: 0, actionDamageBonus: 0, firstWeaponDiscount: 0 },
+    mods: {
+      weaponBuyRefund: 0,
+      marketDiscount: 0,
+      actionDamageBonus: 0,
+      firstWeaponDiscount: 0,
+      ignoreDebt: 0,
+    },
     abilityActivated: false,
     attackBonuses: [],
     endTriggers: [],
@@ -253,6 +260,9 @@ function triggerOpponentActionStar(game, playerIndex) {
 function buy(game, playerIndex, cardId) {
   if (game.phase !== 'buy') throw new Error('구매는 구매단계에만 할 수 있습니다');
   const player = game.players[playerIndex];
+  if ((player.debt ?? 0) > 0 && (game.turnState.mods?.ignoreDebt ?? 0) <= 0) {
+    throw new Error('빚을 다 갚기 전에는 구매할 수 없습니다');
+  }
   if (player.buys < 1) throw new Error('구매 횟수가 부족합니다');
   const slot = game.market[cardId];
   if (!slot) throw new Error(`시장에 없는 카드: ${cardId}`);
@@ -274,6 +284,28 @@ function buy(game, playerIndex, cardId) {
     player.coins += refund;
     game.turnState.mods.weaponBuyRefund = 0;
   }
+}
+
+/**
+ * 빚을 원으로 갚는다(검사 → 변경 순서).
+ * 갚는 양 = min(amount ?? Infinity, coins, debt).
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @param {number} [amount]
+ * @returns {void}
+ */
+function payDebt(game, playerIndex, amount) {
+  if (game.phase !== 'buy') throw new Error('빚은 구매단계에만 갚을 수 있습니다');
+  const player = game.players[playerIndex];
+  const debt = player.debt ?? 0;
+  if (debt <= 0) throw new Error('갚을 빚이 없습니다');
+  if (player.coins <= 0) throw new Error('원이 부족합니다');
+  if (amount !== undefined && !(amount >= 1)) throw new Error('갚을 양은 1 이상이어야 합니다');
+
+  // 여기서부터 상태 변경
+  const paid = Math.min(amount ?? Infinity, player.coins, debt);
+  player.coins -= paid;
+  player.debt = debt - paid;
 }
 
 /**
@@ -485,7 +517,7 @@ function endTurn(game, playerIndex) {
   player.discard.push(...toDiscard);
   player.inPlay = [];
   player.hand = [];
-  drawCards(game, playerIndex, HAND_SIZE);
+  drawCards(game, playerIndex, handSizeAtEnd(game, playerIndex));
   player.coins = 0;
   player.actions = 0;
   player.buys = 0;
@@ -494,6 +526,22 @@ function endTurn(game, playerIndex) {
   game.activeIndex = 1 - playerIndex;
   game.turn += 1;
   startTurn(game);
+}
+
+/**
+ * 차례 끝에 뽑을 장수. 캐릭터 패시브 ability.extraDrawIfDebt 가 있고
+ * 그 플레이어의 빚이 1 이상이면 HAND_SIZE + n 장을 뽑는다.
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {number}
+ */
+function handSizeAtEnd(game, playerIndex) {
+  const player = game.players[playerIndex];
+  const characterId = player.characterId;
+  if (!characterId) return HAND_SIZE;
+  const extra = getCharacter(characterId).ability?.extraDrawIfDebt;
+  if (typeof extra !== 'number') return HAND_SIZE;
+  return (player.debt ?? 0) >= 1 ? HAND_SIZE + extra : HAND_SIZE;
 }
 
 /**
@@ -587,6 +635,10 @@ export function applyAction(game, playerIndex, action) {
         buy(game, playerIndex, action.cardId);
         break;
       }
+      case 'payDebt': {
+        payDebt(game, playerIndex, action.amount);
+        break;
+      }
       case 'upgrade': {
         upgradeCard(game, playerIndex, action.uid, action.mode);
         break;
@@ -616,13 +668,16 @@ export function applyAction(game, playerIndex, action) {
         throw new Error(`알 수 없는 조작: ${action.type}`);
     }
 
-    /** @type {{ turn: number, p: number, type: string, cardId?: string, mode?: string }} */
+    /** @type {{ turn: number, p: number, type: string, cardId?: string, mode?: string,
+     *  amount?: number }} */
     const entry = { turn: turnBefore, p: playerIndex, type: action.type };
     if (action.type === 'playCard') {
       const played = game.players[playerIndex].inPlay.find((c) => c.uid === action.uid);
       if (played) entry.cardId = played.cardId;
     } else if (action.type === 'buy') {
       entry.cardId = action.cardId;
+    } else if (action.type === 'payDebt') {
+      entry.amount = action.amount;
     } else if (action.type === 'upgrade') {
       const upgraded = game.players[playerIndex].hand.find((c) => c.uid === action.uid);
       if (upgraded) entry.cardId = upgraded.cardId;

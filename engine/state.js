@@ -10,6 +10,7 @@ import { randomInt, shuffleInPlace } from './rng.js';
  *  stars: number,
  *  drawPile: CardInstance[], hand: CardInstance[], discard: CardInstance[],
  *  inPlay: CardInstance[], actions: number, buys: number, coins: number,
+ *  debt: number,
  *  defense: number, abilityUsed: boolean, abilityUses: number, turnsTaken: number
  * }} PlayerState */
 /** @typedef {{
@@ -70,6 +71,7 @@ export function createGame({ seed, players }) {
         actions: 0,
         buys: 0,
         coins: 0,
+        debt: 0,
         defense: 0,
         abilityUsed: false,
         abilityUses: 0,
