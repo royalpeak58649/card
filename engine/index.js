@@ -2,6 +2,7 @@
 import './cards/basic.js';
 import './cards/section8.js';
 import './cards/neuro.js';
+import './cards/ligand.js';
 import './cards/neutral.js';
 
 export {
