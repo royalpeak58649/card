@@ -153,6 +153,7 @@ test('doubleFirstCostlyAction: 4번째 차례부터 그 차례 첫 ⚡1 행동�
     assert.equal(game.players[first].coins, 2);
     assert.equal(game.turnState.echoUsed, false);
     passTurn(game, first);
+    passTurn(game, 1 - first);
     // 실패한 조작 뒤에는 상태가 통째로 복원되므로 플레이어를 다시 읽는다.
     assert.equal(game.players[first].turnsTaken, turn + 1);
   }
@@ -163,9 +164,11 @@ test('doubleFirstCostlyAction: 4번째 차례부터 그 차례 첫 ⚡1 행동�
   applyAction(game, first, { type: 'playCard', uid: coin1a.uid });
   assert.equal(game.players[first].coins, 4);
   assert.equal(game.turnState.echoUsed, true);
+  game.players[first].actions = 1; // 두 번째 ⚡1 카드를 낼 행동력
   applyAction(game, first, { type: 'playCard', uid: coin1b.uid });
   assert.equal(game.players[first].coins, 6);
   passTurn(game, first);
+    passTurn(game, 1 - first);
 
   // 5번째 차례: ⚡0 카드는 두 배가 아니고 echoUsed 도 쓰지 않는다
   assert.equal(game.players[first].turnsTaken, 5);
@@ -182,6 +185,7 @@ test('doubleFirstCostlyAction: 4번째 차례 첫 ⚡1 카드가 두 번 실행�
   const { game, first } = startedGameWithFirst('test_ec_echo');
   for (let turn = 1; turn <= 3; turn++) {
     passTurn(game, first);
+    passTurn(game, 1 - first);
   }
   assert.equal(game.players[first].turnsTaken, 4);
   const [coin1] = setHand(game, first, ['test_ec_coin1']);
@@ -194,6 +198,7 @@ test('doubleFirstCostlyAction: 캐릭터가 없으면 4번째 차례에도 두 �
   const { game, first } = startedGame();
   for (let turn = 1; turn <= 3; turn++) {
     passTurn(game, first);
+    passTurn(game, 1 - first);
   }
   assert.equal(game.players[first].turnsTaken, 4);
   const [coin1] = setHand(game, first, ['test_ec_coin1']);
