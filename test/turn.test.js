@@ -78,6 +78,7 @@ test('startGame 후 첫 차례 상태', () => {
     bought: [],
     starsSpent: 0,
     tempUpgrades: 0,
+    upgradedPlayed: 0,
     damageDealt: 0,
     mods: { weaponBuyRefund: 0, marketDiscount: 0, actionDamageBonus: 0 },
     attackBonuses: [],
