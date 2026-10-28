@@ -23,9 +23,19 @@ docker compose logs tunnel | grep trycloudflare  # 주소 확인
 ## 개발
 
 ```bash
-npm test                       # 엔진·서버·클라이언트 문법 테스트
-npm run sim -- --games 1000    # AI 끼리 대전시켜 승률 집계
+npm test                                   # 엔진·서버·클라이언트 테스트
+npm run sim -- --games 3000                # AI 끼리 대전시켜 승률 집계 (기본: 모의 실행 AI, 코어 수만큼 병렬)
+npm run sim -- --games 3000 --ai basic     # 규칙 기반 AI 로 비교
+npm run tune -- --chars all --iters 12 --games 120 --write   # 캐릭터별 카드 가치 재조정(약 50분)
 ```
+
+### AI
+
+- `engine/aiSmart.js` — 모의 실행 AI. 할 수 있는 조작마다 상태를 복사해 그 차례 끝까지 굴려 보고,
+  준 피해·얻은 카드 가치·별·방어·빚을 점수로 매겨 고른다. 서버의 AI 대전 상대와 시뮬레이터가 쓴다.
+- `engine/aiValues.js` — 캐릭터별 카드 가치. `npm run tune` 이 자기 대전(SPSA)으로 조정해 `TUNED` 에 써 넣는다.
+  카드·캐릭터를 바꾸면 다시 조정해야 밸런스 수치를 믿을 수 있다.
+- `engine/ai.js` — 규칙 기반 AI. 모의 실행 안에서 남은 차례를 빠르게 굴리는 기본 정책으로 쓰인다.
 
 ## 구조
 
