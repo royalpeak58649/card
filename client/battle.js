@@ -102,6 +102,19 @@ function safeCardDef(cardId) {
  * @param {string|null} characterId
  * @returns {string}
  */
+function safeCharacter(characterId) {
+  if (!characterId) return null;
+  try {
+    return getCharacter(characterId);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @param {string|null} characterId
+ * @returns {string}
+ */
 function characterName(characterId) {
   if (!characterId) return '알 수 없음';
   try {
@@ -239,6 +252,8 @@ function logText(entry, you) {
       return `${entry.turn}턴 · ${who}: 재화 모두 내기`;
     case 'choose':
       return `${entry.turn}턴 · ${who}: 선택 완료`;
+    case 'activateAbility':
+      return `${entry.turn}턴 · ${who}: 캐릭터 능력 발동!`;
     default:
       return '';
   }
@@ -279,6 +294,13 @@ function playerSummary(player, opts = {}) {
   if ((player.defense ?? 0) > 0) defense.textContent = `🛡 ${player.defense}`;
 
   const namePanel = el('div', 'bt-name', characterName(player.characterId));
+  const character = safeCharacter(player.characterId);
+  if (character) {
+    namePanel.title = character.abilityText ?? '';
+    if (character.ability?.activeAbility && player.abilityUsed) {
+      namePanel.appendChild(el('span', 'bt-ability-used', ' · 능력 사용함'));
+    }
+  }
 
   box.append(tiles, hp, starRow(player.stars), defense, namePanel);
 
@@ -510,6 +532,20 @@ function actionButtons(g, me, ctx) {
     }
   } else if (g.phase === 'attack') {
     box.appendChild(button('차례 끝내기', 'btn small primary', () => sendGame(ctx.net, { type: 'endPhase' }), !canAct));
+  }
+  const character = safeCharacter(me.characterId);
+  const active = character?.ability?.activeAbility;
+  if (active && !me.abilityUsed) {
+    const btn = button('✨ 능력 발동', 'btn small bt-ability-btn', () => {
+      if (window.confirm(`${character.name} 능력을 발동할까요? (경기 중 1번)\n${active.text ?? character.abilityText ?? ''}`)) {
+        sendGame(ctx.net, { type: 'activateAbility' });
+      }
+    }, !canAct);
+    btn.title = active.text ?? character.abilityText ?? '';
+    box.appendChild(btn);
+  }
+  if (g.turnState?.mods?.actionDamageBonus > 0 && g.activeIndex === ctx.you) {
+    box.appendChild(el('div', 'bt-ability-on', `능력 발동 중: 피해 행동카드 +${g.turnState.mods.actionDamageBonus}`));
   }
   return box;
 }
@@ -844,7 +880,7 @@ export function renderBattle(root, state, net) {
   middle.appendChild(myArea(g, me, { canAct, myTurn, ongoing, net, rerender }));
   main.appendChild(middle);
 
-  main.appendChild(actionButtons(g, me, { canAct, net }));
+  main.appendChild(actionButtons(g, me, { canAct, net, you }));
   board.appendChild(main);
   board.appendChild(logPanel(g, you));
   screen.appendChild(board);

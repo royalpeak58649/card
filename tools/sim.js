@@ -8,12 +8,13 @@ import {
   getCardDef,
   getFaction,
   getCharacter,
+  allCharacterIds,
   NEUTRAL_CARD_IDS,
 } from '../engine/index.js';
 import { chooseAiAction } from '../engine/ai.js';
 
 /** 캐릭터 후보 */
-const CHARACTER_IDS = ['hayun', 'kangjin'];
+const CHARACTER_IDS = allCharacterIds();
 /** 한 플레이어가 시장에 넣는 진영 카드 종류 수 */
 const FACTION_PICKS = 4;
 /** 한 플레이어가 시장에 넣는 중립 카드 종류 수 */

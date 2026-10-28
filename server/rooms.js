@@ -1,7 +1,7 @@
 // 방 관리. 네트워크와 분리된 순수 로직이라 테스트하기 쉽다.
 import { randomInt, randomUUID } from 'node:crypto';
 
-import { applyMatchAction, createMatch, getCandidates } from '../engine/index.js';
+import { applyMatchAction, createMatch, getCandidates, allCharacterIds } from '../engine/index.js';
 import { chooseAiAction } from '../engine/ai.js';
 
 /** @typedef {import('../engine/match.js').MatchState} MatchState */
@@ -24,7 +24,6 @@ const CODE_LENGTH = 4;
 /** 방 코드에 쓰는 글자(헷갈리는 I, O 제외) */
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 /** AI 가 고를 수 있는 캐릭터 */
-const AI_CHARACTERS = ['hayun', 'kangjin'];
 /** 드래프트에서 고르는 카드 종류 수 */
 const DRAFT_SIZE = 4;
 /** AI 를 한 번에 최대 몇 번까지 진행할지(무한루프 방지) */
@@ -154,7 +153,7 @@ export class RoomManager {
         if (match.picks[aiIndex].characterId !== null) return;
         applyMatchAction(match, aiIndex, {
           type: 'selectCharacter',
-          characterId: pickRandom(AI_CHARACTERS),
+          characterId: pickRandom(allCharacterIds()),
         });
         continue;
       }

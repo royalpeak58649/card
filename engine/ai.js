@@ -1,5 +1,6 @@
 import { getCardDef } from './cards/registry.js';
 import { getPurchasePrice } from './state.js';
+import { getCharacter, getFaction } from './characters.js';
 
 /** @typedef {import('./state.js').GameState} GameState */
 /** @typedef {import('./state.js').CardInstance} CardInstance */
@@ -21,6 +22,53 @@ const MONEY_BONUS = 15;
 const TYPE_SCORE = { weapon: 3, money: 2, action: 1 };
 /** 제거 우선순위(앞일수록 먼저 제거) */
 const TRASH_PRIORITY = ['stone', 'pistol'];
+/** 내 진영·캐릭터 카드 구매 보정 */
+const OWN_POOL_BONUS = 12;
+
+/**
+ * 효과 목록(중첩 if 포함)에 그 op 가 있는지.
+ * @param {any[]} effects
+ * @param {string} op
+ * @returns {boolean}
+ */
+function hasOp(effects, op) {
+  for (const effect of effects ?? []) {
+    if (effect.op === op) return true;
+    if (effect.op === 'if' && (hasOp(effect.then, op) || hasOp(effect.else, op))) return true;
+  }
+  return false;
+}
+
+/**
+ * 그 플레이어의 진영 카드 + 캐릭터 카드 id 목록.
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {string[]}
+ */
+function ownPool(game, playerIndex) {
+  const characterId = game.players[playerIndex].characterId;
+  if (!characterId) return [];
+  const character = getCharacter(characterId);
+  return [...getFaction(character.factionId).cardIds, ...character.cardIds];
+}
+
+/**
+ * 행동카드를 내는 순서 점수(클수록 먼저). 행동력을 주는 카드 → 카드를 뽑는 카드 → 나머지,
+ * "이번 차례 낸 행동카드 수"에 비례하는 카드는 마지막.
+ * @param {CardInstance} card
+ * @returns {number}
+ */
+function actionOrder(card) {
+  const def = getCardDef(card.cardId);
+  const effects = card.upgraded && def.upgradedEffects ? def.upgradedEffects : def.effects;
+  let score = 0;
+  if (hasOp(effects, 'gainActions')) score += 100;
+  if (hasOp(effects, 'draw')) score += 50;
+  if ((def.actionCost ?? 0) === 0) score += 10;
+  if (hasOp(effects, 'gainCoinsPerStat') || JSON.stringify(effects).includes('"perAction"')
+    || JSON.stringify(effects).includes('"actionsPlayed"')) score -= 80;
+  return score;
+}
 
 /**
  * 손패에서 uid 로 카드를 찾는다.
@@ -147,10 +195,18 @@ function chooseActionPhase(game, playerIndex) {
     const actionCost = def.actionCost ?? 0;
     return actionCost === 0 || player.actions >= actionCost;
   });
+  // 발동형 능력: 피해를 주는 행동카드를 낼 수 있으면 먼저 발동한다.
+  if (player.characterId && player.abilityUsed !== true) {
+    const ability = getCharacter(player.characterId).ability?.activeAbility;
+    const damageCards = playable.filter((card) => getCardDef(card.cardId).dealsDamage === true);
+    if (ability && damageCards.length >= 2) return { type: 'activateAbility' };
+  }
   if (playable.length > 0) {
-    // 행동력을 쓰지 않는 카드를 먼저 낸다.
-    const free = playable.find((card) => (getCardDef(card.cardId).actionCost ?? 0) === 0);
-    return { type: 'playCard', uid: (free ?? playable[0]).uid };
+    // 행동력을 주는 카드 먼저, 낸 행동카드 수에 비례하는 카드는 마지막에.
+    let best = playable[0];
+    for (const card of playable) if (actionOrder(card) > actionOrder(best)) best = card;
+    // 행동력을 소모하는 카드를 냈을 때 행동력이 바닥나면 그 뒤 카드를 못 내므로 순서가 중요하다.
+    return { type: 'playCard', uid: best.uid };
   }
 
   return { type: 'endPhase' };
@@ -175,6 +231,7 @@ function chooseBuyPhase(game, playerIndex) {
     ? 0
     : allCards.filter((card) => getCardDef(card.cardId).type === 'weapon').length / allCards.length;
 
+  const pool = ownPool(game, playerIndex);
   let best = null;
   let bestScore = -Infinity;
   for (const cardId of Object.keys(game.market)) {
@@ -187,6 +244,7 @@ function chooseBuyPhase(game, playerIndex) {
     if (price > player.coins) continue;
 
     let score = price * 10 + (TYPE_SCORE[def.type] ?? 0);
+    if (pool.includes(cardId)) score += OWN_POOL_BONUS;
     if (def.type === 'weapon' && weaponRatio < LOW_WEAPON_RATIO) score += WEAPON_BONUS;
     if (def.type === 'money' && weaponRatio > HIGH_WEAPON_RATIO) score += MONEY_BONUS;
     if (score > bestScore) {

@@ -15,6 +15,7 @@ export {
   registerFactions,
   getFaction,
   allFactionIds,
+  allCharacterIds,
   registerCharacters,
   getCharacter,
 } from './characters.js';

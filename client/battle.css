@@ -826,3 +826,20 @@ button.bt-tile:hover {
   color: #9fb4d8;
   text-shadow: 0 3px 0 #3a4a66;
 }
+
+/* 캐릭터 발동 능력 */
+.bt-ability-btn {
+  background: linear-gradient(135deg, #ffd56b, #ff9f5a);
+  color: #4a2400;
+  border-color: #e08a2c;
+}
+.bt-ability-on {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffd56b;
+  text-align: right;
+}
+.bt-ability-used {
+  font-size: 11px;
+  opacity: 0.7;
+}

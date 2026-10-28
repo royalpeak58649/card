@@ -46,6 +46,14 @@ export function getFaction(id) {
 }
 
 /**
+ * 등록된 모든 캐릭터 id.
+ * @returns {string[]}
+ */
+export function allCharacterIds() {
+  return Object.keys(characters);
+}
+
+/**
  * 등록된 모든 진영 id.
  * @returns {string[]}
  */
