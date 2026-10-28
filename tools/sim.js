@@ -145,6 +145,7 @@ export function playGame(seed) {
 
   return {
     winner: game.phase === 'gameOver' ? game.winner : null,
+    draw: game.phase === 'gameOver' && game.draw === true,
     turns: game.turn,
     actions,
     firstPlayerIndex: game.firstPlayerIndex,
@@ -205,7 +206,7 @@ export function runSim({ games, seed }) {
       if (result.winner === p) entry.wins += 1;
     }
 
-    if (result.winner === null) {
+    if (result.winner === null || result.draw === true) {
       draws += 1;
     } else {
       decided += 1;

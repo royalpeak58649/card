@@ -227,7 +227,7 @@ test('공격: 피해는 공격단계 종료 시 한 번에 적용된다', () => 
   assert.equal(game.turnState.damageDealt, 0);
 });
 
-test('상대 hp 가 0 이하가 되면 게임 종료', () => {
+test('상대 hp 가 0 이하가 되어도 라운드 끝(후공 차례 종료)까지 게임이 끝나지 않는다', () => {
   const { game, first, second } = startedGame();
   game.players[second].hp = 3;
   setHand(game, first, ['pistol', 'pistol', 'pistol']);
@@ -237,9 +237,18 @@ test('상대 hp 가 0 이하가 되면 게임 종료', () => {
     applyAction(game, first, { type: 'playCard', uid: card.uid });
   }
   applyAction(game, first, { type: 'endPhase' });
+  // 선공 차례가 끝나도 판정하지 않고 후공 차례로 넘어간다.
+  assert.equal(game.phase, 'action');
+  assert.equal(game.winner, null);
+  assert.equal(game.activeIndex, second);
+  assert.ok(game.players[second].hp <= 0);
+
+  // 후공이 반격하지 못하고 차례를 끝내면 선공 승리.
+  applyAction(game, second, { type: 'endPhase' });
+  applyAction(game, second, { type: 'endPhase' });
+  applyAction(game, second, { type: 'endPhase' });
   assert.equal(game.winner, first);
   assert.equal(game.phase, 'gameOver');
-  assert.ok(game.players[second].hp <= 0);
   assert.throws(() => applyAction(game, first, { type: 'endPhase' }), Error);
   assert.throws(() => applyAction(game, second, { type: 'endPhase' }), Error);
 });

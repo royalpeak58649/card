@@ -247,7 +247,7 @@ function logText(entry, you) {
 /**
  * 상대(또는 나)의 요약 패널을 만든다.
  * @param {Record<string, any>} player
- * @param {{ opponent?: boolean, connected?: boolean, active?: boolean }} opts
+ * @param {{ opponent?: boolean, connected?: boolean, active?: boolean, ongoing?: boolean }} opts
  * @returns {HTMLElement}
  */
 function playerSummary(player, opts = {}) {
@@ -266,8 +266,14 @@ function playerSummary(player, opts = {}) {
   tiles.append(deckTile, discardTile);
 
   const hp = el('div', 'bt-hp');
-  hp.append(el('span', 'bt-hp-icon', '❤'), el('span', 'bt-hp-num', String(player.hp)));
+  const hpNum = el('span', 'bt-hp-num', String(player.hp));
+  if ((player.hp ?? 0) <= 0) hpNum.classList.add('bt-hp-num-dead');
+  hp.append(el('span', 'bt-hp-icon', '❤'), hpNum);
   hp.append(el('span', 'bt-hp-max', `/ ${player.maxHp}`));
+  // 0 이하인데 경기가 계속 중이면(라운드 끝 판정 전) 마지막 반격 기회를 알린다.
+  if ((player.hp ?? 0) <= 0 && opts.ongoing === true) {
+    hp.appendChild(el('span', 'bt-last-stand', '마지막 반격!'));
+  }
 
   const defense = el('div', 'bt-defense');
   if ((player.defense ?? 0) > 0) defense.textContent = `🛡 ${player.defense}`;
@@ -289,9 +295,10 @@ function playerSummary(player, opts = {}) {
  * @param {Record<string, any>} opp
  * @param {Record<string, any>|null} opponent
  * @param {boolean} oppTurn
+ * @param {boolean} ongoing 경기가 계속 중인지(라운드 끝 판정 전)
  * @returns {HTMLElement}
  */
-function opponentArea(g, opp, opponent, oppTurn) {
+function opponentArea(g, opp, opponent, oppTurn, ongoing) {
   const area = el('div', 'bt-opp');
 
   const handWrap = el('div', 'bt-opp-hand');
@@ -305,7 +312,7 @@ function opponentArea(g, opp, opponent, oppTurn) {
   area.appendChild(handWrap);
 
   const connected = opponent ? opponent.connected !== false : true;
-  area.appendChild(playerSummary(opp, { opponent: true, connected, active: oppTurn }));
+  area.appendChild(playerSummary(opp, { opponent: true, connected, active: oppTurn, ongoing }));
   return area;
 }
 
@@ -447,7 +454,7 @@ function handCard(g, me, card, ctx) {
  * 아래쪽(내 영역): 손패 · 덱/버린 더미 · 내 요약.
  * @param {Record<string, any>} g
  * @param {Record<string, any>} me
- * @param {{ canAct: boolean, myTurn: boolean, net: { send: (obj: any) => void }, rerender: () => void }} ctx
+ * @param {{ canAct: boolean, myTurn: boolean, ongoing: boolean, net: { send: (obj: any) => void }, rerender: () => void }} ctx
  * @returns {HTMLElement}
  */
 function myArea(g, me, ctx) {
@@ -475,7 +482,7 @@ function myArea(g, me, ctx) {
   if (discardOpen) discardBtn.classList.add('open');
 
   bottom.append(deck, discardBtn);
-  bottom.appendChild(playerSummary(me, {}));
+  bottom.appendChild(playerSummary(me, { ongoing: ctx.ongoing }));
   area.appendChild(bottom);
   return area;
 }
@@ -746,7 +753,11 @@ function finishedOverlay(view, g, you) {
   const box = el('div', 'bt-finished-box');
 
   const won = view.winner === you;
-  box.appendChild(el('div', won ? 'bt-result win' : 'bt-result lose', won ? '승리!' : '패배…'));
+  if (view.draw === true) {
+    box.appendChild(el('div', 'bt-result draw', '무승부'));
+  } else {
+    box.appendChild(el('div', won ? 'bt-result win' : 'bt-result lose', won ? '승리!' : '패배…'));
+  }
 
   const me = g.players[you];
   const opp = g.players[1 - you];
@@ -797,6 +808,8 @@ export function renderBattle(root, state, net) {
   const pending = g.pending || null;
   const myPending = Boolean(pending && pending.playerIndex === you);
   const canAct = myTurn && !pending && g.phase !== 'gameOver';
+  // 라운드 끝 판정 전(경기 계속 중)인지. 체력 0 이하 표시에 쓴다.
+  const ongoing = view.stage !== 'finished' && g.phase !== 'gameOver';
   const rerender = () => {
     if (typeof state.render === 'function') state.render();
   };
@@ -820,7 +833,7 @@ export function renderBattle(root, state, net) {
   const board = el('div', 'bt-board');
 
   const main = el('div', 'bt-main');
-  main.appendChild(opponentArea(g, opp, state.opponent, !myTurn));
+  main.appendChild(opponentArea(g, opp, state.opponent, !myTurn, ongoing));
   main.appendChild(centerBoard(g, you, myTurn));
 
   const middle = el('div', 'bt-middle');
@@ -828,7 +841,7 @@ export function renderBattle(root, state, net) {
     marketOpen = !marketOpen;
     rerender();
   }));
-  middle.appendChild(myArea(g, me, { canAct, myTurn, net, rerender }));
+  middle.appendChild(myArea(g, me, { canAct, myTurn, ongoing, net, rerender }));
   main.appendChild(middle);
 
   main.appendChild(actionButtons(g, me, { canAct, net }));

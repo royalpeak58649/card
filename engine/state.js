@@ -15,7 +15,7 @@ import { randomInt, shuffleInPlace } from './rng.js';
 /** @typedef {{
  *  seed: number, rngState: number, nextUid: number, turn: number,
  *  phase: string, activeIndex: number, firstPlayerIndex: number,
- *  winner: number|null, players: PlayerState[],
+ *  winner: number|null, draw: boolean, players: PlayerState[],
  *  market: Record<string, { count: number, bought: number }>,
  *  trash: CardInstance[], log: string[],
  *  pending: import('./choices.js').PendingChoice|null
@@ -52,6 +52,7 @@ export function createGame({ seed, players }) {
     activeIndex: 0,
     firstPlayerIndex: 0,
     winner: null,
+    draw: false,
     players: players.map((p) => {
       const characterId = p.characterId ?? null;
       const maxHp = characterId !== null ? getCharacter(characterId).maxHp : p.maxHp;

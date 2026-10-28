@@ -84,6 +84,7 @@ export function startGame(game) {
   }
   game.activeIndex = game.firstPlayerIndex;
   game.pending = null;
+  game.draw = false;
   startTurn(game);
 }
 
@@ -298,12 +299,36 @@ function resolveAttack(game, playerIndex) {
   opponent.defense = 0;
 
   turnState.damageDealt = damage;
+  // 승패는 라운드 끝(후공 차례 종료)에만 판정하므로 hp 는 음수 그대로 둔다.
   opponent.hp -= damage;
-  if (opponent.hp <= 0) {
-    opponent.hp = 0;
-    game.winner = playerIndex;
-    game.phase = 'gameOver';
+}
+
+/**
+ * 라운드 끝(후공 차례 종료)에 승패를 판정한다.
+ * 둘 다 0 이하면 hp 가 높은 쪽 승리, 같으면 무승부.
+ * @param {GameState} game
+ * @returns {boolean} 경기가 끝났으면 true
+ */
+function checkRoundEnd(game) {
+  const [p0, p1] = game.players;
+  const alive0 = p0.hp > 0;
+  const alive1 = p1.hp > 0;
+  if (alive0 && alive1) return false;
+
+  game.phase = 'gameOver';
+  if (alive0) {
+    game.winner = 0;
+  } else if (alive1) {
+    game.winner = 1;
+  } else if (p0.hp > p1.hp) {
+    game.winner = 0;
+  } else if (p1.hp > p0.hp) {
+    game.winner = 1;
+  } else {
+    game.winner = null;
+    game.draw = true;
   }
+  return true;
 }
 
 /**
@@ -332,6 +357,8 @@ function endTurn(game, playerIndex) {
   player.coins = 0;
   player.actions = 0;
   player.buys = 0;
+  // 라운드 끝(후공 차례 종료)에만 승패를 판정한다.
+  if (playerIndex !== game.firstPlayerIndex && checkRoundEnd(game)) return;
   game.activeIndex = 1 - playerIndex;
   game.turn += 1;
   startTurn(game);
@@ -402,7 +429,7 @@ export function applyAction(game, playerIndex, action) {
           game.phase = 'attack';
         } else if (game.phase === 'attack') {
           resolveAttack(game, playerIndex);
-          if (game.phase !== 'gameOver') endTurn(game, playerIndex);
+          endTurn(game, playerIndex);
         } else {
           throw new Error(`알 수 없는 단계: ${game.phase}`);
         }

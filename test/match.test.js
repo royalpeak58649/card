@@ -151,8 +151,19 @@ test('game 조작: 상대 hp 1 에서 권총 공격으로 승리하면 finished'
   });
   applyMatchAction(match, first, { type: 'game', action: { type: 'endPhase' } });
 
+  // 선공 차례가 끝나도 판정하지 않는다(라운드 끝 판정).
+  assert.equal(match.stage, 'playing');
+  assert.equal(game.phase, 'action');
+  assert.equal(game.activeIndex, second);
+
+  // 후공이 반격하지 못하고 차례를 끝내면 선공 승리.
+  for (let i = 0; i < 3; i++) {
+    applyMatchAction(match, second, { type: 'game', action: { type: 'endPhase' } });
+  }
+
   assert.equal(match.stage, 'finished');
   assert.equal(match.winner, first);
+  assert.equal(match.draw, false);
   assert.equal(match.game.phase, 'gameOver');
 });
 

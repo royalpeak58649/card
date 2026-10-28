@@ -12,7 +12,8 @@ import { applyAction, startGame } from './turn.js';
 /** @typedef {{ characterId: string|null, cardIds: string[]|null }} Pick */
 /** @typedef {{
  *  seed: number, rngState: number, stage: string, players: MatchPlayer[],
- *  neutralIds: string[], picks: Pick[], game: GameState|null, winner: number|null
+ *  neutralIds: string[], picks: Pick[], game: GameState|null, winner: number|null,
+ *  draw: boolean
  * }} MatchState */
 
 /** 경기 시작 시 공개되는 중립 카드 수 */
@@ -47,6 +48,7 @@ export function createMatch({ seed, players }) {
     ],
     game: null,
     winner: null,
+    draw: false,
   };
 
   const shuffled = shuffleInPlace(match, NEUTRAL_CARD_IDS.slice());
@@ -127,6 +129,7 @@ export function applyMatchAction(match, playerIndex, action) {
       if (match.game.phase === 'gameOver') {
         match.stage = 'finished';
         match.winner = match.game.winner;
+        match.draw = match.game.draw === true;
       }
       return;
     }
