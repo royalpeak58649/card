@@ -88,6 +88,9 @@ test('startGame 후 첫 차례 상태', () => {
     opponentStarGiven: false,
     defenseGained: 0,
     playedActionIds: [],
+    lastAction: null,
+    prevAction: null,
+    echoUsed: false,
   });
 });
 
