@@ -2,7 +2,7 @@
 import { randomInt, randomUUID } from 'node:crypto';
 
 import { applyMatchAction, createMatch, getCandidates, allCharacterIds } from '../engine/index.js';
-import { chooseAiAction } from '../engine/ai.js';
+import { chooseSmartAction } from '../engine/aiSmart.js';
 
 /** @typedef {import('../engine/match.js').MatchState} MatchState */
 
@@ -175,7 +175,7 @@ export class RoomManager {
           ? pending.playerIndex === aiIndex
           : game.activeIndex === aiIndex;
         if (!isAiTurn) return;
-        const action = chooseAiAction(game, aiIndex);
+        const action = chooseSmartAction(game, aiIndex);
         if (!action) return;
         applyMatchAction(match, aiIndex, { type: 'game', action });
         continue;
