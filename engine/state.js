@@ -10,7 +10,7 @@ import { randomInt, shuffleInPlace } from './rng.js';
  *  stars: number,
  *  drawPile: CardInstance[], hand: CardInstance[], discard: CardInstance[],
  *  inPlay: CardInstance[], actions: number, buys: number, coins: number,
- *  defense: number, abilityUsed: boolean
+ *  defense: number, abilityUsed: boolean, abilityUses: number, turnsTaken: number
  * }} PlayerState */
 /** @typedef {{
  *  seed: number, rngState: number, nextUid: number, turn: number,
@@ -72,6 +72,8 @@ export function createGame({ seed, players }) {
         coins: 0,
         defense: 0,
         abilityUsed: false,
+        abilityUses: 0,
+        turnsTaken: 0,
       };
     }),
     market: {},
@@ -139,7 +141,7 @@ export function drawCards(game, playerIndex, n) {
 /**
  * 현재 구매가를 계산한다.
  * playerIndex 를 주면 그 플레이어가 차례일 때 차례 보정(marketDiscount)과
- * 캐릭터 능력(firstWeaponDiscount)을 적용한다.
+ * 차례 보정 mods.firstWeaponDiscount(하윤 능력 등)를 적용한다.
  * @param {GameState} game
  * @param {string} cardId
  * @param {number} [playerIndex]
@@ -169,10 +171,7 @@ export function getPurchasePrice(game, cardId, playerIndex) {
  * @returns {number}
  */
 function firstWeaponDiscount(game, cardId, playerIndex) {
-  const player = game.players[playerIndex];
-  if (!player || !player.characterId) return 0;
-  const ability = getCharacter(player.characterId).ability ?? {};
-  const discount = ability.firstWeaponDiscount ?? 0;
+  const discount = game.turnState?.mods?.firstWeaponDiscount ?? 0;
   if (discount <= 0) return 0;
   if (getCardDef(cardId).type !== 'weapon') return 0;
   const bought = game.turnState.bought ?? [];

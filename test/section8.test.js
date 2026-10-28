@@ -273,36 +273,53 @@ test('제식 기관단총: 재화 3장이면 4 피해, 아니면 2 / 강화판 5
   assert.equal(g4.players[s4].hp, 20 - 3);
 });
 
-test('하윤 능력: 첫 무기 구매만 -1, 다음 차례에 다시 적용', () => {
+test('하윤 능력: 발동형, 내 5번째 차례부터, 경기 중 2번, 첫 무기 구매만 -1', () => {
   const { game, first, second } = startedGame([{ characterId: 'hayun' }, {}]);
-  const player = game.players[first];
-  // 할증이 끝난 소총은 5 - 1 = 4 (할증 중이면 5 + 1 - 1 = 5)
-  game.market.rifle.bought = 2;
-  assert.equal(getPurchasePrice(game, 'rifle', first), 4);
-  // 캐릭터가 없는 플레이어는 할인 없음
-  assert.equal(getPurchasePrice(game, 'rifle', second), 5);
-  game.market.rifle.bought = 0;
-  // 할증 중인 소총은 5 + 1 - 1 = 5
+  // 실패한 조작은 상태를 통째로 복원하므로 매번 새로 읽는다.
+  const me = () => game.players[first];
+  game.market.rifle.bought = 2; // 할증 없는 소총 5원
+
+  // 발동 전에는 할인 없음
   assert.equal(getPurchasePrice(game, 'rifle', first), 5);
-  // 캐릭터가 없는 플레이어는 할인 없음
-  assert.equal(getPurchasePrice(game, 's8_serviceSmg', second), 5);
+  // 내 1~4번째 차례에는 발동 불가
+  for (let n = 1; n <= 4; n++) {
+    assert.equal(me().turnsTaken, n);
+    assert.throws(() => applyAction(game, first, { type: 'activateAbility' }), /5번째/);
+    passTurn(game, first);
+    passTurn(game, second);
+  }
+  assert.equal(me().turnsTaken, 5);
+
+  // 5번째 차례: 발동 → 첫 무기만 -1
+  applyAction(game, first, { type: 'activateAbility' });
+  assert.equal(me().abilityUses, 1);
+  assert.equal(getPurchasePrice(game, 'rifle', first), 4);
+  assert.equal(getPurchasePrice(game, 'gold', first), 6); // 무기가 아니면 할인 없음
+  assert.equal(getPurchasePrice(game, 'rifle', second), 5); // 상대 기준으로는 할인 없음
+  // 같은 차례에 두 번은 불가
+  assert.throws(() => applyAction(game, first, { type: 'activateAbility' }), /이번 차례/);
 
   setHand(game, first, ['gold', 'gold', 'gold']);
   applyAction(game, first, { type: 'endPhase' }); // buy
   applyAction(game, first, { type: 'playAllMoney' });
-  assert.equal(player.coins, 9);
   applyAction(game, first, { type: 'buy', cardId: 'rifle' });
-  // 할증 중 소총 6원 - 할인 1원
-  assert.equal(player.coins, 4);
-  // 같은 차례 두 번째 무기는 할인 없음(할증 중인 소총은 5 + 1)
-  assert.equal(getPurchasePrice(game, 'pistol', first), 0);
-  assert.equal(getPurchasePrice(game, 'rifle', first), 6);
-  assert.equal(getPurchasePrice(game, 's8_serviceSmg', first), 5);
+  assert.equal(me().coins, 9 - 4);
+  // 같은 차례 두 번째 무기는 할인 없음
+  assert.equal(getPurchasePrice(game, 'rifle', first), 5);
 
+  // 다음 차례에는 다시 발동해야 할인
   passTurn(game, first);
   passTurn(game, second);
-  assert.equal(game.activeIndex, first);
-  assert.equal(getPurchasePrice(game, 's8_serviceSmg', first), 4);
+  assert.equal(getPurchasePrice(game, 'rifle', first), 5);
+  applyAction(game, first, { type: 'activateAbility' });
+  assert.equal(getPurchasePrice(game, 'rifle', first), 4);
+  assert.equal(me().abilityUses, 2);
+  assert.equal(me().abilityUsed, true);
+
+  // 세 번째는 불가
+  passTurn(game, first);
+  passTurn(game, second);
+  assert.throws(() => applyAction(game, first, { type: 'activateAbility' }), /더 쓸 수 없습니다/);
 });
 
 test('긴급 조달: 구매가 5 이하 무기를 덱 맨 위로 / 강화판은 8 이하', () => {

@@ -209,8 +209,15 @@ export const SECTION8_CHARACTERS = {
     factionId: 'section8',
     maxHp: 56,
     cardIds: ['s8_emergencyProc', 's8_budget', 's8_depot'],
-    ability: { firstWeaponDiscount: 1 },
-    abilityText: '매 차례 처음으로 구매하는 무기카드의 구매가 -1',
+    ability: {
+      activeAbility: {
+        maxUses: 2,
+        minOwnTurn: 5,
+        effects: [{ op: 'addMod', key: 'firstWeaponDiscount', n: 1 }],
+        text: '이번 차례 처음으로 구매하는 무기카드의 구매가 -1',
+      },
+    },
+    abilityText: '발동(내 5번째 차례부터, 경기 중 2번): 이번 차례 처음으로 구매하는 무기카드의 구매가 -1',
   },
   kangjin: {
     id: 'kangjin',

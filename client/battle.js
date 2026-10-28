@@ -171,14 +171,8 @@ function displayPrice(g, cardId, you, myTurn) {
   if (def.surchargeFirst !== undefined && slot.bought < def.surchargeFirst) price += 1;
   if (myTurn) {
     price -= g.turnState?.mods?.marketDiscount ?? 0;
-    const me = g.players[you];
-    if (def.type === 'weapon' && me && me.characterId) {
-      let discount = 0;
-      try {
-        discount = getCharacter(me.characterId).ability?.firstWeaponDiscount ?? 0;
-      } catch {
-        discount = 0;
-      }
+    if (def.type === 'weapon') {
+      const discount = g.turnState?.mods?.firstWeaponDiscount ?? 0;
       const bought = g.turnState?.bought ?? [];
       const boughtWeapon = bought.some((id) => safeCardDef(id)?.type === 'weapon');
       if (discount > 0 && !boughtWeapon) price -= discount;
@@ -540,16 +534,29 @@ function actionButtons(g, me, ctx) {
   const character = safeCharacter(me.characterId);
   const active = character?.ability?.activeAbility;
   if (active && !me.abilityUsed) {
-    const btn = button('✨ 능력 발동', 'btn small bt-ability-btn', () => {
-      if (window.confirm(`${character.name} 능력을 발동할까요? (경기 중 1번)\n${active.text ?? character.abilityText ?? ''}`)) {
+    const maxUses = typeof active.maxUses === 'number' ? active.maxUses : 1;
+    const left = maxUses - (me.abilityUses ?? 0);
+    const tooEarly = active.minOwnTurn !== undefined && (me.turnsTaken ?? 0) < active.minOwnTurn;
+    const usedThisTurn = g.turnState?.abilityActivated === true && g.activeIndex === ctx.you;
+    let label = `✨ 능력 발동 (${left}회 남음)`;
+    if (tooEarly) label = `✨ 능력: 내 ${active.minOwnTurn}번째 차례부터`;
+    else if (usedThisTurn) label = '✨ 이번 차례 발동함';
+    const btn = button(label, 'btn small bt-ability-btn', () => {
+      if (window.confirm(`${character.name} 능력을 발동할까요? (남은 ${left}회)\n${active.text ?? character.abilityText ?? ''}`)) {
         sendGame(ctx.net, { type: 'activateAbility' });
       }
-    }, !canAct);
+    }, !canAct || tooEarly || usedThisTurn);
     btn.title = active.text ?? character.abilityText ?? '';
     box.appendChild(btn);
   }
-  if (g.turnState?.mods?.actionDamageBonus > 0 && g.activeIndex === ctx.you) {
-    box.appendChild(el('div', 'bt-ability-on', `능력 발동 중: 피해 행동카드 +${g.turnState.mods.actionDamageBonus}`));
+  if (g.activeIndex === ctx.you && g.turnState?.mods) {
+    const mods = g.turnState.mods;
+    if (mods.actionDamageBonus > 0) {
+      box.appendChild(el('div', 'bt-ability-on', `능력 발동 중: 피해 행동카드 +${mods.actionDamageBonus}`));
+    }
+    if (mods.firstWeaponDiscount > 0) {
+      box.appendChild(el('div', 'bt-ability-on', `능력 발동 중: 첫 무기 구매가 -${mods.firstWeaponDiscount}`));
+    }
   }
   return box;
 }

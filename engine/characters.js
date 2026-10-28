@@ -7,11 +7,11 @@
 /** @typedef {{
  *  id: string, name: string, factionId: string, maxHp: number, cardIds: string[],
  *  ability: {
- *    firstWeaponDiscount?: number, attackBonuses?: AttackBonus[],
+ *    attackBonuses?: AttackBonus[],
  *    opponentActionStar?: { threshold: number, stars: number },
  *    permUpgradeCost?: number,
  *    endTriggers?: { cond?: Cond, effects: import('./effects.js').Effect[] }[],
- *    activeAbility?: { oncePerGame?: boolean, effects: import('./effects.js').Effect[], text?: string }
+ *    activeAbility?: { oncePerGame?: boolean, maxUses?: number, minOwnTurn?: number, effects: import('./effects.js').Effect[], text?: string }
  *  },
  *  abilityText: string
  * }} CharacterDef */

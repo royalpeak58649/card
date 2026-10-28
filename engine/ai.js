@@ -1,6 +1,24 @@
 import { getCardDef } from './cards/registry.js';
 import { getPurchasePrice } from './state.js';
 import { getCharacter, getFaction } from './characters.js';
+import { abilityMaxUses } from './turn.js';
+
+/**
+ * 지금 발동형 능력을 쓸 수 있는지(횟수·차례 조건).
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {any|null} 쓸 수 있으면 능력 정의, 아니면 null
+ */
+function usableAbility(game, playerIndex) {
+  const player = game.players[playerIndex];
+  if (!player.characterId) return null;
+  const ability = getCharacter(player.characterId).ability?.activeAbility;
+  if (!ability) return null;
+  if ((player.abilityUses ?? 0) >= abilityMaxUses(ability)) return null;
+  if (ability.minOwnTurn !== undefined && (player.turnsTaken ?? 0) < ability.minOwnTurn) return null;
+  if (game.turnState?.abilityActivated === true) return null;
+  return ability;
+}
 
 /** @typedef {import('./state.js').GameState} GameState */
 /** @typedef {import('./state.js').CardInstance} CardInstance */
@@ -210,10 +228,10 @@ function chooseActionPhase(game, playerIndex) {
   }
 
   // 발동형 능력: 피해를 주는 행동카드를 낼 수 있으면 먼저 발동한다.
-  if (player.characterId && player.abilityUsed !== true) {
-    const ability = getCharacter(player.characterId).ability?.activeAbility;
+  const ability = usableAbility(game, playerIndex);
+  if (ability && JSON.stringify(ability.effects).includes('actionDamageBonus')) {
     const damageCards = playable.filter((card) => getCardDef(card.cardId).dealsDamage === true);
-    if (ability && damageCards.length >= 2) return { type: 'activateAbility' };
+    if (damageCards.length >= 2) return { type: 'activateAbility' };
   }
   if (playable.length > 0) {
     // 행동력을 주는 카드 먼저, 낸 행동카드 수에 비례하는 카드는 마지막에.
@@ -244,6 +262,19 @@ function chooseBuyPhase(game, playerIndex) {
   const weaponRatio = allCards.length === 0
     ? 0
     : allCards.filter((card) => getCardDef(card.cardId).type === 'weapon').length / allCards.length;
+
+  // 하윤 같은 '첫 무기 할인' 능력: 할인을 받아야 살 수 있는 비싼 무기가 있으면 발동한다.
+  const discountAbility = usableAbility(game, playerIndex);
+  if (discountAbility && JSON.stringify(discountAbility.effects).includes('firstWeaponDiscount')) {
+    const boughtWeapon = (game.turnState?.bought ?? []).some((id) => getCardDef(id).type === 'weapon');
+    const target = !boughtWeapon && Object.keys(game.market).some((id) => {
+      const def = getCardDef(id);
+      if (def.type !== 'weapon' || game.market[id].count <= 0 || def.cost < 5) return false;
+      const price = getPurchasePrice(game, id, playerIndex);
+      return price > player.coins && price - 1 <= player.coins;
+    });
+    if (target) return { type: 'activateAbility' };
+  }
 
   const pool = ownPool(game, playerIndex);
   let best = null;

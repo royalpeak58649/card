@@ -51,7 +51,8 @@ function createTurnState() {
     tempUpgrades: 0,
     upgradedPlayed: 0,
     damageDealt: 0,
-    mods: { weaponBuyRefund: 0, marketDiscount: 0, actionDamageBonus: 0 },
+    mods: { weaponBuyRefund: 0, marketDiscount: 0, actionDamageBonus: 0, firstWeaponDiscount: 0 },
+    abilityActivated: false,
     attackBonuses: [],
     endTriggers: [],
     trashAtCleanup: [],
@@ -66,6 +67,8 @@ function createTurnState() {
  */
 function startTurn(game) {
   const player = game.players[game.activeIndex];
+  // 각 플레이어가 자기 차례를 몇 번째 맞는지(이번 차례 포함).
+  player.turnsTaken = (player.turnsTaken ?? 0) + 1;
   // 경기 첫 차례(선공의 첫 차례)에는 별을 받지 않는다.
   if (game.turn !== 1) {
     player.stars = Math.min(MAX_STARS, player.stars + 1);
@@ -357,6 +360,16 @@ function resolveAttack(game, playerIndex) {
 }
 
 /**
+ * 발동형 능력의 최대 사용 횟수(maxUses, 없으면 oncePerGame 이면 1, 둘 다 없으면 무제한).
+ * @param {{ maxUses?: number, oncePerGame?: boolean }} ability
+ * @returns {number}
+ */
+export function abilityMaxUses(ability) {
+  if (typeof ability.maxUses === 'number') return ability.maxUses;
+  return ability.oncePerGame === true ? 1 : Infinity;
+}
+
+/**
  * 캐릭터의 발동형 능력을 쓴다(검사 → 변경 순서).
  * @param {GameState} game
  * @param {number} playerIndex
@@ -370,12 +383,18 @@ function activateAbility(game, playerIndex) {
   if (!player.characterId) throw new Error('캐릭터가 없습니다');
   const ability = getCharacter(player.characterId).ability?.activeAbility;
   if (!ability) throw new Error('발동형 능력이 없습니다');
-  if (ability.oncePerGame === true && player.abilityUsed === true) {
-    throw new Error('이미 사용한 능력입니다');
+  const maxUses = abilityMaxUses(ability);
+  const uses = player.abilityUses ?? (player.abilityUsed ? 1 : 0);
+  if (uses >= maxUses) throw new Error('능력을 더 쓸 수 없습니다');
+  if (ability.minOwnTurn !== undefined && (player.turnsTaken ?? 0) < ability.minOwnTurn) {
+    throw new Error(`내 ${ability.minOwnTurn}번째 차례부터 쓸 수 있습니다`);
   }
+  if (game.turnState.abilityActivated === true) throw new Error('이번 차례에 이미 능력을 썼습니다');
 
   // 여기서부터 상태 변경
-  player.abilityUsed = true;
+  player.abilityUses = uses + 1;
+  player.abilityUsed = player.abilityUses >= maxUses;
+  game.turnState.abilityActivated = true;
   runEffects(game, { playerIndex, cardUid: '' }, ability.effects ?? []);
 }
 
