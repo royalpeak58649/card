@@ -137,7 +137,8 @@ function setHand(game, playerIndex, cardIds) {
   const player = game.players[playerIndex];
   player.drawPile.push(...player.hand);
   player.hand = cardIds.map((id) => createCardInstance(game, id));
-  return player.hand;
+  // 카드를 내면 손패 배열이 줄어드므로 복사본을 돌려준다.
+  return [...player.hand];
 }
 
 /** 차례를 끝내고 상대 차례로 넘긴다. */
