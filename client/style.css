@@ -1,0 +1,623 @@
+/* 카드 대전 — 바닐라 CSS. 색·카드·버튼·레이아웃 */
+:root {
+  --purple: #b425d6;
+  --purple-dark: #7a1ea8;
+  --bg: #f6f4fb;
+  --panel: #e9e6f4;
+  --ink: #2b2540;
+
+  --money-border: #f6d365;
+  --money-bg: #fff7d6;
+  --weapon-border: #e8606a;
+  --weapon-bg: #fde3e5;
+  --action-border: #8e9fd8;
+  --action-bg: #eef0fb;
+
+  --gold: #f0b429;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Noto Sans KR', system-ui, -apple-system, 'Malgun Gothic', sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 상단 바 ───────────────────────────────────────── */
+.topbar {
+  height: 72px;
+  flex: 0 0 72px;
+  background: linear-gradient(180deg, var(--purple) 0%, var(--purple-dark) 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  box-shadow: 0 3px 10px rgba(43, 37, 64, 0.25);
+  padding: 0 16px;
+  text-align: center;
+}
+
+.screen {
+  flex: 1 1 auto;
+  padding: 20px 16px 40px;
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ── 패널 ─────────────────────────────────────────── */
+.panel {
+  background: var(--panel);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.panel-title {
+  font-weight: 900;
+  font-size: 16px;
+  margin: 0 0 10px;
+  color: var(--purple-dark);
+}
+
+.muted {
+  color: #6b6480;
+}
+
+/* ── 버튼 ─────────────────────────────────────────── */
+.btn {
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--purple-dark);
+  background: #fff;
+  border: 3px solid var(--purple);
+  border-radius: 14px;
+  padding: 10px 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--purple-dark);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 var(--purple-dark);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--purple-dark);
+}
+
+.btn:disabled {
+  color: #8b8798;
+  border-color: #b9b5c6;
+  box-shadow: 0 4px 0 #b9b5c6;
+  background: #f1f0f5;
+  cursor: not-allowed;
+}
+
+.btn.primary {
+  background: var(--purple);
+  color: #fff;
+}
+
+.btn.small {
+  font-size: 14px;
+  padding: 6px 14px;
+  border-width: 2px;
+  box-shadow: 0 3px 0 var(--purple-dark);
+}
+
+.btn.toggle-on {
+  background: var(--purple);
+  color: #fff;
+}
+
+/* ── 입력 ─────────────────────────────────────────── */
+.input {
+  font-family: inherit;
+  font-size: 16px;
+  padding: 10px 12px;
+  border: 2px solid #c9c3dd;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  min-width: 0;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--purple);
+}
+
+/* ── 카드 ─────────────────────────────────────────── */
+.card {
+  position: relative;
+  width: 150px;
+  height: 210px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  border: 4px solid var(--action-border);
+  background: var(--action-bg);
+  box-shadow: 0 4px 10px rgba(43, 37, 64, 0.18);
+  padding: 26px 8px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  user-select: none;
+}
+
+.card.type-money {
+  border-color: var(--money-border);
+  background: var(--money-bg);
+}
+
+.card.type-weapon {
+  border-color: var(--weapon-border);
+  background: var(--weapon-bg);
+}
+
+.card.type-action {
+  border-color: var(--action-border);
+  background: var(--action-bg);
+}
+
+.card.clickable {
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: scale(1.04);
+  z-index: 2;
+}
+
+.card-flag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: rgba(43, 37, 64, 0.82);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px 2px 6px;
+  border-bottom-right-radius: 10px;
+  white-space: nowrap;
+}
+
+.card-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--purple-dark);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+
+.card-star {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  color: var(--gold);
+  font-size: 16px;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.35);
+}
+
+.card-icon {
+  font-size: 34px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.card-name {
+  font-weight: 900;
+  font-size: 14px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 8px;
+  padding: 1px 6px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.card-text {
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.card-price {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--purple-dark);
+  color: var(--purple-dark);
+  font-size: 13px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card.upgraded {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold), 0 0 12px rgba(240, 180, 41, 0.75);
+}
+
+.card.selected {
+  outline: 4px solid var(--purple);
+  outline-offset: 1px;
+  transform: translateY(-8px);
+}
+
+.card.selected:hover {
+  transform: translateY(-8px) scale(1.04);
+}
+
+.card.disabled {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+}
+
+.card.mini {
+  width: 90px;
+  height: 126px;
+  border-width: 3px;
+  border-radius: 10px;
+  padding: 20px 5px 18px;
+  gap: 2px;
+}
+
+.card.mini .card-icon {
+  font-size: 22px;
+}
+
+.card.mini .card-name {
+  font-size: 11px;
+  padding: 0 4px;
+}
+
+.card.mini .card-text {
+  display: none;
+}
+
+.card.mini .card-flag {
+  font-size: 9px;
+  padding: 1px 5px 1px 4px;
+}
+
+.card.mini .card-price {
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  left: 4px;
+  bottom: 4px;
+}
+
+.card.mini .card-badge {
+  min-width: 16px;
+  height: 16px;
+  font-size: 9px;
+}
+
+.card.mini .card-star {
+  font-size: 12px;
+}
+
+/* ── 카드 줄 ──────────────────────────────────────── */
+.card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.card-row.center {
+  justify-content: center;
+}
+
+/* ── 로비 ─────────────────────────────────────────── */
+.lobby {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.lobby .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lobby .field label {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.lobby .row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lobby .row .input {
+  flex: 1 1 140px;
+}
+
+.waiting-big {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--purple-dark);
+  text-align: center;
+  padding: 18px 8px;
+  line-height: 1.5;
+}
+
+.waiting-big .room-code {
+  display: block;
+  font-size: 34px;
+  letter-spacing: 0.18em;
+  color: var(--purple);
+}
+
+/* ── 캐릭터 선택 ──────────────────────────────────── */
+.select-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.faction-name {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--purple-dark);
+  text-align: center;
+}
+
+.character-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+.character-card {
+  flex: 1 1 300px;
+  max-width: 420px;
+  background: #fff;
+  border: 4px solid var(--purple);
+  border-radius: 18px;
+  padding: 16px;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--purple-dark);
+  transition: transform 0.1s ease;
+}
+
+.character-card:hover {
+  transform: translateY(-3px);
+}
+
+.character-card.chosen {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold), 0 5px 0 #b98a12;
+}
+
+.character-card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.character-name {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--purple-dark);
+}
+
+.character-hp {
+  font-weight: 700;
+  margin: 4px 0 8px;
+}
+
+.character-ability {
+  font-size: 14px;
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+/* ── 입고 화면 ────────────────────────────────────── */
+.draft-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.draft-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.draft-side {
+  flex: 0 0 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.draft-guide {
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.draft-guide strong {
+  color: var(--purple);
+  font-size: 22px;
+}
+
+.draft-row-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b6480;
+  margin-bottom: 6px;
+}
+
+.draft-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.draft-hint {
+  background: var(--purple);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.opponent-line {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.status-pill {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 10px;
+  background: #fff;
+  color: var(--purple-dark);
+  border: 2px solid var(--purple);
+}
+
+.status-pill.done {
+  background: var(--purple);
+  color: #fff;
+}
+
+/* ── 대전(자리표시) ───────────────────────────────── */
+.battle-placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  text-align: center;
+}
+
+.hp-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hp-box {
+  background: #fff;
+  border: 3px solid var(--purple);
+  border-radius: 14px;
+  padding: 12px 20px;
+  font-weight: 900;
+  font-size: 18px;
+  min-width: 160px;
+}
+
+/* ── 토스트 ───────────────────────────────────────── */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: #3a2f52;
+  color: #fff;
+  font-weight: 700;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  z-index: 50;
+  max-width: calc(100vw - 32px);
+}
+
+/* ── 휴대폰 ───────────────────────────────────────── */
+@media (max-width: 700px) {
+  .topbar {
+    height: 60px;
+    flex-basis: 60px;
+    font-size: 19px;
+  }
+
+  .screen {
+    padding: 14px 10px 32px;
+  }
+
+  .draft-layout {
+    flex-direction: column;
+  }
+
+  .draft-side {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .card {
+    width: 132px;
+    height: 186px;
+  }
+
+  .card-row {
+    gap: 8px;
+  }
+
+  .draft-footer {
+    justify-content: center;
+  }
+}
