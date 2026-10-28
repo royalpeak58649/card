@@ -300,7 +300,7 @@ registerOp('gainFromMarket', (game, ctx, effect) => {
     options: marketOptions(game, effect.filter, effect.maxCost ?? 0),
     min: 1,
     max: 1,
-    data: { to: effect.to ?? 'discard' },
+    data: { to: effect.to ?? 'discard', debt: effect.debt ?? 0 },
   });
 });
 
@@ -311,6 +311,12 @@ registerChoice('gainFromMarket', (game, pending, selection) => {
   // "얻기"는 구매가 아니므로 bought 는 늘리지 않는다.
   slot.count -= 1;
   putCard(game, pending.playerIndex, createCardInstance(game, cardId), pending.data.to);
+  // 카드를 실제로 얻었을 때만 빚을 진다.
+  const debt = pending.data.debt ?? 0;
+  if (debt > 0) {
+    const player = game.players[pending.playerIndex];
+    player.debt = (player.debt ?? 0) + debt;
+  }
 });
 
 registerOp('exchangeForWeapon', (game, ctx, effect) => {
@@ -412,6 +418,37 @@ registerOp('gainCard', (game, ctx, effect) => {
   // "얻기"는 구매가 아니므로 bought 는 늘리지 않는다.
   slot.count -= 1;
   putCard(game, ctx.playerIndex, createCardInstance(game, effect.cardId), effect.to ?? 'discard');
+});
+
+registerOp('gainDebt', (game, ctx, effect) => {
+  const player = game.players[ctx.playerIndex];
+  player.debt = (player.debt ?? 0) + (effect.n ?? 0);
+});
+
+registerOp('reduceDebt', (game, ctx, effect) => {
+  const player = game.players[ctx.playerIndex];
+  player.debt = Math.max(0, (player.debt ?? 0) - (effect.n ?? 0));
+});
+
+registerOp('clearDebt', (game, ctx) => {
+  game.players[ctx.playerIndex].debt = 0;
+});
+
+registerOp('transferDebt', (game, ctx, effect) => {
+  const player = game.players[ctx.playerIndex];
+  const opponent = game.players[1 - ctx.playerIndex];
+  const amount = Math.min(effect.max ?? Infinity, player.debt ?? 0);
+  if (amount <= 0) return;
+  player.debt = (player.debt ?? 0) - amount;
+  opponent.debt = (opponent.debt ?? 0) + amount;
+});
+
+registerOp('debtToDamage', (game, ctx, effect) => {
+  const player = game.players[ctx.playerIndex];
+  const amount = Math.min(effect.max ?? Infinity, player.debt ?? 0);
+  if (amount <= 0) return;
+  player.debt = (player.debt ?? 0) - amount;
+  game.turnState.attackDamage += amount * (effect.per ?? 1);
 });
 
 registerOp('heal', (game, ctx, effect) => {
