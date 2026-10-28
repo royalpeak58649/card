@@ -1,5 +1,6 @@
 /** @typedef {import('./conditions.js').Cond} Cond */
-/** @typedef {{ flat?: number, perWeapon?: number, perAction?: number, cap?: number, cond?: Cond }} AttackBonus */
+/** @typedef {{ flat?: number, perWeapon?: number, perAction?: number,
+ *  perStat?: { stat: string, per: number }, cap?: number, cond?: Cond }} AttackBonus */
 /** @typedef {{
  *  id: string, name: string, cardIds: string[], characterIds: string[]
  * }} FactionDef */
@@ -8,6 +9,8 @@
  *  ability: {
  *    firstWeaponDiscount?: number, attackBonuses?: AttackBonus[],
  *    opponentActionStar?: { threshold: number, stars: number },
+ *    permUpgradeCost?: number,
+ *    endTriggers?: { cond?: Cond, effects: import('./effects.js').Effect[] }[],
  *    activeAbility?: { oncePerGame?: boolean, effects: import('./effects.js').Effect[], text?: string }
  *  },
  *  abilityText: string

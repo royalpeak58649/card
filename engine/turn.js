@@ -4,14 +4,14 @@ import { createCardInstance, drawCards, getPurchasePrice } from './state.js';
 import { getCharacter } from './characters.js';
 import { MAX_STARS, runEffects } from './effects.js';
 import { resolveChoice } from './choices.js';
-import { evalCond } from './conditions.js';
+import { evalCond, getStat } from './conditions.js';
 
 /** @typedef {import('./state.js').GameState} GameState */
 /** @typedef {import('./state.js').CardInstance} CardInstance */
 /** @typedef {{
  *  attackDamage: number, moneyPlayed: number, weaponsPlayed: number,
  *  actionsPlayed: number, bought: string[], starsSpent: number,
- *  tempUpgrades: number, damageDealt: number,
+ *  tempUpgrades: number, upgradedPlayed: number, damageDealt: number,
  *  mods: Record<string, number>, attackBonuses: Record<string, any>[],
  *  endTriggers: { cond?: Record<string, any>, effects: import('./effects.js').Effect[],
  *    ctx: import('./effects.js').EffectContext }[],
@@ -49,6 +49,7 @@ function createTurnState() {
     bought: [],
     starsSpent: 0,
     tempUpgrades: 0,
+    upgradedPlayed: 0,
     damageDealt: 0,
     mods: { weaponBuyRefund: 0, marketDiscount: 0, actionDamageBonus: 0 },
     attackBonuses: [],
@@ -171,6 +172,7 @@ function playCard(game, playerIndex, uid) {
     game.turnState.actionsPlayed += 1;
     triggerOpponentActionStar(game, playerIndex);
   }
+  if (card.upgraded === true) game.turnState.upgradedPlayed += 1;
 
   const effects = card.upgraded && def.upgradedEffects ? def.upgradedEffects : def.effects;
   runEffects(game, { playerIndex, cardUid: card.uid }, effects);
@@ -235,6 +237,19 @@ function buy(game, playerIndex, cardId) {
 }
 
 /**
+ * 영구 강화 비용(별)을 구한다. 캐릭터의 permUpgradeCost 가 있으면 그 값을 쓴다.
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {number}
+ */
+function permUpgradeCost(game, playerIndex) {
+  const characterId = game.players[playerIndex].characterId;
+  if (!characterId) return PERM_UPGRADE_COST;
+  const cost = getCharacter(characterId).ability?.permUpgradeCost;
+  return typeof cost === 'number' ? cost : PERM_UPGRADE_COST;
+}
+
+/**
  * 손패의 카드를 별로 강화한다(검사 → 변경 순서).
  * @param {GameState} game
  * @param {number} playerIndex
@@ -253,7 +268,7 @@ function upgradeCard(game, playerIndex, uid, mode) {
   if (!def.upgradedEffects) throw new Error(`강화판이 없는 카드: ${card.cardId}`);
   if (card.upgraded) throw new Error(`이미 강화된 카드: ${uid}`);
 
-  const cost = mode === 'temp' ? TEMP_UPGRADE_COST : PERM_UPGRADE_COST;
+  const cost = mode === 'temp' ? TEMP_UPGRADE_COST : permUpgradeCost(game, playerIndex);
   if (player.stars < cost) throw new Error('별이 부족합니다');
   if (mode === 'temp' && game.turnState.tempUpgrades >= MAX_TEMP_UPGRADES) {
     throw new Error('일시 강화는 한 차례에 3장까지입니다');
@@ -322,6 +337,9 @@ function resolveAttack(game, playerIndex) {
     let amount = (bonus.flat ?? 0)
       + (bonus.perWeapon ?? 0) * weaponsPlayed
       + (bonus.perAction ?? 0) * actionsPlayed;
+    if (bonus.perStat !== undefined) {
+      amount += (bonus.perStat.per ?? 0) * getStat(game, playerIndex, bonus.perStat.stat);
+    }
     if (bonus.cap !== undefined) amount = Math.min(amount, bonus.cap);
     total += amount;
   }
@@ -433,6 +451,27 @@ function runEndTriggers(game, playerIndex) {
   for (const trigger of triggers) {
     if (trigger.cond !== undefined && !evalCond(game, trigger.ctx, trigger.cond)) continue;
     runEffects(game, trigger.ctx, trigger.effects);
+    if (game.pending) {
+      throw new Error('차례 끝 효과에는 선택형 효과를 쓸 수 없습니다');
+    }
+  }
+  runCharacterEndTriggers(game, playerIndex);
+}
+
+/**
+ * 캐릭터의 차례 끝 발동(endTriggers)을 처리한다.
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {void}
+ */
+function runCharacterEndTriggers(game, playerIndex) {
+  const characterId = game.players[playerIndex].characterId;
+  if (!characterId) return;
+  const triggers = getCharacter(characterId).ability?.endTriggers ?? [];
+  const ctx = { playerIndex, cardUid: '' };
+  for (const trigger of triggers) {
+    if (trigger.cond !== undefined && !evalCond(game, ctx, trigger.cond)) continue;
+    runEffects(game, ctx, trigger.effects ?? []);
     if (game.pending) {
       throw new Error('차례 끝 효과에는 선택형 효과를 쓸 수 없습니다');
     }

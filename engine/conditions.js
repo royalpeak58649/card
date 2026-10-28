@@ -11,21 +11,51 @@ const STAT_KEYS = [
   'actionsPlayed',
   'starsSpent',
   'damageDealt',
+  'tempUpgrades',
+  'upgradedPlayed',
 ];
 
 /** 손패 종류 검사에 쓸 수 있는 종류 */
 const HAND_TYPES = ['money', 'weapon', 'action'];
 
 /**
- * stat 값을 읽는다. 'boughtWeapons' 는 turnState.bought 중 무기 카드 수.
+ * 플레이어의 영구 강화 카드 수(일시 강화는 제외).
  * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {number}
+ */
+function countUpgradedOwned(game, playerIndex) {
+  const player = game.players[playerIndex];
+  if (!player) throw new Error(`알 수 없는 플레이어: ${playerIndex}`);
+  const zones = [player.hand, player.drawPile, player.discard, player.inPlay];
+  let count = 0;
+  for (const zone of zones) {
+    for (const card of zone ?? []) {
+      if (card.upgraded === true && card.tempUpgraded !== true) count += 1;
+    }
+  }
+  return count;
+}
+
+/**
+ * stat 값을 읽는다. turnState 숫자 필드, 'boughtWeapons', 'stars', 'upgradedOwned'.
+ * @param {GameState} game
+ * @param {number} playerIndex
  * @param {string} stat
  * @returns {number}
  */
-function readStat(game, stat) {
+export function getStat(game, playerIndex, stat) {
   const turnState = game.turnState ?? {};
   if (stat === 'boughtWeapons') {
     return (turnState.bought ?? []).filter((cardId) => getCardDef(cardId).type === 'weapon').length;
+  }
+  if (stat === 'stars') {
+    const player = game.players[playerIndex];
+    if (!player) throw new Error(`알 수 없는 플레이어: ${playerIndex}`);
+    return player.stars ?? 0;
+  }
+  if (stat === 'upgradedOwned') {
+    return countUpgradedOwned(game, playerIndex);
   }
   if (!STAT_KEYS.includes(stat)) throw new Error(`알 수 없는 조건 stat: ${stat}`);
   return turnState[stat] ?? 0;
@@ -65,7 +95,7 @@ export function evalCond(game, ctx, cond) {
     return opponent.hp * 2 <= opponent.maxHp;
   }
   if (Object.prototype.hasOwnProperty.call(cond, 'stat')) {
-    const value = readStat(game, cond.stat);
+    const value = getStat(game, ctx.playerIndex, cond.stat);
     if (cond.gte !== undefined && !(value >= cond.gte)) return false;
     if (cond.lte !== undefined && !(value <= cond.lte)) return false;
     if (cond.eq !== undefined && !(value === cond.eq)) return false;

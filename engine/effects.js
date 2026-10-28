@@ -1,7 +1,7 @@
 import { drawCards, createCardInstance } from './state.js';
 import { getCardDef } from './cards/registry.js';
 import { requestChoice, registerChoice } from './choices.js';
-import { evalCond } from './conditions.js';
+import { evalCond, getStat } from './conditions.js';
 import { shuffleInPlace } from './rng.js';
 
 /** @typedef {{ op: string, n?: number }} Effect */
@@ -149,7 +149,7 @@ registerOp('gainCoins', (game, ctx, effect) => {
 });
 
 registerOp('gainCoinsPerStat', (game, ctx, effect) => {
-  const value = game.turnState[effect.stat] ?? 0;
+  const value = getStat(game, ctx.playerIndex, effect.stat);
   const per = effect.per ?? 1;
   const max = effect.max ?? Infinity;
   game.players[ctx.playerIndex].coins += Math.min(max, per * value);
@@ -329,6 +329,7 @@ registerOp('addAttackBonus', (game, ctx, effect) => {
   if (effect.flat !== undefined) bonus.flat = effect.flat;
   if (effect.perWeapon !== undefined) bonus.perWeapon = effect.perWeapon;
   if (effect.perAction !== undefined) bonus.perAction = effect.perAction;
+  if (effect.perStat !== undefined) bonus.perStat = effect.perStat;
   if (effect.cap !== undefined) bonus.cap = effect.cap;
   if (effect.cond !== undefined) bonus.cond = effect.cond;
   game.turnState.attackBonuses.push(bonus);
@@ -385,6 +386,59 @@ registerChoice('discardFromHand', (game, pending, selection) => {
   if (selection.length > 0 && thenIfAny.length > 0) {
     pending.rest.unshift(...thenIfAny);
   }
+});
+
+registerOp('freeUpgrade', (game, ctx, effect) => {
+  const player = game.players[ctx.playerIndex];
+  const options = player.hand
+    .filter((c) => {
+      const def = getCardDef(c.cardId);
+      return def.basic !== true && Boolean(def.upgradedEffects) && c.upgraded !== true;
+    })
+    .map((c) => c.uid);
+  requestChoice(game, ctx, {
+    kind: 'freeUpgrade',
+    prompt: '무료로 강화할 카드를 고르세요',
+    options,
+    min: 0,
+    max: effect.n ?? 0,
+  });
+});
+
+registerChoice('freeUpgrade', (game, pending, selection) => {
+  const hand = game.players[pending.playerIndex].hand;
+  for (const uid of selection) {
+    const card = hand.find((c) => c.uid === uid);
+    if (!card) throw new Error(`손에 없는 카드: ${uid}`);
+    // 별을 쓰지 않으므로 starsSpent·tempUpgrades 는 늘리지 않는다.
+    card.upgraded = true;
+    card.tempUpgraded = true;
+  }
+});
+
+registerOp('payStars', (game, ctx, effect) => {
+  const player = game.players[ctx.playerIndex];
+  const n = effect.n ?? 0;
+  if (player.stars < n) return;
+  requestChoice(game, ctx, {
+    kind: 'payStars',
+    prompt: `별 ${n}개를 쓸까요?`,
+    options: ['pay', 'skip'],
+    min: 1,
+    max: 1,
+    data: { n, then: effect.then ?? [] },
+  });
+});
+
+registerChoice('payStars', (game, pending, selection) => {
+  if (selection[0] !== 'pay') return;
+  const player = game.players[pending.playerIndex];
+  const n = pending.data.n ?? 0;
+  player.stars -= n;
+  game.turnState.starsSpent += n;
+  // 후속 효과를 남은 효과보다 먼저 실행한다.
+  const then = pending.data.then ?? [];
+  if (then.length > 0) pending.rest.unshift(...then);
 });
 
 registerOp('reorderTop', (game, ctx, effect) => {
