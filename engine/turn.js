@@ -603,6 +603,21 @@ function runCharacterEndTriggers(game, playerIndex) {
   }
 }
 
+/** 실패한 조작을 되돌리기 위한 스냅샷을 뜰지. AI 모의 실행(버리는 복사본)에서만 끈다. */
+let atomic = true;
+
+/**
+ * 원자성(스냅샷 복원)을 켜거나 끈다. 끈 동안 실패한 조작은 상태를 반쯤 바꾼 채 남길 수 있으므로,
+ * 버릴 복사본에서만 써야 한다.
+ * @param {boolean} on
+ * @returns {boolean} 이전 값
+ */
+export function setAtomic(on) {
+  const prev = atomic;
+  atomic = on;
+  return prev;
+}
+
 /**
  * 모든 조작의 단일 입구. 잘못된 조작은 상태를 바꾸지 않고 Error 를 던진다.
  * @param {GameState} game
@@ -614,7 +629,7 @@ export function applyAction(game, playerIndex, action) {
   if (!action || typeof action !== 'object') throw new Error('잘못된 조작입니다');
   assertCanAct(game, playerIndex, action);
 
-  const snapshot = JSON.stringify(game);
+  const snapshot = atomic ? JSON.stringify(game) : null;
   /** @type {number|undefined} 이번 조작으로 실제 갚은 빚(로그용) */
   let debtPaid;
   // 로그의 turn 은 조작을 처리하기 전의 차례 번호로 기록한다.
@@ -689,8 +704,10 @@ export function applyAction(game, playerIndex, action) {
     game.log.push(entry);
   } catch (err) {
     // 실패한 조작은 흔적을 남기지 않는다(객체 참조는 유지).
-    for (const key of Object.keys(game)) delete game[key];
-    Object.assign(game, JSON.parse(snapshot));
+    if (snapshot !== null) {
+      for (const key of Object.keys(game)) delete game[key];
+      Object.assign(game, JSON.parse(snapshot));
+    }
     throw err;
   }
 }
