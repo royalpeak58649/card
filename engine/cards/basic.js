@@ -4,6 +4,7 @@ import { registerCards } from './registry.js';
 export const BASIC_CARDS = {
   stone: {
     id: 'stone',
+    text: '+1원',
     name: '돌',
     type: 'money',
     cost: 0,
@@ -12,6 +13,7 @@ export const BASIC_CARDS = {
   },
   silver: {
     id: 'silver',
+    text: '+2원',
     name: '은괴',
     type: 'money',
     cost: 3,
@@ -20,6 +22,7 @@ export const BASIC_CARDS = {
   },
   gold: {
     id: 'gold',
+    text: '+3원',
     name: '금괴',
     type: 'money',
     cost: 6,
@@ -28,6 +31,7 @@ export const BASIC_CARDS = {
   },
   pistol: {
     id: 'pistol',
+    text: '1 피해',
     name: '권총',
     type: 'weapon',
     cost: 0,
@@ -36,6 +40,7 @@ export const BASIC_CARDS = {
   },
   rifle: {
     id: 'rifle',
+    text: '3 피해',
     name: '소총',
     type: 'weapon',
     cost: 5,
@@ -45,6 +50,7 @@ export const BASIC_CARDS = {
   },
   assaultRifle: {
     id: 'assaultRifle',
+    text: '5 피해',
     name: '돌격소총',
     type: 'weapon',
     cost: 8,

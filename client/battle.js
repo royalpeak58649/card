@@ -455,6 +455,7 @@ function myArea(g, me, ctx) {
 
   const hand = el('div', 'bt-hand');
   const cards = me.hand || [];
+  if (cards.length > 6) hand.classList.add('crowded');
   if (cards.length === 0) hand.appendChild(el('div', 'bt-muted', '손패 없음'));
   for (const card of cards) hand.appendChild(handCard(g, me, card, ctx));
   area.appendChild(hand);

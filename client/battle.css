@@ -359,7 +359,24 @@ button.bt-tile:hover {
 .bt-hand-card {
   position: relative;
   flex: 0 0 auto;
-  margin-right: -34px;
+  margin-right: 10px;
+}
+
+/* 손패가 많을 때만 겹친다 */
+.bt-hand.crowded .bt-hand-card {
+  margin-right: -40px;
+}
+
+/* 지금 낼 수 없는 손패는 살짝만 어둡게: 이름과 효과는 읽히게 */
+.bt-hand .card.disabled {
+  opacity: 0.82;
+  filter: grayscale(0.2) brightness(0.9);
+}
+
+/* 지금 낼 수 있는 손패는 빛나게 */
+.bt-hand .card:not(.disabled) {
+  box-shadow: 0 0 0 3px #f6d365, 0 8px 22px rgba(246, 211, 101, 0.45);
+  cursor: pointer;
 }
 
 .bt-hand-card:last-child {
@@ -749,8 +766,8 @@ button.bt-tile:hover {
     height: 158px;
   }
 
-  .bt-hand-card {
-    margin-right: -26px;
+  .bt-hand.crowded .bt-hand-card {
+    margin-right: -30px;
   }
 
   .bt-hp-num {
@@ -765,4 +782,13 @@ button.bt-tile:hover {
     top: 70px;
     font-size: 14px;
   }
+}
+
+/* 카드 바탕은 항상 밝으므로, 어두운 게임판의 글자색을 물려받지 않게 한다 */
+.card {
+  color: #2b2540;
+}
+.card .card-text,
+.card [class*='text'] {
+  color: #3b3452;
 }
