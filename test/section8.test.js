@@ -276,8 +276,11 @@ test('하윤 능력: 첫 무기 구매만 -1, 다음 차례에 다시 적용', (
   // 할증이 끝난 소총은 5 - 1 = 4 (할증 중이면 5 + 1 - 1 = 5)
   game.market.rifle.bought = 2;
   assert.equal(getPurchasePrice(game, 'rifle', first), 4);
+  // 캐릭터가 없는 플레이어는 할인 없음
   assert.equal(getPurchasePrice(game, 'rifle', second), 5);
   game.market.rifle.bought = 0;
+  // 할증 중인 소총은 5 + 1 - 1 = 5
+  assert.equal(getPurchasePrice(game, 'rifle', first), 5);
   // 캐릭터가 없는 플레이어는 할인 없음
   assert.equal(getPurchasePrice(game, 's8_serviceSmg', second), 5);
 
@@ -288,8 +291,9 @@ test('하윤 능력: 첫 무기 구매만 -1, 다음 차례에 다시 적용', (
   applyAction(game, first, { type: 'buy', cardId: 'rifle' });
   // 할증 중 소총 6원 - 할인 1원
   assert.equal(player.coins, 4);
-  // 같은 차례 두 번째 무기는 할인 없음
+  // 같은 차례 두 번째 무기는 할인 없음(할증 중인 소총은 5 + 1)
   assert.equal(getPurchasePrice(game, 'pistol', first), 0);
+  assert.equal(getPurchasePrice(game, 'rifle', first), 6);
   assert.equal(getPurchasePrice(game, 's8_serviceSmg', first), 5);
 
   passTurn(game, first);
@@ -461,7 +465,8 @@ test('전리품 회수: 8 피해 이상이면 차례 끝에 금괴 / 강화판�
 
 test('중기관총 + 권총 2장: 1 + 3 = 4 피해 / 강화판 5', () => {
   const { game, first } = startedGame();
-  assert.equal(attackWith(game, first, ['s8_heavyMg', 'pistol', 'pistol']), 4);
+  // 중기관총(1) + 권총 2장(2) + 무기 1장당 +1(3) = 6
+  assert.equal(attackWith(game, first, ['s8_heavyMg', 'pistol', 'pistol']), 6);
 
   const { game: g2, first: f2 } = startedGame();
   applyAction(g2, f2, { type: 'endPhase' }); // buy
@@ -474,5 +479,6 @@ test('중기관총 + 권총 2장: 1 + 3 = 4 피해 / 강화판 5', () => {
     applyAction(g2, f2, { type: 'playCard', uid: card.uid });
   }
   applyAction(g2, f2, { type: 'endPhase' });
-  assert.equal(hpBefore - opponent.hp, 5);
+  // 중기관총(2) + 권총 2장(2) + 무기 1장당 +1(3) = 7
+  assert.equal(hpBefore - opponent.hp, 7);
 });

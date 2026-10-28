@@ -278,11 +278,14 @@ function resolveAttack(game, playerIndex) {
   const turnState = game.turnState;
   let total = turnState.attackDamage;
   const bonuses = (turnState.attackBonuses ?? []).concat(characterAttackBonuses(game, playerIndex));
+  // 캐릭터 능력의 조건은 '이번 공격단계에 낸 무기 수'를 기준으로 본다.
+  const weaponsPlayed = turnState.weaponsPlayed;
+  const condCtx = { playerIndex, cardUid: '' };
   for (const bonus of bonuses) {
-    if (bonus.cond !== undefined && !evalCond(game, { playerIndex, cardUid: '' }, bonus.cond)) {
+    if (bonus.cond !== undefined && !evalCond(game, condCtx, bonus.cond)) {
       continue;
     }
-    let amount = (bonus.flat ?? 0) + (bonus.perWeapon ?? 0) * turnState.weaponsPlayed;
+    let amount = (bonus.flat ?? 0) + (bonus.perWeapon ?? 0) * weaponsPlayed;
     if (bonus.cap !== undefined) amount = Math.min(amount, bonus.cap);
     total += amount;
   }
