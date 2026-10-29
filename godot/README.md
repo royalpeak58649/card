@@ -23,9 +23,10 @@
 |---|---|
 | `engine/` | 순수 규칙. `rules.gd`(상태·효과·선택·차례·증강 적용), `match_rules.gd`(선택→입고→대전, view), `campaign_rules.gd`(모험), `ai_basic.gd`·`ai_smart.gd`(AI), `game_data.gd`(데이터 읽기) |
 | `data/game_data.json` | 카드·캐릭터·진영·증강·캠페인·AI 가치·추천 구성. **JS 엔진에서 내보낸 것**이다 |
-| `ui/` | 화면. `main.gd`(로비·선택·입고·온라인 대기실), `battle_screen.gd`(대전), `campaign_ui.gd`(모험 진행 막대·보스 소개·결과·증강 보상), `card_view.gd`(카드), `session.gd`(AI 연습·모험 진행), `online_session.gd`(서버 WebSocket 연결·재접속), `ui_kit.gd`(테마), `dialogs.gd`, `settings.gd`(자동 로드) |
-| `tests/` | `cross_check.gd`(JS 와 단계별 비교), `sim.gd`(AI 대전), `ui_smoke.gd`(AI 연습 화면 자동 진행·스크린샷), `campaign_smoke.gd`(모험 화면 자동 진행, `--lose` 로 실패 화면), `run_online.sh`·`online_smoke.gd`·`web_bot.mjs`(로컬 서버로 온라인 대전 완주·재접속·웹 클라이언트 호환), `online_unreachable.gd`(서버 연결 실패 처리) |
+| `ui/` | 화면. `main.gd`(로비·선택·입고·온라인 대기실), `battle_screen.gd`(대전), `campaign_ui.gd`(모험 진행 막대·보스 소개·결과·증강 보상), `card_view.gd`(카드), `session.gd`(AI 연습·모험 진행), `online_session.gd`(서버 WebSocket 연결·재접속), `ui_kit.gd`(테마), `dialogs.gd`, `codex.gd`(도감), `settings.gd`·`music.gd`(자동 로드: 설정·BGM) |
+| `tests/` | `cross_check.gd`(JS 와 단계별 비교), `sim.gd`(AI 대전), `ui_smoke.gd`(AI 연습 화면 자동 진행·스크린샷), `campaign_smoke.gd`(모험 화면 자동 진행, `--lose` 로 실패 화면), `run_online.sh`·`online_smoke.gd`·`web_bot.mjs`(로컬 서버로 온라인 대전 완주·재접속·웹 클라이언트 호환), `online_unreachable.gd`(서버 연결 실패 처리), `extras_smoke.gd`(도감 항목 수·검색·필터, BGM 재생·저장·일시 정지) |
 | `tools/` | `export_data.mjs`(데이터 내보내기), `make_trace.mjs`(교차 검증 기록 만들기) |
+| `audio/` | BGM 「별의 돌격」(웹판 `client/audio` 와 같은 파일, 다시 만들려면 `node tools/makeBgm.js`) |
 | `fonts/` | Pretendard(OFL-1.1). 웹 내보내기에서도 한글이 보이도록 글꼴을 넣었다 |
 
 ## 한 컴퓨터에서 온라인 시험하기
@@ -66,6 +67,7 @@ xvfb-run godot --path godot -s res://tests/campaign_smoke.gd -- --shots /tmp/csh
 bash godot/tests/run_online.sh [/tmp/oshots]      # 로컬 서버 + Godot 둘: 방 만들기·참가·완주·6턴에 끊고 재접속·방 종료
 GUEST=web bash godot/tests/run_online.sh           # 참가자를 웹판과 같은 메시지를 쓰는 봇으로(웹 ↔ Godot)
 godot --headless --path godot -s res://tests/online_unreachable.gd   # 서버에 못 붙을 때 로비 복귀
+xvfb-run godot --path godot -s res://tests/extras_smoke.gd -- --settings user://t.cfg --shots /tmp/xshots   # 도감·BGM
 ```
 
 `cross_check` 는 JS 엔진이 남긴 기록을 같은 순서로 다시 적용해 **조작 하나하나의 오류 문구·상태 해시·가려진 화면 해시·AI 가 고른 조작**을 비교한다.

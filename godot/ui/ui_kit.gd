@@ -115,12 +115,24 @@ static func theme() -> Theme:
 	t.set_stylebox("panel", "TooltipPanel", box(INK, Color.TRANSPARENT, 0, 8, 8))
 	t.set_color("font_color", "TooltipLabel", Color.WHITE)
 	t.set_font_size("font_size", "TooltipLabel", 14)
-	t.set_stylebox("normal", "OptionButton", box(Color("#ffffff22"), Color.WHITE, 1, 8, 6))
-	t.set_color("font_color", "OptionButton", Color.WHITE)
-	t.set_color("font_hover_color", "OptionButton", Color.WHITE)
-	t.set_stylebox("hover", "OptionButton", box(Color("#ffffff44"), Color.WHITE, 1, 8, 6))
-	t.set_stylebox("pressed", "OptionButton", box(Color("#ffffff44"), Color.WHITE, 1, 8, 6))
-	t.set_stylebox("focus", "OptionButton", box(Color.TRANSPARENT, Color.WHITE, 1, 8, 6))
+	# 선택 상자(흰 창 안) + 상단 막대용 변형
+	t.set_stylebox("normal", "OptionButton", box(Color.WHITE, Color("#c9c0e0"), 2, 10, 8))
+	t.set_stylebox("hover", "OptionButton", box(Color("#f6e9fb"), PURPLE, 2, 10, 8))
+	t.set_stylebox("pressed", "OptionButton", box(Color("#ecd3f5"), PURPLE_DARK, 2, 10, 8))
+	t.set_stylebox("focus", "OptionButton", box(Color.TRANSPARENT, PURPLE, 2, 10, 8))
+	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		t.set_color(k, "OptionButton", INK)
+	t.set_type_variation("TopBarOption", "OptionButton")
+	t.set_stylebox("normal", "TopBarOption", box(Color("#ffffff22"), Color.WHITE, 1, 8, 6))
+	t.set_stylebox("hover", "TopBarOption", box(Color("#ffffff44"), Color.WHITE, 1, 8, 6))
+	t.set_stylebox("pressed", "TopBarOption", box(Color("#ffffff44"), Color.WHITE, 1, 8, 6))
+	t.set_stylebox("focus", "TopBarOption", box(Color.TRANSPARENT, Color.WHITE, 1, 8, 6))
+	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		t.set_color(k, "TopBarOption", Color.WHITE)
+	# 상단 막대의 볼륨 막대
+	t.set_stylebox("slider", "HSlider", box(Color("#ffffff55"), Color.TRANSPARENT, 0, 4, 2))
+	t.set_stylebox("grabber_area", "HSlider", box(Color.WHITE, Color.TRANSPARENT, 0, 4, 2))
+	t.set_stylebox("grabber_area_highlight", "HSlider", box(Color.WHITE, Color.TRANSPARENT, 0, 4, 2))
 	t.set_font_size("font_size", "PopupMenu", 16)
 	_theme = t
 	return t

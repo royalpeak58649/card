@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Settings="*res://ui/settings.gd"
+Music="*res://ui/music.gd"
 
 [display]
 

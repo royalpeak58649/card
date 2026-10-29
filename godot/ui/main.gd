@@ -150,17 +150,25 @@ func _top_right_buttons() -> Array:
 	if session == online:
 		var conn := UiKit.label("● 연결됨" if online.is_connected_to_server() else "● 다시 연결하는 중…", "", 14,
 			Color("#c9ffd9") if online.is_connected_to_server() else Color("#ffd2d2"))
-		return [conn, UiKit.button("플레이 가이드", func(): Dialogs.guide(self)), UiKit.button("로비로", confirm_leave)]
-	return [UiKit.settings().make_speed_picker(),
+		return [conn, _music_controls(), _codex_button(), UiKit.button("플레이 가이드", func(): Dialogs.guide(self)), UiKit.button("로비로", confirm_leave)]
+	return [UiKit.settings().make_speed_picker(), _music_controls(), _codex_button(),
 		UiKit.button("플레이 가이드", func(): Dialogs.guide(self)),
 		UiKit.button("로비로", confirm_leave)]
+
+
+func _codex_button() -> Button:
+	return UiKit.button("도감", func(): Codex.open(self))
+
+
+func _music_controls() -> Control:
+	return get_node("/root/Music").make_controls()
 
 
 # ─────────────────────────── 로비 ───────────────────────────
 
 func _show_lobby() -> void:
 	var root := UiKit.vbox(0)
-	root.add_child(UiKit.top_bar("카드 대전", [UiKit.settings().make_speed_picker(), UiKit.button("플레이 가이드", func(): Dialogs.guide(self))]))
+	root.add_child(UiKit.top_bar("카드 대전", [UiKit.settings().make_speed_picker(), _music_controls(), _codex_button(), UiKit.button("플레이 가이드", func(): Dialogs.guide(self))]))
 	var center := CenterContainer.new()
 	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(center)
@@ -287,7 +295,7 @@ func _show_lobby() -> void:
 	join_row.add_child(join_btn)
 	oc.add_child(join_row)
 
-	var note := UiKit.wrap_label("Godot 이식판: AI 연습·모험 모드·온라인 대전을 지원합니다. 도감은 다음 단계에서 옮깁니다.", 13, UiKit.MUTED)
+	var note := UiKit.wrap_label("Godot 이식판: AI 연습·모험 모드·온라인 대전·도감·BGM을 지원합니다.", 13, UiKit.MUTED)
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(note)
 	_set_screen(root, "lobby")

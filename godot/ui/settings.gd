@@ -13,6 +13,9 @@ var player_name := "나"
 var server_url := DEFAULT_SERVER_URL
 ## 온라인 방 재접속 정보(새로고침·재실행 후 같은 자리로 돌아간다). 없으면 빈 Dictionary.
 var online_session: Dictionary = {}
+## BGM 켜기/끄기와 볼륨(0~1). 웹판 기본값과 같다.
+var music_enabled := true
+var music_volume := 0.3
 
 
 func _ready() -> void:
@@ -32,6 +35,8 @@ func _ready() -> void:
 			ai_speed = s
 		player_name = str(cfg.get_value("game", "player_name", player_name))
 		server_url = str(cfg.get_value("online", "server_url", server_url))
+		music_enabled = cfg.get_value("music", "enabled", music_enabled) == true
+		music_volume = clampf(float(cfg.get_value("music", "volume", music_volume)), 0.0, 1.0)
 		var sess = cfg.get_value("online", "session", {})
 		if sess is Dictionary and sess.has("room") and sess.has("token") and sess.has("url"):
 			online_session = sess
@@ -43,6 +48,8 @@ func _save() -> void:
 	cfg.set_value("game", "player_name", player_name)
 	cfg.set_value("online", "server_url", server_url)
 	cfg.set_value("online", "session", online_session)
+	cfg.set_value("music", "enabled", music_enabled)
+	cfg.set_value("music", "volume", music_volume)
 	cfg.save(path)
 
 
@@ -83,6 +90,7 @@ func ai_delay() -> float:
 func make_speed_picker() -> OptionButton:
 	var ob := OptionButton.new()
 	ob.focus_mode = Control.FOCUS_NONE
+	ob.theme_type_variation = "TopBarOption"
 	ob.tooltip_text = "AI 진행 속도"
 	var speeds := GameData.ai_speeds()
 	for i in speeds.size():
