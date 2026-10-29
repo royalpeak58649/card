@@ -17,8 +17,6 @@ const TEMP_UPGRADE_COST = 1;
 const PERM_UPGRADE_COST = 4;
 /** 카드가 아닌 선택지 키워드의 표시 이름 */
 const KEYWORD_LABELS = { trash: '제거', discard: '버리기', pay: '★ 별 사용', skip: '사용 안 함' };
-/** 세션 저장 키(client/net.js 와 같다) */
-const SESSION_KEY = 'cardDuel.session';
 
 /** 단계 표시 순서 */
 const PHASES = [
@@ -819,7 +817,7 @@ function choiceModal(g, me, pending, ctx) {
  * @param {number} you
  * @returns {HTMLElement}
  */
-function finishedOverlay(view, g, you) {
+function finishedOverlay(view, g, you, state) {
   const overlay = el('div', 'bt-finished');
   const box = el('div', 'bt-finished-box');
 
@@ -837,14 +835,7 @@ function finishedOverlay(view, g, you) {
   box.appendChild(hpLine);
 
   box.appendChild(
-    button('로비로', 'btn primary', () => {
-      try {
-        localStorage.removeItem(SESSION_KEY);
-      } catch {
-        // 무시
-      }
-      location.reload();
-    }),
+    button('로비로', 'btn primary', () => state.leaveLobby()),
   );
 
   overlay.appendChild(box);
@@ -933,7 +924,7 @@ export function renderBattle(root, state, net) {
   }
   if (myPending) screen.appendChild(choiceModal(g, me, pending, { net, rerender }));
 
-  if (view.stage === 'finished') screen.appendChild(finishedOverlay(view, g, you));
+  if (view.stage === 'finished') screen.appendChild(finishedOverlay(view, g, you, state));
 
   root.appendChild(screen);
 }

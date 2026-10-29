@@ -2,8 +2,26 @@ services:
   game:
     build: .
     ports:
-      - "8080:8080"
+      # Azure HTTP 배포: .env에 GAME_PORT=80. HTTPS 배포는 GAME_BIND=127.0.0.1.
+      - "${GAME_BIND:-0.0.0.0}:${GAME_PORT:-8080}:8080"
     restart: unless-stopped
+
+  # Caddy가 도메인 인증서 발급과 HTTP→HTTPS, WebSocket 프록시를 담당한다.
+  # 실행 전 DOMAIN 환경변수에 DNS가 이 VM을 가리키는 도메인을 넣는다.
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [game]
+    restart: unless-stopped
+    profiles: [https]
 
   # 공개 HTTPS 주소가 필요할 때: docker compose --profile tunnel up -d
   # 주소는 `docker compose logs tunnel` 에 https://....trycloudflare.com 으로 나온다(재시작하면 바뀜).
@@ -13,3 +31,7 @@ services:
     depends_on: [game]
     restart: unless-stopped
     profiles: [tunnel]
+
+volumes:
+  caddy_data:
+  caddy_config:

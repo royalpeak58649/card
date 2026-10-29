@@ -26,6 +26,7 @@ const CONTENT_TYPES = {
   '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  '.mp3': 'audio/mpeg',
 };
 /** 방 정리 주기 */
 const SWEEP_INTERVAL_MS = 10 * 60 * 1000;
@@ -179,6 +180,22 @@ export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
   /** @type {Map<import('ws').WebSocket, { code: string, you: number, token: string }>} */
   const sessions = new Map();
 
+  // 명시적 퇴장은 방을 끝낸다. 단순 연결 끊김은 기존 재접속 동작을 유지한다.
+  const leave = (socket) => {
+    const session = sessions.get(socket);
+    if (session) {
+      rooms.rooms.delete(session.code);
+      for (const [peer, member] of sessions) {
+        if (member.code !== session.code) continue;
+        sessions.delete(peer);
+        if (sockets.get(member.token) === peer) sockets.delete(member.token);
+        send(peer, { t: 'left', message: peer === socket ? '' : '상대가 로비로 돌아가 방이 종료되었습니다.' });
+      }
+    } else {
+      send(socket, { t: 'left' });
+    }
+  };
+
   /**
    * 방에 앉은 뒤 공통 처리.
    * @param {import('ws').WebSocket} socket
@@ -210,6 +227,9 @@ export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
 
     try {
       switch (msg.t) {
+        case 'leave':
+          leave(socket);
+          return;
         case 'create': {
           const room = rooms.createRoom({ vsAi: false });
           const { you, token } = rooms.join(room.code, msg.name);

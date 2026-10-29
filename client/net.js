@@ -94,6 +94,7 @@ export function connect(onMessage) {
       if (msg.t === 'joined') {
         saveSession({ room: msg.room, token: msg.token });
       }
+      if (msg.t === 'left') clearSession();
       onMessage(msg);
     });
 

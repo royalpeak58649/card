@@ -14,6 +14,7 @@
 | `campaign` | `campaignId`, `name` | 모험 모드 방을 만들고 0번으로 들어간다(1번은 보스 AI). 조작은 `action` 으로 같은 방식 |
 | `rejoin` | `room`, `token` | 새로고침·재접속. 예전에 받은 token 으로 같은 자리에 다시 앉는다 |
 | `action` | `action` | 경기 조작. `action` 은 engine 의 applyMatchAction 에 그대로 넘어간다 |
+| `leave` | — | 방을 종료하고 참가자 모두 로비로 이동한다. 대기·대전·모험에서 공통 |
 | `ping` | — | 연결 유지. 서버는 `pong` 으로 답한다 |
 
 `action` 예시:
@@ -35,6 +36,7 @@
 | `joined` | `room`, `you`, `token` | 방에 들어갔다. `you` 는 0 또는 1. `token` 은 localStorage 에 저장해 rejoin 에 쓴다 |
 | `state` | `view`, `opponent` | 상태가 바뀔 때마다. `view` = engine 의 `viewFor(match, you)`. `opponent` = `{ name, connected, isAi }` 또는 아직 없으면 `null` |
 | `error` | `message` | 잘못된 요청·조작. 한국어 문장 |
+| `left` | `message?` | 방 종료 확인. 클라이언트는 저장된 세션과 현재 화면 상태를 지우고 로비로 이동한다 |
 | `pong` | — | ping 응답 |
 
 ## view 의 주요 필드 (engine/view.js 참고)
@@ -71,3 +73,5 @@
 
 - `augments` 는 보유 증강 id 배열, `augmentChoices` 는 미선택 후보 id 배열(선택 후 빈 배열)이다. 증강 이름·등급·문구는 `/engine/index.js` 의 `getAugment(id)` 로 읽는다.
 - 보유 증강은 다음 전투의 `players[0].augmentIds` 에 반영한다. 후보는 서버에서 한 번 확정하며 재접속 시 유지한다.
+
+명시적 `leave`는 방과 해당 방의 모든 소켓 세션을 삭제하므로 이전 토큰으로 재접속할 수 없다. 다른 참가자에게는 상대 퇴장 안내를 보낸다. 네트워크 단절은 기존처럼 자리를 유지하여 `rejoin`할 수 있다.

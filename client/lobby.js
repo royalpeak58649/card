@@ -1,5 +1,6 @@
 // 로비 화면: 이름 입력, 방 만들기 / AI 연습 / 방 코드로 참가.
 import { loadSession } from './net.js';
+import { showGuide } from './dialogs.js';
 import { allCampaignIds, getCampaign } from '/engine/index.js';
 
 /** 이름 기억용 localStorage 키 */
@@ -50,6 +51,15 @@ export function renderLobby(root, net, state = {}) {
   const lobby = document.createElement('div');
   lobby.className = 'lobby';
 
+  const intro = document.createElement('section');
+  intro.className = 'lobby-intro';
+  const title = document.createElement('h1');
+  title.textContent = '당신의 한 수가, 전장을 바꾼다';
+  const description = document.createElement('p');
+  description.textContent = '카드를 모아 덱을 키우고, 별의 힘으로 강화하세요. 친구와의 대전부터 은빛 야수와의 모험까지, 나만의 전략을 펼칠 시간입니다.';
+  intro.append(title, description);
+  lobby.appendChild(intro);
+
   // 방을 만든 뒤라면 방 코드를 크게 보여준다.
   if (state.room) {
     const waiting = document.createElement('div');
@@ -60,6 +70,9 @@ export function renderLobby(root, net, state = {}) {
     code.textContent = state.room;
     waiting.appendChild(code);
     lobby.appendChild(waiting);
+    screen.appendChild(lobby);
+    root.appendChild(screen);
+    return;
   }
 
   const nameField = document.createElement('div');
@@ -90,14 +103,14 @@ export function renderLobby(root, net, state = {}) {
   createBtn.className = 'btn primary';
   createBtn.textContent = '방 만들기';
   createBtn.addEventListener('click', () => {
-    net.send({ t: 'create', name: currentName() });
+    showGuide({ mode: 'create', onStart: () => net.send({ t: 'create', name: currentName() }) });
   });
 
   const aiBtn = document.createElement('button');
   aiBtn.className = 'btn';
   aiBtn.textContent = 'AI 와 연습';
   aiBtn.addEventListener('click', () => {
-    net.send({ t: 'vsAi', name: currentName() });
+    showGuide({ mode: 'vsAi', onStart: () => net.send({ t: 'vsAi', name: currentName() }) });
   });
 
   createRow.append(createBtn, aiBtn);
@@ -125,7 +138,7 @@ export function renderLobby(root, net, state = {}) {
       roomInput.focus();
       return;
     }
-    net.send({ t: 'join', room, name: currentName() });
+    showGuide({ mode: 'join', onStart: () => net.send({ t: 'join', room, name: currentName() }) });
   });
   roomInput.addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter') joinBtn.click();
@@ -155,7 +168,7 @@ export function renderLobby(root, net, state = {}) {
     start.className = 'btn primary';
     start.textContent = '작전 시작';
     start.addEventListener('click', () => {
-      net.send({ t: 'campaign', campaignId: id, name: currentName() });
+      showGuide({ mode: 'campaign', onStart: () => net.send({ t: 'campaign', campaignId: id, name: currentName() }) });
     });
     card.append(name, desc, start);
     adventure.appendChild(card);

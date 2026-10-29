@@ -333,3 +333,62 @@ test('RoomManager: 없는 방, 가득 찬 방, 틀린 token', async () => {
   assert.equal(rooms.rooms.size, 0);
   await sleep(0);
 });
+
+test('leave: 대기 방을 삭제하고 재접속을 막으며 같은 연결에서 새 게임을 만든다', async () => {
+  const { wsUrl, close } = await boot();
+  const a = await connect(wsUrl);
+  try {
+    a.send({ t: 'create', name: '가' });
+    const old = await a.next('joined');
+    const waiting = await a.next('state');
+    assert.equal(waiting.view, null);
+    a.send({ t: 'leave' });
+    await a.next('left');
+    a.send({ t: 'action', action: { type: 'selectCharacter', characterId: 'hayun' } });
+    assert.match((await a.next('error')).message, /방에 들어가야/);
+    a.send({ t: 'rejoin', room: old.room, token: old.token });
+    assert.match((await a.next('error')).message, /방을 찾을 수 없습니다/);
+    a.send({ t: 'vsAi', name: '새 게임' });
+    await a.next('joined');
+    assert.equal((await a.next('state')).view.stage, 'select');
+    a.send({ t: 'leave' });
+    await a.next('left');
+    a.send({ t: 'campaign', campaignId: 'silverbeast', name: '모험' });
+    await a.next('joined');
+    assert.equal((await a.next('state')).campaign.status, 'battle');
+    a.send({ t: 'leave' });
+    await a.next('left');
+  } finally {
+    a.close();
+    await close();
+  }
+});
+
+test('leave: 상대도 방에서 나가며 이전 토큰·조작은 새 방에 영향을 주지 않는다', async () => {
+  const { wsUrl, close } = await boot();
+  const a = await connect(wsUrl);
+  const b = await connect(wsUrl);
+  try {
+    a.send({ t: 'create', name: '가' });
+    const old = await a.next('joined');
+    await a.next('state');
+    b.send({ t: 'join', room: old.room, name: '나' });
+    await b.next('joined');
+    await a.next('state');
+    await b.next('state');
+    a.send({ t: 'leave' });
+    await a.next('left');
+    assert.match((await b.next('left')).message, /상대.*종료/);
+    b.send({ t: 'action', action: { type: 'selectCharacter', characterId: 'hayun' } });
+    assert.match((await b.next('error')).message, /방에 들어가야/);
+    b.send({ t: 'create', name: '다시' });
+    await b.next('joined');
+    assert.equal((await b.next('state')).view, null);
+    a.send({ t: 'rejoin', room: old.room, token: old.token });
+    assert.match((await a.next('error')).message, /방을 찾을 수 없습니다/);
+  } finally {
+    a.close();
+    b.close();
+    await close();
+  }
+});

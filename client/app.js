@@ -1,13 +1,18 @@
 // 화면 전환과 서버 메시지 처리.
-import { connect } from './net.js';
+import { connect, clearSession } from './net.js';
 import { renderLobby } from './lobby.js';
 import { renderSelect, renderDraft } from './draft.js';
 import { renderCampaignHeader, renderCampaignResult } from './campaign.js';
 
+import { showGuide, confirmLeave } from './dialogs.js';
+import { showCodex } from './codex.js';
+import { createMusicControls } from './music.js';
+import { renderBattle } from './battle.js';
+
 const app = document.getElementById('app');
 
 /** @type {{ you: number|null, room: string|null, view: any, opponent: any, error: string|null,
- *  draftSelection?: string[], draftUpgraded?: boolean, render: () => void }} */
+ *  campaign: any, draftSelection?: string[], draftUpgraded?: boolean, leaveLobby?: () => void, render: () => void }} */
 const state = {
   you: null,
   room: null,
@@ -38,16 +43,10 @@ function render() {
     // 모험 모드: 상단 바 아래에 진행 막대와 이번 보스 소개를 붙인다.
     if (campaign) app.insertBefore(renderCampaignHeader(campaign), app.children[1] ?? null);
   } else {
-    // 대전 화면은 동적 import 로 불러온다.
-    import('/client/battle.js')
-      .then((mod) => {
-        app.textContent = '';
-        mod.renderBattle(app, state, net);
-      })
-      .catch((err) => {
-        showToast(`대전 화면을 불러오지 못했습니다: ${err && err.message ? err.message : err}`);
-      });
+    renderBattle(app, state, net);
   }
+  const leaveButton = document.getElementById('return-lobby');
+  if (leaveButton) leaveButton.hidden = !state.room;
   if (state.error) showToast(state.error);
 }
 
@@ -89,15 +88,22 @@ function onMessage(msg) {
       state.view = msg.view;
       state.campaign = msg.campaign || null;
       state.opponent = msg.opponent || null;
-      if (typeof msg.view.you === 'number') state.you = msg.view.you;
+      if (typeof msg.view?.you === 'number') state.you = msg.view.you;
       // 단계가 바뀌면 입고 화면의 임시 선택을 초기화한다.
-      if (msg.view.stage !== prevStage) {
+      if (msg.view?.stage !== prevStage) {
         state.draftSelection = [];
         state.draftUpgraded = false;
       }
       render();
       return;
     }
+    case 'left':
+      clearSession();
+      document.querySelectorAll('dialog.game-dialog').forEach((dialog) => dialog.close());
+      Object.assign(state, { you: null, room: null, view: null, campaign: null, opponent: null, error: null, draftSelection: [], draftUpgraded: false });
+      render();
+      if (msg.message) showToast(msg.message);
+      return;
     case 'error':
       state.error = msg.message || '오류가 발생했습니다';
       showToast(state.error);
@@ -109,5 +115,23 @@ function onMessage(msg) {
 }
 
 const net = connect(onMessage);
+state.leaveLobby = () => net.send({ t: 'leave' });
+const toolbar = document.createElement('nav');
+toolbar.className = 'game-toolbar';
+toolbar.setAttribute('aria-label', '게임 메뉴');
+for (const [label, action, id] of [
+  ['← 로비로', () => confirmLeave(state.leaveLobby, state.view?.stage === 'finished' && (!state.campaign || ['lost', 'cleared'].includes(state.campaign.status))), 'return-lobby'],
+  ['도감', showCodex, 'open-codex'],
+  ['플레이 가이드', () => showGuide(), 'open-guide'],
+]) {
+  const button = document.createElement('button');
+  button.className = 'btn small';
+  button.id = id;
+  button.textContent = label;
+  button.addEventListener('click', action);
+  toolbar.appendChild(button);
+}
+toolbar.appendChild(createMusicControls());
+app.before(toolbar);
 
 render();

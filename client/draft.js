@@ -1,6 +1,6 @@
 // 캐릭터 선택(stage 'select')와 카드 입고(stage 'draft') 화면.
-import { getCharacter, getFaction, getCandidates, allFactionIds } from '/engine/index.js';
-import { renderCard } from './cards.js';
+import { getCharacter, getFaction, getCandidates, allFactionIds, getCardDef } from '/engine/index.js';
+import { renderCard, cardTypeLabel } from './cards.js';
 
 /** 입고할 카드 종류 수 */
 const DRAFT_SIZE = 4;
@@ -248,9 +248,26 @@ export function renderDraft(root, state, net) {
   neutralTitle.textContent = '중립 거래소 카드';
   neutralPanel.appendChild(neutralTitle);
   const neutralRow = document.createElement('div');
-  neutralRow.className = 'card-row center';
+  neutralRow.className = 'draft-preview-list';
   for (const cardId of view.neutralIds || []) {
-    neutralRow.appendChild(renderCard(cardId, { mini: true, upgraded: showUpgraded }));
+    const def = getCardDef(cardId);
+    const preview = document.createElement('article');
+    preview.className = 'draft-preview';
+    const thumbnail = renderCard(cardId, { mini: true, upgraded: showUpgraded });
+    thumbnail.removeAttribute('role');
+    const info = document.createElement('div');
+    info.className = 'draft-preview-info';
+    const name = document.createElement('h3');
+    name.textContent = def.name;
+    const meta = document.createElement('div');
+    meta.className = 'draft-preview-meta';
+    meta.textContent = `${cardTypeLabel(def.type)} · ${def.cost}원${def.type === 'action' ? ` · 행동력 ${def.actionCost ?? 0}` : ''}`;
+    const effect = document.createElement('p');
+    effect.className = 'draft-preview-effect';
+    effect.textContent = `${showUpgraded ? '★ 강화' : '기본'} · ${showUpgraded && def.upgradedText ? def.upgradedText : def.text}`;
+    info.append(name, meta, effect);
+    preview.append(thumbnail, info);
+    neutralRow.appendChild(preview);
   }
   neutralPanel.appendChild(neutralRow);
   side.appendChild(neutralPanel);

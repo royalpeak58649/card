@@ -1,6 +1,7 @@
 // 모험 모드 화면: 스테이지 진행 표시, 스테이지 결과(승리·패배·클리어).
 import { getCharacter, getCardDef, getAugment } from '/engine/index.js';
 import { renderCard } from './cards.js';
+import { confirmLeave } from './dialogs.js';
 
 let cssLoaded = false;
 
@@ -214,14 +215,7 @@ export function renderCampaignResult(root, state, net) {
     buttons.appendChild(btn('처음부터 다시', 'btn primary', () => net.send({ t: 'action', action: { type: 'restart' } })));
   }
   buttons.appendChild(
-    btn('로비로', 'btn', () => {
-      try {
-        localStorage.removeItem('cardDuel.session');
-      } catch {
-        // 무시
-      }
-      location.reload();
-    }),
+    btn('로비로', 'btn', () => confirmLeave(state.leaveLobby, status === 'lost' || status === 'cleared')),
   );
   box.appendChild(buttons);
   screen.appendChild(box);

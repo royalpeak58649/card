@@ -20,6 +20,57 @@ docker compose --profile tunnel up -d --build   # + 공개 HTTPS 주소(Cloudfla
 docker compose logs tunnel | grep trycloudflare  # 주소 확인
 ```
 
+## Azure VM 배포(IP로 HTTP 접속)
+
+Azure VM의 NSG에서 TCP 22·80을 허용한다. 프로젝트 폴더의 `.env`에 `GAME_PORT=80`을 넣으면 compose 파일을 직접 수정하지 않고 80번 포트로 서비스할 수 있다. `.env`는 Git에서 제외된다.
+
+```bash
+cd ~/card
+# .env에 기존 설정이 있으면 GAME_PORT 항목만 추가/수정한다.
+printf 'GAME_PORT=80\n' > .env
+git pull --ff-only origin main
+docker compose up -d --build game
+curl -I --retry 10 --retry-all-errors --retry-delay 2 --max-time 5 http://127.0.0.1/
+```
+
+기존에 `docker-compose.yml`의 포트를 직접 수정했다면 먼저 백업한 뒤 `git restore docker-compose.yml`로 복원하고 업데이트한다. 이후에는 `git pull --ff-only origin main`과 `docker compose up -d --build game`만 실행하면 된다. 재시작 시 메모리에 있는 진행 중인 방은 초기화된다.
+
+## Azure VM 배포(도메인 + HTTPS)
+
+Azure VM의 NSG에서 TCP 22·80·443을 허용하고, 도메인의 A 레코드를 VM의 공인 IP로 지정한다. VM에 SSH로 접속한 뒤 Docker를 설치하고 저장소를 받아 실행한다.
+
+```bash
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl git
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker "$USER"
+newgrp docker
+
+git clone https://github.com/royalpeak58649/card.git
+cd card
+printf 'DOMAIN=game.example.com\nGAME_BIND=127.0.0.1\nGAME_PORT=8080\n' > .env   # 실제 도메인으로 변경
+docker compose --profile https up -d --build
+docker compose ps
+docker compose logs -f --tail=100 game caddy
+```
+
+`DOMAIN`의 DNS가 VM을 가리키고 80/443이 외부에서 접근 가능하면 Caddy가 인증서를 자동 발급한다. 브라우저에서 `https://game.example.com`으로 접속하고, WebSocket은 같은 HTTPS 주소의 `/ws`를 자동으로 사용한다. 배포 후 업데이트는 다음처럼 한다.
+
+```bash
+git pull --ff-only origin main
+docker compose --profile https up -d --build
+```
+
+문제 확인에는 `docker compose ps`, `docker compose logs game`, `docker compose logs caddy`, `curl -I https://game.example.com`을 사용한다.
+
+## 로비 · 도감 · BGM
+
+- 상단 메뉴에서 언제든 로비로 돌아갈 수 있다. 진행 중이면 확인 후 방을 종료하며 온라인 상대도 로비로 이동한다.
+- 도감에서 카드의 기본·강화 효과, 캐릭터, 보스, 증강을 검색한다. 카드에는 진영·종류 필터를 사용할 수 있다.
+- 각 모드 시작 전에 규칙과 모드 설명을 확인한다. 상단 플레이 가이드에서도 다시 볼 수 있다.
+- 오리지널 피아노 BGM 「별의 돌격」(138 BPM, 약 56초)이 첫 클릭 후 반복 재생된다. 음악 켜기·끄기와 볼륨은 저장되며, 다른 탭을 보는 동안에는 일시 정지한다.
+- BGM은 외부 샘플 없이 합성한 곡이다. 재생성: `node tools/makeBgm.js /path/to/ffmpeg` (libmp3lame 필요).
+
 ## 개발
 
 ```bash
