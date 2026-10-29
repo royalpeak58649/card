@@ -67,6 +67,7 @@ docker compose --profile https up -d --build
 
 - 상단 메뉴에서 언제든 로비로 돌아갈 수 있다. 진행 중이면 확인 후 방을 종료하며 온라인 상대도 로비로 이동한다.
 - 도감에서 카드의 기본·강화 효과, 캐릭터, 보스, 증강을 검색한다. 카드에는 진영·종류 필터를 사용할 수 있다.
+- 캐릭터별 AI 추천 입고 구성 2개를 카드 선택 화면에서 적용할 수 있다. 구성 적용 후 직접 수정하거나 확정한다. 조합과 운영법은 [추천 구성 문서](docs/RECOMMENDATIONS.md)에 정리돼 있다.
 - 각 모드 시작 전에 규칙과 모드 설명을 확인한다. 상단 플레이 가이드에서도 다시 볼 수 있다.
 - 오리지널 피아노 BGM 「별의 돌격」(138 BPM, 약 56초)이 첫 클릭 후 반복 재생된다. 음악 켜기·끄기와 볼륨은 저장되며, 다른 탭을 보는 동안에는 일시 정지한다.
 - BGM은 외부 샘플 없이 합성한 곡이다. 재생성: `node tools/makeBgm.js /path/to/ffmpeg` (libmp3lame 필요).
@@ -78,6 +79,7 @@ npm test                                   # 엔진·서버·클라이언트 테
 npm run sim -- --games 3000                # AI 끼리 대전시켜 승률 집계 (기본: 모의 실행 AI, 코어 수만큼 병렬)
 npm run sim -- --games 3000 --ai basic     # 규칙 기반 AI 로 비교
 npm run tune -- --chars all --iters 12 --games 120 --write   # 캐릭터별 카드 가치 재조정(약 50분)
+node tools/recommend.js                    # 캐릭터별 추천 구성 비교·검증 결과 생성
 npm run campaign-sim -- --games 200        # 증강 포함 스테이지별 승률(앞선 보상 무작위 선택)
 npm run campaign-sim -- --games 200 --no-augments # 증강 없이 비교
 ```

@@ -1,6 +1,7 @@
 // 캐릭터 선택(stage 'select')와 카드 입고(stage 'draft') 화면.
 import { getCharacter, getFaction, getCandidates, allFactionIds, getCardDef } from '/engine/index.js';
 import { renderCard, cardTypeLabel } from './cards.js';
+import { renderRecommendations } from './recommendations.js';
 
 /** 입고할 카드 종류 수 */
 const DRAFT_SIZE = 4;
@@ -165,6 +166,8 @@ export function renderDraft(root, state, net) {
   strong.textContent = `${DRAFT_SIZE}종류`;
   guide.append(strong, document.createTextNode('를 선택해주세요.'));
   main.appendChild(guide);
+  const recommendations = renderRecommendations(myPick.characterId, state, submitted);
+  if (recommendations) main.appendChild(recommendations);
 
   const candidates = myPick.characterId ? getCandidates(myPick.characterId) : [];
   const factionCardIds = myPick.characterId ? getFaction(getCharacter(myPick.characterId).factionId).cardIds : [];
