@@ -293,6 +293,11 @@ function playerSummary(player, opts = {}) {
   if ((player.debt ?? 0) > 0) {
     defense.appendChild(el('span', 'bt-debt', ` 💸 빚 ${player.debt}`));
   }
+  if (player.bleed === true) {
+    const bleed = el('span', 'bt-bleed', ' 🩸 출혈');
+    bleed.title = '피해를 입으면 추가 피해 1(행동카드 피해가 섞이면 2)을 입고 사라진다';
+    defense.appendChild(bleed);
+  }
 
   const namePanel = el('div', 'bt-name', characterName(player.characterId));
   const character = safeCharacter(player.characterId);
@@ -892,7 +897,11 @@ export function renderBattle(root, state, net) {
     choiceSelection = [];
   }
 
-  root.appendChild(el('div', 'topbar', view.stage === 'finished' ? '대전 종료' : '대전'));
+  const cp = state.campaign;
+  const title = cp
+    ? `${cp.name} · 스테이지 ${cp.stageIndex + 1} ${cp.stages[cp.stageIndex].name}`
+    : view.stage === 'finished' ? '대전 종료' : '대전';
+  root.appendChild(el('div', 'topbar', title));
 
   const screen = el('div', 'screen bt-screen');
   const board = el('div', 'bt-board');

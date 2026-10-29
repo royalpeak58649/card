@@ -11,6 +11,7 @@
 | `create` | `name` | 새 방을 만들고 0번 플레이어로 들어간다 |
 | `join` | `room`, `name` | 방 코드로 1번 플레이어로 들어간다 |
 | `vsAi` | `name` | AI 상대 방을 만들고 0번 플레이어로 들어간다(1번은 AI) |
+| `campaign` | `campaignId`, `name` | 모험 모드 방을 만들고 0번으로 들어간다(1번은 보스 AI). 조작은 `action` 으로 같은 방식 |
 | `rejoin` | `room`, `token` | 새로고침·재접속. 예전에 받은 token 으로 같은 자리에 다시 앉는다 |
 | `action` | `action` | 경기 조작. `action` 은 engine 의 applyMatchAction 에 그대로 넘어간다 |
 | `ping` | — | 연결 유지. 서버는 `pong` 으로 답한다 |
@@ -54,3 +55,15 @@
   - `trash`
 
 카드 이름·효과 문구·종류·구매가는 클라이언트가 `/engine/index.js` 의 `getCardDef(cardId)` 로 직접 얻는다(서버가 engine 폴더를 정적 파일로 제공). 캐릭터는 `getCharacter(id)`, 후보 카드는 `getCandidates(characterId)`, 현재 구매가는 `getPurchasePrice` 대신 view 로는 계산이 어려우므로 클라이언트에서 아래 규칙으로 표시만 한다: 기본가 + (surchargeFirst 가 있고 bought < surchargeFirst 면 +1) − marketDiscount(내 차례일 때) − 첫 무기 할인(하윤, 이번 차례 무기 미구매 시). 실제 판정은 서버.
+
+## 모험 모드
+
+- 시작: `{ "t": "campaign", "campaignId": "silverbeast", "name": "나" }`
+- `state` 메시지에 `campaign` 필드가 붙는다(`view` 는 지금 스테이지 경기, 형식은 일반 대전과 같음):
+  `{ campaignId, name, description, stageIndex, stageCount, status, augments, history, stages: [{ name, intro, bossId, bossName, bossMaxHp, cleared }] }`
+- `status`: `'battle'`(스테이지 진행 중) → `'stageWon'` / `'cleared'`(마지막 스테이지 승리) / `'lost'`(패배·무승부)
+- 조작(`action`):
+  - 스테이지 안: `selectCharacter`, `draft`, `game` — 일반 대전과 같다(플레이어는 항상 0번, 선공)
+  - `{ "type": "nextStage" }` — `stageWon` 에서 다음 스테이지로
+  - `{ "type": "restart" }` — `lost`·`cleared` 에서 1스테이지부터 다시
+- 보스 차례는 서버가 조작 직후 바로 진행한다.

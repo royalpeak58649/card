@@ -1,5 +1,6 @@
 // 로비 화면: 이름 입력, 방 만들기 / AI 연습 / 방 코드로 참가.
 import { loadSession } from './net.js';
+import { allCampaignIds, getCampaign } from '/engine/index.js';
 
 /** 이름 기억용 localStorage 키 */
 const NAME_KEY = 'cardDuel.name';
@@ -37,6 +38,12 @@ export function saveName(name) {
  * @returns {void}
  */
 export function renderLobby(root, net, state = {}) {
+  if (!document.querySelector('link[href="/client/campaign.css"]')) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '/client/campaign.css';
+    document.head.appendChild(link);
+  }
   const screen = document.createElement('div');
   screen.className = 'screen';
 
@@ -126,6 +133,34 @@ export function renderLobby(root, net, state = {}) {
   joinRow.append(roomInput, joinBtn);
   joinField.append(joinLabel, joinRow);
   lobby.appendChild(joinField);
+
+  // 모험 모드
+  const adventure = document.createElement('div');
+  adventure.className = 'lobby-adventure';
+  const advTitle = document.createElement('div');
+  advTitle.className = 'lobby-adventure-title';
+  advTitle.textContent = '모험 모드';
+  adventure.appendChild(advTitle);
+  for (const id of allCampaignIds()) {
+    const def = getCampaign(id);
+    const card = document.createElement('div');
+    card.className = 'lobby-adventure-card';
+    const name = document.createElement('div');
+    name.className = 'lobby-adventure-name';
+    name.textContent = def.name;
+    const desc = document.createElement('div');
+    desc.className = 'muted';
+    desc.textContent = `${def.description} (스테이지 ${def.stages.length}개)`;
+    const start = document.createElement('button');
+    start.className = 'btn primary';
+    start.textContent = '작전 시작';
+    start.addEventListener('click', () => {
+      net.send({ t: 'campaign', campaignId: id, name: currentName() });
+    });
+    card.append(name, desc, start);
+    adventure.appendChild(card);
+  }
+  lobby.appendChild(adventure);
 
   const session = loadSession();
   if (session) {

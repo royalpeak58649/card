@@ -1,0 +1,203 @@
+/* 모험 모드 */
+.cp-header {
+  max-width: 1080px;
+  margin: 16px auto 0;
+  padding: 16px 20px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #2c2a3d, #3b3550);
+  color: #f3f0fb;
+  box-shadow: 0 6px 18px rgba(30, 20, 60, 0.18);
+}
+.cp-title {
+  font-weight: 800;
+  font-size: 18px;
+  color: #d9d4ff;
+  margin-bottom: 10px;
+}
+.cp-track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 6px 0 14px;
+  overflow-x: auto;
+}
+.cp-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 72px;
+  opacity: 0.55;
+}
+.cp-node.current,
+.cp-node.cleared {
+  opacity: 1;
+}
+.cp-node-num {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  background: #4a4560;
+  border: 2px solid #8f88b3;
+}
+.cp-node.cleared .cp-node-num {
+  background: #3f8f5a;
+  border-color: #7fe0a0;
+}
+.cp-node.current .cp-node-num {
+  background: #b425d6;
+  border-color: #f0c2ff;
+  box-shadow: 0 0 0 4px rgba(180, 37, 214, 0.3);
+}
+.cp-node-name {
+  font-size: 11px;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+.cp-link {
+  flex: 1 1 24px;
+  min-width: 16px;
+  height: 3px;
+  background: #5c5675;
+  margin-bottom: 18px;
+}
+.cp-boss {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.cp-boss-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+}
+.cp-stage-label {
+  font-size: 12px;
+  color: #b8b2d6;
+}
+.cp-boss-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #e6ecff;
+}
+.cp-boss-hp {
+  color: #ff8f9c;
+  font-weight: 700;
+}
+.cp-intro {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #d6d1ee;
+}
+.cp-ability {
+  margin-top: 8px;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255, 120, 140, 0.14);
+  color: #ffd2d8;
+}
+.cp-boss-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.cp-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #b8b2d6;
+}
+.cp-result {
+  max-width: 720px;
+  margin: 24px auto;
+  padding: 24px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(30, 20, 60, 0.12);
+  text-align: center;
+}
+.cp-result .cp-track {
+  justify-content: center;
+}
+.cp-result .cp-node-name {
+  color: #2b2540;
+}
+.cp-result-title {
+  font-size: 32px;
+  font-weight: 900;
+  margin-top: 8px;
+}
+.cp-result-title.win {
+  color: #7a1ea8;
+}
+.cp-result-title.lose {
+  color: #c0392b;
+}
+.cp-result-sub {
+  margin-top: 6px;
+  color: #4a4360;
+}
+.cp-result-hp {
+  margin-top: 10px;
+  font-weight: 700;
+  color: #2b2540;
+}
+.cp-history {
+  margin: 14px auto 0;
+  max-width: 460px;
+  text-align: left;
+  font-size: 13px;
+  color: #4a4360;
+}
+.cp-history-row {
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+}
+.cp-buttons {
+  justify-content: center;
+  margin-top: 18px;
+  gap: 10px;
+}
+/* 로비의 모험 모드 */
+.lobby-adventure {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed #d5cfe8;
+}
+.lobby-adventure-title {
+  font-weight: 800;
+  color: #7a1ea8;
+  margin-bottom: 8px;
+}
+.lobby-adventure-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #2c2a3d, #3b3550);
+  color: #f3f0fb;
+}
+.lobby-adventure-card .muted {
+  color: #c9c3e2;
+}
+.lobby-adventure-name {
+  font-weight: 800;
+  font-size: 16px;
+}
+@media (max-width: 700px) {
+  .cp-header {
+    margin: 12px 16px 0;
+  }
+  .cp-result {
+    margin: 16px;
+  }
+}
+/* 어두운 머리말 안의 카드도 글자는 어둡게 */
+.cp-header .card {
+  color: #2b2540;
+}

@@ -2,6 +2,7 @@
 import { connect } from './net.js';
 import { renderLobby } from './lobby.js';
 import { renderSelect, renderDraft } from './draft.js';
+import { renderCampaignHeader, renderCampaignResult } from './campaign.js';
 
 const app = document.getElementById('app');
 
@@ -11,6 +12,7 @@ const state = {
   you: null,
   room: null,
   view: null,
+  campaign: null,
   opponent: null,
   error: null,
   render,
@@ -25,12 +27,16 @@ let toastTimer = null;
  */
 function render() {
   app.textContent = '';
+  const campaign = state.campaign;
   if (!state.view) {
-    renderLobby(app, net, { room: state.room, error: state.error });
-  } else if (state.view.stage === 'select') {
-    renderSelect(app, state, net);
-  } else if (state.view.stage === 'draft') {
-    renderDraft(app, state, net);
+    renderLobby(app, net, { room: campaign ? null : state.room, error: state.error });
+  } else if (campaign && campaign.status !== 'battle') {
+    renderCampaignResult(app, state, net);
+  } else if (state.view.stage === 'select' || state.view.stage === 'draft') {
+    if (state.view.stage === 'select') renderSelect(app, state, net);
+    else renderDraft(app, state, net);
+    // 모험 모드: 상단 바 아래에 진행 막대와 이번 보스 소개를 붙인다.
+    if (campaign) app.insertBefore(renderCampaignHeader(campaign), app.children[1] ?? null);
   } else {
     // 대전 화면은 동적 import 로 불러온다.
     import('/client/battle.js')
@@ -81,6 +87,7 @@ function onMessage(msg) {
     case 'state': {
       const prevStage = state.view ? state.view.stage : null;
       state.view = msg.view;
+      state.campaign = msg.campaign || null;
       state.opponent = msg.opponent || null;
       if (typeof msg.view.you === 'number') state.you = msg.view.you;
       // 단계가 바뀌면 입고 화면의 임시 선택을 초기화한다.

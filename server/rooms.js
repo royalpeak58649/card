@@ -1,7 +1,16 @@
 // 방 관리. 네트워크와 분리된 순수 로직이라 테스트하기 쉽다.
 import { randomInt, randomUUID } from 'node:crypto';
 
-import { applyMatchAction, createMatch, getCandidates, allCharacterIds } from '../engine/index.js';
+import {
+  applyMatchAction,
+  createMatch,
+  getCandidates,
+  allCharacterIds,
+  getCampaign,
+  createCampaign,
+  applyCampaignAction,
+  runEnemy,
+} from '../engine/index.js';
 import { chooseSmartAction } from '../engine/aiSmart.js';
 
 /** @typedef {import('../engine/match.js').MatchState} MatchState */
@@ -15,7 +24,8 @@ import { chooseSmartAction } from '../engine/aiSmart.js';
 /**
  * @typedef {{
  *  code: string, match: MatchState|null, seats: [Seat|null, Seat|null],
- *  vsAi: boolean, createdAt: number, lastActivity: number
+ *  vsAi: boolean, createdAt: number, lastActivity: number,
+ *  campaignId: string|null, campaign: any|null
  * }} Room
  */
 
@@ -67,19 +77,23 @@ export class RoomManager {
 
   /**
    * 새 방을 만든다. vsAi 면 1번 자리에 AI 를 앉힌다.
-   * @param {{ vsAi?: boolean }} [opts]
+   * campaignId 를 주면 모험 모드 방(1번 자리는 보스 AI)이 된다.
+   * @param {{ vsAi?: boolean, campaignId?: string|null }} [opts]
    * @returns {Room}
    */
-  createRoom({ vsAi = false } = {}) {
+  createRoom({ vsAi = false, campaignId = null } = {}) {
+    if (campaignId) getCampaign(campaignId);
     const now = Date.now();
     /** @type {Room} */
     const room = {
       code: this.#newCode(),
       match: null,
       seats: [null, null],
-      vsAi: Boolean(vsAi),
+      vsAi: Boolean(vsAi) || Boolean(campaignId),
       createdAt: now,
       lastActivity: now,
+      campaignId: campaignId ?? null,
+      campaign: null,
     };
     if (room.vsAi) {
       room.seats[1] = { name: 'AI', token: null, connected: true, isAi: true };
@@ -130,6 +144,14 @@ export class RoomManager {
    */
   act(code, you, action) {
     const room = this.#get(code);
+    if (room.campaign) {
+      if (you !== 0) throw new Error('모험 모드에서는 조작할 수 없습니다');
+      applyCampaignAction(room.campaign, action);
+      runEnemy(room.campaign, (game, p) => chooseSmartAction(game, p));
+      room.match = room.campaign.match;
+      this.#touch(room);
+      return room;
+    }
     if (!room.match) throw new Error('아직 경기가 시작되지 않았습니다');
     applyMatchAction(room.match, you, action);
     this.#touch(room);
@@ -220,6 +242,15 @@ export class RoomManager {
   #maybeStart(room) {
     if (room.match) return;
     if (room.seats.some((seat) => seat === null)) return;
+    if (room.campaignId) {
+      room.campaign = createCampaign({
+        seed: randomInt(2 ** 31),
+        campaignId: room.campaignId,
+        playerName: /** @type {Seat} */ (room.seats[0]).name,
+      });
+      room.match = room.campaign.match;
+      return;
+    }
     room.match = createMatch({
       seed: randomInt(2 ** 31),
       players: room.seats.map((seat, i) => ({

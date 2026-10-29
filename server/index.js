@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { WebSocketServer } from 'ws';
 
-import { viewFor } from '../engine/index.js';
+import { viewFor, campaignView } from '../engine/index.js';
 import { RoomManager } from './rooms.js';
 
 /** @typedef {import('./rooms.js').Room} Room */
@@ -155,6 +155,17 @@ export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
       const socket = sockets.get(seat.token);
       if (!socket) continue;
       const other = room.seats[1 - you];
+      if (room.campaign) {
+        // 모험 모드: 경기 화면은 그대로 쓰고, 캠페인 정보를 따로 보낸다.
+        const { match, ...campaign } = campaignView(room.campaign);
+        send(socket, {
+          t: 'state',
+          view: match,
+          campaign,
+          opponent: { name: match.players[1].name, connected: true, isAi: true },
+        });
+        continue;
+      }
       send(socket, {
         t: 'state',
         view: room.match ? viewFor(room.match, you) : null,
@@ -207,6 +218,12 @@ export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
         }
         case 'vsAi': {
           const room = rooms.createRoom({ vsAi: true });
+          const { you, token } = rooms.join(room.code, msg.name);
+          enter(socket, room, you, token);
+          return;
+        }
+        case 'campaign': {
+          const room = rooms.createRoom({ campaignId: String(msg.campaignId ?? '') });
           const { you, token } = rooms.join(room.code, msg.name);
           enter(socket, room, you, token);
           return;
