@@ -50,17 +50,18 @@ static func guide(host: Control, lead := "", on_start := Callable(), start_label
 	var row := UiKit.hbox(10)
 	row.alignment = BoxContainer.ALIGNMENT_END
 	col.add_child(row)
-	var overlay: Control
-	var close := func(): overlay.queue_free()
+	# 람다는 지역 변수를 값으로 잡으므로 창 노드는 배열에 담아 넘긴다.
+	var holder := [null]
+	var close := func(): holder[0].queue_free()
 	if on_start.is_null():
 		row.add_child(UiKit.button("닫기", close, true))
 	else:
 		row.add_child(UiKit.button("닫기", close))
 		row.add_child(UiKit.button(start_label, func():
-			overlay.queue_free()
+			holder[0].queue_free()
 			on_start.call(), true))
-	overlay = modal(host, "플레이 가이드", col, 720)
-	return overlay
+	holder[0] = modal(host, "플레이 가이드", col, 720)
+	return holder[0]
 
 
 static func confirm(host: Control, title: String, message: String, ok_label: String, on_ok: Callable) -> Control:
@@ -69,10 +70,10 @@ static func confirm(host: Control, title: String, message: String, ok_label: Str
 	var row := UiKit.hbox(10)
 	row.alignment = BoxContainer.ALIGNMENT_END
 	col.add_child(row)
-	var overlay: Control
-	row.add_child(UiKit.button("취소", func(): overlay.queue_free()))
+	var holder := [null]
+	row.add_child(UiKit.button("취소", func(): holder[0].queue_free()))
 	row.add_child(UiKit.button(ok_label, func():
-		overlay.queue_free()
+		holder[0].queue_free()
 		on_ok.call(), true))
-	overlay = modal(host, title, col, 480)
-	return overlay
+	holder[0] = modal(host, title, col, 480)
+	return holder[0]

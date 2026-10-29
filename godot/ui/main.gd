@@ -69,9 +69,10 @@ func _refresh() -> void:
 			_show_draft()
 		"playing", "finished":
 			if _screen_key != "battle" or _battle == null:
-				_battle = BattleScreen.new()
-				_battle.setup(self, session)
-				_set_screen(_battle, "battle")
+				var battle = BattleScreen.new()
+				battle.setup(self, session)
+				_set_screen(battle, "battle")
+				_battle = battle
 			_battle.render()
 
 
@@ -88,7 +89,7 @@ func confirm_leave() -> void:
 
 
 func _top_right_buttons() -> Array:
-	return [Settings.make_speed_picker(),
+	return [UiKit.settings().make_speed_picker(),
 		UiKit.button("플레이 가이드", func(): Dialogs.guide(self)),
 		UiKit.button("로비로", confirm_leave)]
 
@@ -97,7 +98,7 @@ func _top_right_buttons() -> Array:
 
 func _show_lobby() -> void:
 	var root := UiKit.vbox(0)
-	root.add_child(UiKit.top_bar("카드 대전", [Settings.make_speed_picker(), UiKit.button("플레이 가이드", func(): Dialogs.guide(self))]))
+	root.add_child(UiKit.top_bar("카드 대전", [UiKit.settings().make_speed_picker(), UiKit.button("플레이 가이드", func(): Dialogs.guide(self))]))
 	var center := CenterContainer.new()
 	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(center)
@@ -118,17 +119,17 @@ func _show_lobby() -> void:
 	card.add_child(inner)
 	inner.add_child(UiKit.bold("내 이름", 15, UiKit.MUTED))
 	var name_edit := LineEdit.new()
-	name_edit.text = Settings.player_name
+	name_edit.text = UiKit.settings().player_name
 	name_edit.max_length = 12
 	name_edit.placeholder_text = "이름"
 	inner.add_child(name_edit)
 
 	var start := UiKit.button("AI와 연습하기", func():
 		var n := name_edit.text.strip_edges()
-		Settings.player_name = n if n != "" else "나"
-		Settings._save()
+		UiKit.settings().player_name = n if n != "" else "나"
+		UiKit.settings()._save()
 		Dialogs.guide(self, "AI를 상대로 차례의 흐름을 익혀 보세요. 시간에 쫓기지 않고 카드 효과와 강화 조합을 연습할 수 있습니다.",
-			func(): session.start_vs_ai(Settings.player_name), "연습 시작"), true)
+			func(): session.start_vs_ai(UiKit.settings().player_name), "연습 시작"), true)
 	start.custom_minimum_size.y = 56
 	start.add_theme_font_size_override("font_size", 20)
 	inner.add_child(start)

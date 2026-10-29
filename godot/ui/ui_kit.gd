@@ -23,6 +23,11 @@ const FONT_HEAVY := preload("res://fonts/Pretendard-ExtraBold.otf")
 static var _theme: Theme
 
 
+## 자동 로드된 설정 노드(res://ui/settings.gd). 전역 이름 대신 실행 중에 찾는다.
+static func settings() -> Node:
+	return (Engine.get_main_loop() as SceneTree).root.get_node("Settings")
+
+
 static func box(bg: Color, border := Color.TRANSPARENT, border_w := 0, radius := 10, pad := 10) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg
@@ -98,6 +103,13 @@ static func theme() -> Theme:
 	t.set_type_variation("MutedLabel", "Label")
 	t.set_color("font_color", "MutedLabel", MUTED)
 	t.set_font_size("font_size", "MutedLabel", 14)
+
+	# 입력 칸
+	t.set_stylebox("normal", "LineEdit", box(Color.WHITE, Color("#c9c0e0"), 2, 10, 10))
+	t.set_stylebox("focus", "LineEdit", box(Color.TRANSPARENT, PURPLE, 2, 10, 10))
+	t.set_color("font_color", "LineEdit", INK)
+	t.set_color("font_placeholder_color", "LineEdit", MUTED)
+	t.set_color("caret_color", "LineEdit", PURPLE_DARK)
 
 	# 스크롤·툴팁·옵션
 	t.set_stylebox("panel", "TooltipPanel", box(INK, Color.TRANSPARENT, 0, 8, 8))

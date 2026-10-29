@@ -22,7 +22,7 @@ var _timer: SceneTreeTimer
 
 func _ready() -> void:
 	rng.randomize()
-	Settings.ai_speed_changed.connect(func(_s): _schedule_ai())
+	UiKit.settings().ai_speed_changed.connect(func(_s): _schedule_ai())
 
 
 func _exit_tree() -> void:
@@ -108,7 +108,7 @@ func _schedule_ai() -> void:
 	if not ai_turn() or _thinking or _timer != null:
 		return
 	var gen := _generation
-	var t := get_tree().create_timer(Settings.ai_delay())
+	var t := get_tree().create_timer(UiKit.settings().ai_delay())
 	_timer = t
 	t.timeout.connect(func():
 		if _timer == t:

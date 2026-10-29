@@ -67,7 +67,6 @@ func render() -> void:
 
 	# 덮개(선택 창·강화 비교·버린 더미·결과)
 	_overlay_layer = Control.new()
-	_overlay_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_overlay_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_overlay_layer.top_level = true
 	_overlay_layer.size = get_viewport_rect().size
@@ -170,7 +169,7 @@ func _display_price(g: Dictionary, card_id: String, my_turn: bool) -> int:
 
 func _market_panel(g: Dictionary, me: Dictionary, you: int, my_turn: bool, can_act: bool) -> PanelContainer:
 	var p := UiKit.panel("WhitePanel")
-	p.custom_minimum_size.x = 470
+	p.custom_minimum_size.x = 400
 	var col := UiKit.vbox(6)
 	p.add_child(col)
 	var head := UiKit.hbox(8)
@@ -197,24 +196,67 @@ func _market_panel(g: Dictionary, me: Dictionary, you: int, my_turn: bool, can_a
 				ids.append(id)
 		if ids.is_empty():
 			continue
-		inner.add_child(UiKit.bold(GameData.type_label(type), 14, UiKit.MUTED))
-		var flow := HFlowContainer.new()
-		flow.add_theme_constant_override("h_separation", 6)
-		flow.add_theme_constant_override("v_separation", 6)
-		inner.add_child(flow)
+		inner.add_child(UiKit.bold(GameData.type_label(type), 13, UiKit.MUTED))
 		for cid in ids:
 			var id: String = cid
 			var slot: Dictionary = g["market"][id]
 			var price := _display_price(g, id, my_turn)
 			var sold_out := int(slot["count"]) <= 0
 			var affordable: bool = can_act and g["phase"] == "buy" and int(me["buys"]) >= 1 and int(me["coins"]) >= price and not debt_blocked and Rules.can_buy_cards(g, you)
-			var cv := CardView.make(id, {"mini": true, "price": price, "badge": "%d장" % int(slot["count"]),
-				"disabled": sold_out or not affordable, "note": "매진" if sold_out else ""})
-			if not sold_out and not affordable:
-				cv.modulate = Color(1, 1, 1, 0.78)
-			cv.pressed.connect(func(_c): _send({"type": "buy", "cardId": id}))
-			flow.add_child(cv)
+			inner.add_child(_market_row(id, price, int(slot["count"]), sold_out, affordable))
 	return p
+
+
+func _market_row(id: String, price: int, count: int, sold_out: bool, affordable: bool) -> Control:
+	var cdef := GameData.card(id)
+	var type: String = cdef["type"]
+	var bg: Color = UiKit.TYPE_BG.get(type, Color.WHITE)
+	var border: Color = UiKit.TYPE_BORDER.get(type, UiKit.MUTED)
+	var b := Button.new()
+	b.focus_mode = Control.FOCUS_NONE
+	b.custom_minimum_size.y = 46
+	b.disabled = sold_out or not affordable
+	b.add_theme_stylebox_override("normal", UiKit.box(bg, border, 2, 10, 6))
+	b.add_theme_stylebox_override("hover", UiKit.box(bg.lightened(0.3), UiKit.PURPLE, 3, 10, 6))
+	b.add_theme_stylebox_override("pressed", UiKit.box(bg.darkened(0.08), UiKit.PURPLE_DARK, 3, 10, 6))
+	b.add_theme_stylebox_override("disabled", UiKit.box(bg, border.lerp(Color.WHITE, 0.5), 2, 10, 6))
+	if not b.disabled:
+		b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	b.tooltip_text = CardView.tooltip_for(cdef)
+	b.pressed.connect(func(): _send({"type": "buy", "cardId": id}))
+	var row := UiKit.hbox(8)
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_KEEP_SIZE, 8)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(row)
+	var fade := 0.45 if (sold_out or not affordable) else 1.0
+	var flag := "행동 %d" % int(Rules.nz(cdef.get("actionCost"), 0)) if type == "action" else GameData.type_label(type)
+	var chip := CardView._chip(flag, border, Color.WHITE if type != "money" else UiKit.INK, 12)
+	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(chip)
+	var texts := UiKit.vbox(0)
+	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	texts.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var nm := UiKit.bold(cdef["name"], 15, UiKit.INK)
+	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texts.add_child(nm)
+	var tx := UiKit.label(cdef.get("text", ""), "", 12, UiKit.MUTED)
+	tx.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	tx.clip_text = true
+	tx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texts.add_child(tx)
+	row.add_child(texts)
+	var price_l := UiKit.bold("매진" if sold_out else "%d원" % price, 16, UiKit.RED if sold_out else UiKit.INK)
+	price_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if price != int(cdef["cost"]) and not sold_out:
+		price_l.add_theme_color_override("font_color", UiKit.PURPLE_DARK)
+	row.add_child(price_l)
+	var cnt := UiKit.label("%d장" % count, "", 12, UiKit.MUTED)
+	cnt.custom_minimum_size.x = 30
+	cnt.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	cnt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(cnt)
+	row.modulate = Color(1, 1, 1, fade)
+	return b
 
 
 # ─────────────────────────── 가운데 판 · 기록 ───────────────────────────
@@ -629,7 +671,7 @@ func _finished_overlay(v: Dictionary, g: Dictionary, you: int) -> void:
 	col.add_child(hp)
 	var row := UiKit.hbox(12)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_child(UiKit.button("다시 하기", func(): session.start_vs_ai(Settings.player_name)))
+	row.add_child(UiKit.button("다시 하기", func(): session.start_vs_ai(UiKit.settings().player_name)))
 	row.add_child(UiKit.button("로비로", app.go_lobby, true))
 	col.add_child(row)
 	_modal("", col, 520)

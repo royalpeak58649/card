@@ -5,8 +5,8 @@ extends PanelContainer
 signal pressed(card_view: CardView)
 signal star_pressed(card_view: CardView)
 
-const SIZE_NORMAL := Vector2(138, 196)
-const SIZE_MINI := Vector2(104, 146)
+const SIZE_NORMAL := Vector2(128, 176)
+const SIZE_MINI := Vector2(98, 136)
 
 var card_id := ""
 var uid := ""
@@ -123,15 +123,15 @@ func _build() -> void:
 		bottom.add_child(UiKit.spacer())
 		bottom.add_child(_chip(extra_note, UiKit.RED, Color.WHITE, 11))
 
-	tooltip_text = _tooltip(cdef)
+	tooltip_text = tooltip_for(cdef)
 
 
 static func TYPE_BORDER(type: String) -> Color:
 	return UiKit.TYPE_BORDER.get(type, UiKit.MUTED)
 
 
-func _tooltip(cdef: Dictionary) -> String:
-	var s := "%s (%s · %d원" % [cdef.get("name", card_id), GameData.type_label(cdef.get("type", "")), int(cdef.get("cost", 0))]
+static func tooltip_for(cdef: Dictionary) -> String:
+	var s := "%s (%s · %d원" % [cdef.get("name", ""), GameData.type_label(cdef.get("type", "")), int(cdef.get("cost", 0))]
 	if cdef.get("type") == "action":
 		s += " · 행동력 %d" % int(Rules.nz(cdef.get("actionCost"), 0))
 	s += ")\n기본: %s" % cdef.get("text", "")

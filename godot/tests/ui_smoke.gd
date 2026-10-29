@@ -20,7 +20,11 @@ func _initialize() -> void:
 			character = args[i + 1]
 	if shots_dir != "":
 		DirAccess.make_dir_recursive_absolute(shots_dir)
-	Settings.ai_speed = "veryFast"
+	var settings = root.get_node_or_null("Settings")
+	if settings != null:
+		settings.set_ai_speed("veryFast")
+	else:
+		printerr("Settings 자동 로드가 없습니다")
 	var scene: PackedScene = load("res://scenes/main.tscn")
 	main = scene.instantiate()
 	root.add_child(main)
@@ -78,7 +82,7 @@ func _run() -> void:
 		_fail("캐릭터 선택 단계가 아닙니다: " + session.stage())
 		return
 
-	var cid := character if character != "" else GameData.all_character_ids()[randi() % 12]
+	var cid: String = character if character != "" else GameData.all_character_ids()[randi() % 12]
 	session.act({"type": "selectCharacter", "characterId": cid})
 	await _wait()
 	if session.stage() != "draft":
