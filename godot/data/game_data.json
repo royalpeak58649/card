@@ -1,0 +1,4297 @@
+{
+ "version": 1,
+ "cards": {
+  "stone": {
+   "id": "stone",
+   "text": "+1원",
+   "name": "돌",
+   "type": "money",
+   "cost": 0,
+   "basic": true,
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 1
+    }
+   ]
+  },
+  "silver": {
+   "id": "silver",
+   "text": "+2원",
+   "name": "은괴",
+   "type": "money",
+   "cost": 3,
+   "basic": true,
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    }
+   ]
+  },
+  "gold": {
+   "id": "gold",
+   "text": "+3원",
+   "name": "금괴",
+   "type": "money",
+   "cost": 6,
+   "basic": true,
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 3
+    }
+   ]
+  },
+  "pistol": {
+   "id": "pistol",
+   "text": "1 피해",
+   "name": "권총",
+   "type": "weapon",
+   "cost": 0,
+   "basic": true,
+   "effects": [
+    {
+     "op": "damage",
+     "n": 1
+    }
+   ]
+  },
+  "rifle": {
+   "id": "rifle",
+   "text": "3 피해",
+   "name": "소총",
+   "type": "weapon",
+   "cost": 5,
+   "basic": true,
+   "surchargeFirst": 2,
+   "effects": [
+    {
+     "op": "damage",
+     "n": 3
+    }
+   ]
+  },
+  "assaultRifle": {
+   "id": "assaultRifle",
+   "text": "5 피해",
+   "name": "돌격소총",
+   "type": "weapon",
+   "cost": 8,
+   "basic": true,
+   "surchargeFirst": 2,
+   "effects": [
+    {
+     "op": "damage",
+     "n": 5
+    }
+   ]
+  },
+  "s8_supplyOrder": {
+   "id": "s8_supplyOrder",
+   "name": "보급 지령",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 2,
+   "text": "+1 카드, +1원",
+   "upgradedText": "+1 카드, +1 행동력, +1원",
+   "effects": [
+    {
+     "op": "draw",
+     "n": 1
+    },
+    {
+     "op": "gainCoins",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "draw",
+     "n": 1
+    },
+    {
+     "op": "gainActions",
+     "n": 1
+    },
+    {
+     "op": "gainCoins",
+     "n": 1
+    }
+   ]
+  },
+  "s8_logistics": {
+   "id": "s8_logistics",
+   "name": "군수 전환",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 4,
+   "text": "손에서 재화카드 1장을 제거할 수 있다. 그렇게 했다면 그 카드보다 구매가가 3 높은 한도 내의 무기카드 1장을 거래소에서 손으로 얻는다",
+   "upgradedText": "제거 대신 버려도 된다. 한도 +4",
+   "effects": [
+    {
+     "op": "exchangeForWeapon",
+     "plus": 3,
+     "allowDiscard": false
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "exchangeForWeapon",
+     "plus": 4,
+     "allowDiscard": true
+    }
+   ]
+  },
+  "s8_opFunds": {
+   "id": "s8_opFunds",
+   "name": "작전 자금",
+   "type": "money",
+   "cost": 5,
+   "text": "+2원. 이번 차례 무기카드를 구매하면 +1원을 돌려받는다",
+   "upgradedText": "+3원, +1 구매, 이번 차례 무기카드를 구매하면 +1원을 돌려받는다",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "addMod",
+     "key": "weaponBuyRefund",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 3
+    },
+    {
+     "op": "gainBuys",
+     "n": 1
+    },
+    {
+     "op": "addMod",
+     "key": "weaponBuyRefund",
+     "n": 1
+    }
+   ]
+  },
+  "s8_maintenance": {
+   "id": "s8_maintenance",
+   "name": "정비 교대",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "버린 더미의 무기카드 1장을 뽑을 덱 맨 위에 둔다",
+   "upgradedText": "버린 더미의 무기카드 1장을 손으로 가져온다",
+   "effects": [
+    {
+     "op": "retrieveFromDiscard",
+     "n": 1,
+     "filter": "weapon",
+     "to": "deckTop",
+     "min": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "retrieveFromDiscard",
+     "n": 1,
+     "filter": "weapon",
+     "to": "hand",
+     "min": 1
+    }
+   ]
+  },
+  "s8_serviceSmg": {
+   "id": "s8_serviceSmg",
+   "name": "제식 기관단총",
+   "type": "weapon",
+   "cost": 5,
+   "text": "2 피해. 이번 차례 재화카드를 3장 이상 냈다면 +2 피해",
+   "upgradedText": "3 피해. 이번 차례 재화카드를 3장 이상 냈다면 +2 피해",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "moneyPlayed",
+      "gte": 3
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 2
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 3
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "moneyPlayed",
+      "gte": 3
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 2
+      }
+     ]
+    }
+   ]
+  },
+  "s8_emergencyProc": {
+   "id": "s8_emergencyProc",
+   "name": "긴급 조달",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 3,
+   "text": "거래소에서 구매가 5 이하 무기카드 1장을 얻어 뽑을 덱 맨 위에 둔다",
+   "upgradedText": "거래소에서 구매가 8 이하 무기카드 1장을 얻어 뽑을 덱 맨 위에 둔다",
+   "effects": [
+    {
+     "op": "gainFromMarket",
+     "filter": "weapon",
+     "maxCost": 5,
+     "to": "deckTop"
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainFromMarket",
+     "filter": "weapon",
+     "maxCost": 8,
+     "to": "deckTop"
+    }
+   ]
+  },
+  "s8_budget": {
+   "id": "s8_budget",
+   "name": "예산 집행",
+   "type": "money",
+   "cost": 4,
+   "text": "+2원. 손에 무기카드가 없다면 +1 카드",
+   "upgradedText": "+3원, +1 카드",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "if",
+     "cond": {
+      "handHasNoType": "weapon"
+     },
+     "then": [
+      {
+       "op": "draw",
+       "n": 1
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 3
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ]
+  },
+  "s8_depot": {
+   "id": "s8_depot",
+   "name": "보급 창고",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 6,
+   "text": "+1 구매. 이번 차례 무기카드를 2장 이상 구매했다면 차례 끝에 별 +1",
+   "upgradedText": "+2 구매. 이번 차례 무기카드를 2장 이상 구매했다면 차례 끝에 별 +1",
+   "effects": [
+    {
+     "op": "gainBuys",
+     "n": 1
+    },
+    {
+     "op": "addEndTrigger",
+     "cond": {
+      "stat": "boughtWeapons",
+      "gte": 2
+     },
+     "effects": [
+      {
+       "op": "gainStars",
+       "n": 1
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainBuys",
+     "n": 2
+    },
+    {
+     "op": "addEndTrigger",
+     "cond": {
+      "stat": "boughtWeapons",
+      "gte": 2
+     },
+     "effects": [
+      {
+       "op": "gainStars",
+       "n": 1
+      }
+     ]
+    }
+   ]
+  },
+  "s8_breakthrough": {
+   "id": "s8_breakthrough",
+   "name": "돌파 명령",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 3,
+   "text": "+1 카드. 이번 공격단계에 무기카드 1장당 +1 피해 (최대 +3)",
+   "upgradedText": "+1 카드. 이번 공격단계에 무기카드 1장당 +1 피해",
+   "effects": [
+    {
+     "op": "draw",
+     "n": 1
+    },
+    {
+     "op": "addAttackBonus",
+     "perWeapon": 1,
+     "cap": 3
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "draw",
+     "n": 1
+    },
+    {
+     "op": "addAttackBonus",
+     "perWeapon": 1
+    }
+   ]
+  },
+  "s8_loot": {
+   "id": "s8_loot",
+   "name": "전리품 회수",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 4,
+   "text": "이번 차례 상대에게 8 이상 피해를 줬다면 차례 끝에 금괴 1장을 얻는다",
+   "upgradedText": "이번 차례 상대에게 5 이상 피해를 줬다면 차례 끝에 금괴 1장을 얻는다",
+   "effects": [
+    {
+     "op": "addEndTrigger",
+     "cond": {
+      "stat": "damageDealt",
+      "gte": 8
+     },
+     "effects": [
+      {
+       "op": "gainCard",
+       "cardId": "gold",
+       "to": "discard"
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "addEndTrigger",
+     "cond": {
+      "stat": "damageDealt",
+      "gte": 5
+     },
+     "effects": [
+      {
+       "op": "gainCard",
+       "cardId": "gold",
+       "to": "discard"
+      }
+     ]
+    }
+   ]
+  },
+  "s8_heavyMg": {
+   "id": "s8_heavyMg",
+   "name": "중기관총",
+   "type": "weapon",
+   "cost": 7,
+   "text": "1 피해. 이번 차례 낸 무기카드 1장당 +1 피해",
+   "upgradedText": "2 피해. 이번 차례 낸 무기카드 1장당 +1 피해",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 1
+    },
+    {
+     "op": "addAttackBonus",
+     "perWeapon": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "addAttackBonus",
+     "perWeapon": 1
+    }
+   ]
+  },
+  "s8_trench": {
+   "id": "s8_trench",
+   "name": "참호 구축",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "방어 +3",
+   "upgradedText": "방어 +5, +1 카드",
+   "effects": [
+    {
+     "op": "addDefense",
+     "n": 3
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "addDefense",
+     "n": 5
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ]
+  },
+  "s8_suppress": {
+   "id": "s8_suppress",
+   "name": "제압 사격",
+   "type": "weapon",
+   "cost": 5,
+   "text": "2 피해. 이번 차례 방어를 얻었다면 +2 피해",
+   "upgradedText": "3 피해. 이번 차례 방어를 얻었다면 +2 피해",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "defenseGained",
+      "gte": 1
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 2
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 3
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "defenseGained",
+      "gte": 1
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 2
+      }
+     ]
+    }
+   ]
+  },
+  "s8_cutSupply": {
+   "id": "s8_cutSupply",
+   "name": "보급선 차단",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 5,
+   "text": "상대의 뽑을 덱 맨 위 2장을 버리게 한다. +1원",
+   "upgradedText": "3장, +1원",
+   "effects": [
+    {
+     "op": "opponentMillTop",
+     "n": 2
+    },
+    {
+     "op": "gainCoins",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "opponentMillTop",
+     "n": 3
+    },
+    {
+     "op": "gainCoins",
+     "n": 1
+    }
+   ]
+  },
+  "nu_synapse": {
+   "id": "nu_synapse",
+   "name": "시냅스 점화",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 2,
+   "text": "+1 행동력, +1 카드",
+   "upgradedText": "+2 행동력, +1 카드",
+   "effects": [
+    {
+     "op": "gainActions",
+     "n": 1
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainActions",
+     "n": 2
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ]
+  },
+  "nu_sync": {
+   "id": "nu_sync",
+   "name": "신경망 동기화",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 4,
+   "text": "+2 카드. 이번 차례 행동카드를 3장 이상 냈다면 +1 행동력",
+   "upgradedText": "+2 카드. 이번 차례 행동카드를 3장 이상 냈다면 +2 행동력",
+   "effects": [
+    {
+     "op": "draw",
+     "n": 2
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "actionsPlayed",
+      "gte": 3
+     },
+     "then": [
+      {
+       "op": "gainActions",
+       "n": 1
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "draw",
+     "n": 2
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "actionsPlayed",
+      "gte": 3
+     },
+     "then": [
+      {
+       "op": "gainActions",
+       "n": 2
+      }
+     ]
+    }
+   ]
+  },
+  "nu_overload": {
+   "id": "nu_overload",
+   "name": "과부하",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "이번 차례 낸 행동카드 1장당 +1원 (최대 4)",
+   "upgradedText": "이번 차례 낸 행동카드 1장당 +1원 (최대 6)",
+   "effects": [
+    {
+     "op": "gainCoinsPerStat",
+     "stat": "actionsPlayed",
+     "per": 1,
+     "max": 4
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoinsPerStat",
+     "stat": "actionsPlayed",
+     "per": 1,
+     "max": 6
+    }
+   ]
+  },
+  "nu_recursion": {
+   "id": "nu_recursion",
+   "name": "재귀 호출",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 4,
+   "text": "+1 행동력. 버린 더미의 행동카드 1장을 손으로 가져온다",
+   "upgradedText": "+1 행동력. 버린 더미의 행동카드 2장을 손으로 가져온다",
+   "effects": [
+    {
+     "op": "gainActions",
+     "n": 1
+    },
+    {
+     "op": "retrieveFromDiscard",
+     "n": 1,
+     "filter": "action",
+     "to": "hand",
+     "min": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainActions",
+     "n": 1
+    },
+    {
+     "op": "retrieveFromDiscard",
+     "n": 2,
+     "filter": "action",
+     "to": "hand",
+     "min": 1
+    }
+   ]
+  },
+  "nu_emp": {
+   "id": "nu_emp",
+   "name": "전자기 펄스",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 5,
+   "dealsDamage": true,
+   "text": "2 피해. 이번 차례 행동카드를 4장 이상 냈다면 +2 피해",
+   "upgradedText": "3 피해. 이번 차례 행동카드를 4장 이상 냈다면 +2 피해",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "actionsPlayed",
+      "gte": 4
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 2
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 3
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "actionsPlayed",
+      "gte": 4
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 2
+      }
+     ]
+    }
+   ]
+  },
+  "nu_barrage": {
+   "id": "nu_barrage",
+   "name": "난사 프로토콜",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 4,
+   "text": "+2 행동력, +1 카드",
+   "upgradedText": "+2 행동력, +2 카드",
+   "effects": [
+    {
+     "op": "gainActions",
+     "n": 2
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainActions",
+     "n": 2
+    },
+    {
+     "op": "draw",
+     "n": 2
+    }
+   ]
+  },
+  "nu_runaway": {
+   "id": "nu_runaway",
+   "name": "폭주 연산",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "+1 행동력. 이번 차례 행동카드를 3장 이상 냈다면 +2 카드",
+   "upgradedText": "+1 행동력. 이번 차례 행동카드를 2장 이상 냈다면 +2 카드",
+   "effects": [
+    {
+     "op": "gainActions",
+     "n": 1
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "actionsPlayed",
+      "gte": 3
+     },
+     "then": [
+      {
+       "op": "draw",
+       "n": 2
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainActions",
+     "n": 1
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "actionsPlayed",
+      "gte": 2
+     },
+     "then": [
+      {
+       "op": "draw",
+       "n": 2
+      }
+     ]
+    }
+   ]
+  },
+  "nu_chain": {
+   "id": "nu_chain",
+   "name": "연쇄 반응",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 5,
+   "text": "이번 차례 낸 행동카드 1장당 +1 피해 (공격 끝에 계산, 최대 +5). 4장 이상이면 차례 끝에 별 +1",
+   "upgradedText": "같은 효과, +1 카드",
+   "effects": [
+    {
+     "op": "addAttackBonus",
+     "perAction": 1,
+     "cap": 5
+    },
+    {
+     "op": "addEndTrigger",
+     "cond": {
+      "stat": "actionsPlayed",
+      "gte": 4
+     },
+     "effects": [
+      {
+       "op": "gainStars",
+       "n": 1
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "draw",
+     "n": 1
+    },
+    {
+     "op": "addAttackBonus",
+     "perAction": 1,
+     "cap": 5
+    },
+    {
+     "op": "addEndTrigger",
+     "cond": {
+      "stat": "actionsPlayed",
+      "gte": 4
+     },
+     "effects": [
+      {
+       "op": "gainStars",
+       "n": 1
+      }
+     ]
+    }
+   ]
+  },
+  "nu_thought": {
+   "id": "nu_thought",
+   "name": "사고 전파",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 3,
+   "dealsDamage": true,
+   "text": "2 피해, +1 행동력",
+   "upgradedText": "3 피해, +1 행동력",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "gainActions",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 3
+    },
+    {
+     "op": "gainActions",
+     "n": 1
+    }
+   ]
+  },
+  "nu_brainwave": {
+   "id": "nu_brainwave",
+   "name": "뇌파 공격",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 5,
+   "dealsDamage": true,
+   "text": "4 피해, +1 카드",
+   "upgradedText": "5 피해, +1 카드, +1 행동력",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 4
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 5
+    },
+    {
+     "op": "draw",
+     "n": 1
+    },
+    {
+     "op": "gainActions",
+     "n": 1
+    }
+   ]
+  },
+  "nu_resonance": {
+   "id": "nu_resonance",
+   "name": "공명",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 5,
+   "dealsDamage": true,
+   "text": "이번 차례 낸 행동카드 1장당 +1 피해 (최대 +5)",
+   "upgradedText": "최대 +7",
+   "effects": [
+    {
+     "op": "addAttackBonus",
+     "perAction": 1,
+     "cap": 5
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "addAttackBonus",
+     "perAction": 1,
+     "cap": 7
+    }
+   ]
+  },
+  "nu_mirror": {
+   "id": "nu_mirror",
+   "name": "미러 프로토콜",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 5,
+   "text": "이번 차례 직전에 낸 행동카드의 효과를 한 번 더 발동한다",
+   "upgradedText": "같은 효과, +1 행동력",
+   "effects": [
+    {
+     "op": "repeatPrevAction"
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "repeatPrevAction"
+    },
+    {
+     "op": "gainActions",
+     "n": 1
+    }
+   ]
+  },
+  "nu_loopback": {
+   "id": "nu_loopback",
+   "name": "루프백",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "+1 행동력. 버린 더미의 행동카드 1장을 뽑을 덱 맨 위에 둔다",
+   "upgradedText": "+1 행동력. 그 카드를 손으로 가져온다",
+   "effects": [
+    {
+     "op": "gainActions",
+     "n": 1
+    },
+    {
+     "op": "retrieveFromDiscard",
+     "n": 1,
+     "filter": "action",
+     "to": "deckTop",
+     "min": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainActions",
+     "n": 1
+    },
+    {
+     "op": "retrieveFromDiscard",
+     "n": 1,
+     "filter": "action",
+     "to": "hand",
+     "min": 1
+    }
+   ]
+  },
+  "nu_reverb": {
+   "id": "nu_reverb",
+   "name": "잔향",
+   "type": "money",
+   "cost": 4,
+   "text": "+1원. 이번 차례 같은 이름의 행동카드를 2장 이상 냈다면 +3원",
+   "upgradedText": "+2원. 같은 조건 +3원",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 1
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "maxSameAction",
+      "gte": 2
+     },
+     "then": [
+      {
+       "op": "gainCoins",
+       "n": 3
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "maxSameAction",
+      "gte": 2
+     },
+     "then": [
+      {
+       "op": "gainCoins",
+       "n": 3
+      }
+     ]
+    }
+   ]
+  },
+  "lg_offering": {
+   "id": "lg_offering",
+   "name": "별빛 헌금",
+   "type": "money",
+   "cost": 4,
+   "text": "+1원, 별 +1",
+   "upgradedText": "+2원, 별 +1",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 1
+    },
+    {
+     "op": "gainStars",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "gainStars",
+     "n": 1
+    }
+   ]
+  },
+  "lg_ritual": {
+   "id": "lg_ritual",
+   "name": "성좌 의식",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "별 +1. 이번 차례 별을 쓴 적 있다면 +1 카드",
+   "upgradedText": "별 +1, +1 카드",
+   "effects": [
+    {
+     "op": "gainStars",
+     "n": 1
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "starsSpent",
+      "gte": 1
+     },
+     "then": [
+      {
+       "op": "draw",
+       "n": 1
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainStars",
+     "n": 1
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ]
+  },
+  "lg_blessing": {
+   "id": "lg_blessing",
+   "name": "별의 축복",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 4,
+   "text": "손패 1장을 별 없이 일시 강화한다",
+   "upgradedText": "손패 2장을 별 없이 일시 강화한다",
+   "effects": [
+    {
+     "op": "freeUpgrade",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "freeUpgrade",
+     "n": 2
+    }
+   ]
+  },
+  "lg_meteor": {
+   "id": "lg_meteor",
+   "name": "유성 낙하",
+   "type": "weapon",
+   "cost": 5,
+   "dealsDamage": true,
+   "text": "2 피해. 별 1개를 써서 +3 피해 할 수 있다",
+   "upgradedText": "3 피해. 별 1개를 써서 +3 피해 할 수 있다",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "payStars",
+     "n": 1,
+     "then": [
+      {
+       "op": "damage",
+       "n": 3
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 3
+    },
+    {
+     "op": "payStars",
+     "n": 1,
+     "then": [
+      {
+       "op": "damage",
+       "n": 3
+      }
+     ]
+    }
+   ]
+  },
+  "lg_observatory": {
+   "id": "lg_observatory",
+   "name": "왕실 천문대",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 5,
+   "text": "+2 카드. 이번 차례 쓴 별 1개당 +1원 (최대 3)",
+   "upgradedText": "+2 카드. 이번 차례 쓴 별 1개당 +1원 (최대 5)",
+   "effects": [
+    {
+     "op": "draw",
+     "n": 2
+    },
+    {
+     "op": "gainCoinsPerStat",
+     "stat": "starsSpent",
+     "per": 1,
+     "max": 3
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "draw",
+     "n": 2
+    },
+    {
+     "op": "gainCoinsPerStat",
+     "stat": "starsSpent",
+     "per": 1,
+     "max": 5
+    }
+   ]
+  },
+  "lg_hone": {
+   "id": "lg_hone",
+   "name": "연마",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "손패 1장을 별 없이 일시 강화, +1 카드, +1 행동력",
+   "upgradedText": "손패 1장을 별 없이 일시 강화, +2 카드, +1 행동력",
+   "effects": [
+    {
+     "op": "freeUpgrade",
+     "n": 1
+    },
+    {
+     "op": "draw",
+     "n": 1
+    },
+    {
+     "op": "gainActions",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "freeUpgrade",
+     "n": 1
+    },
+    {
+     "op": "draw",
+     "n": 2
+    },
+    {
+     "op": "gainActions",
+     "n": 1
+    }
+   ]
+  },
+  "lg_masterSword": {
+   "id": "lg_masterSword",
+   "name": "장인의 검",
+   "type": "weapon",
+   "cost": 6,
+   "dealsDamage": true,
+   "text": "2 피해. 내 덱의 영구 강화 카드 1장당 +1 피해 (최대 +4)",
+   "upgradedText": "3 피해. 내 덱의 영구 강화 카드 1장당 +1 피해 (최대 +6)",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "addAttackBonus",
+     "perStat": {
+      "stat": "upgradedOwned",
+      "per": 1
+     },
+     "cap": 4
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 3
+    },
+    {
+     "op": "addAttackBonus",
+     "perStat": {
+      "stat": "upgradedOwned",
+      "per": 1
+     },
+     "cap": 6
+    }
+   ]
+  },
+  "lg_collection": {
+   "id": "lg_collection",
+   "name": "명품 컬렉션",
+   "type": "money",
+   "cost": 5,
+   "text": "+2원. 이번 차례 낸 강화된 카드 1장당 +1원 (최대 3)",
+   "upgradedText": "+2원. 이번 차례 낸 강화된 카드 1장당 +1원 (최대 5)",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "gainCoinsPerStat",
+     "stat": "upgradedPlayed",
+     "per": 1,
+     "max": 3
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "gainCoinsPerStat",
+     "stat": "upgradedPlayed",
+     "per": 1,
+     "max": 5
+    }
+   ]
+  },
+  "lg_starburst": {
+   "id": "lg_starburst",
+   "name": "성광 폭발",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 4,
+   "dealsDamage": true,
+   "text": "이번 차례 쓴 별 1개당 +2 피해 (공격 끝에 계산, 최대 +8)",
+   "upgradedText": "이번 차례 쓴 별 1개당 +2 피해 (공격 끝에 계산, 최대 +12)",
+   "effects": [
+    {
+     "op": "addAttackBonus",
+     "perStat": {
+      "stat": "starsSpent",
+      "per": 2
+     },
+     "cap": 8
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "addAttackBonus",
+     "perStat": {
+      "stat": "starsSpent",
+      "per": 2
+     },
+     "cap": 12
+    }
+   ]
+  },
+  "lg_pact": {
+   "id": "lg_pact",
+   "name": "별의 계약",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "별 1개를 쓸 수 있다. 그렇게 했다면 +2 카드, +2 행동력",
+   "upgradedText": "별 1개를 쓸 수 있다. 그렇게 했다면 +3 카드, +2 행동력",
+   "effects": [
+    {
+     "op": "payStars",
+     "n": 1,
+     "then": [
+      {
+       "op": "draw",
+       "n": 2
+      },
+      {
+       "op": "gainActions",
+       "n": 2
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "payStars",
+     "n": 1,
+     "then": [
+      {
+       "op": "draw",
+       "n": 3
+      },
+      {
+       "op": "gainActions",
+       "n": 2
+      }
+     ]
+    }
+   ]
+  },
+  "lg_nebulaCoin": {
+   "id": "lg_nebulaCoin",
+   "name": "성운 금화",
+   "type": "money",
+   "cost": 4,
+   "text": "+1원. 이번 차례 쓴 별 1개당 +1원 (최대 4)",
+   "upgradedText": "+2원. 이번 차례 쓴 별 1개당 +1원 (최대 5)",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 1
+    },
+    {
+     "op": "gainCoinsPerStat",
+     "stat": "starsSpent",
+     "per": 1,
+     "max": 4
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "gainCoinsPerStat",
+     "stat": "starsSpent",
+     "per": 1,
+     "max": 5
+    }
+   ]
+  },
+  "lg_constellShield": {
+   "id": "lg_constellShield",
+   "name": "별자리 방패",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 4,
+   "text": "지금 가진 별 1개당 방어 +1 (최대 5)",
+   "upgradedText": "최대 7",
+   "effects": [
+    {
+     "op": "addDefense",
+     "perStat": {
+      "stat": "stars",
+      "per": 1
+     },
+     "max": 5
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "addDefense",
+     "perStat": {
+      "stat": "stars",
+      "per": 1
+     },
+     "max": 7
+    }
+   ]
+  },
+  "lg_starWeight": {
+   "id": "lg_starWeight",
+   "name": "별의 무게",
+   "type": "weapon",
+   "cost": 6,
+   "text": "지금 가진 별 1개당 1 피해 (최대 6, 별은 쓰지 않음)",
+   "upgradedText": "같은 효과 +2 피해",
+   "effects": [
+    {
+     "op": "damagePerStat",
+     "stat": "stars",
+     "per": 1,
+     "max": 6
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damagePerStat",
+     "stat": "stars",
+     "per": 1,
+     "max": 6,
+     "plus": 2
+    }
+   ]
+  },
+  "lg_galaxyVault": {
+   "id": "lg_galaxyVault",
+   "name": "은하 저장고",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 5,
+   "text": "별 +2, +1 카드",
+   "upgradedText": "별 +2, +2 카드",
+   "effects": [
+    {
+     "op": "gainStars",
+     "n": 2
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainStars",
+     "n": 2
+    },
+    {
+     "op": "draw",
+     "n": 2
+    }
+   ]
+  },
+  "vc_usury": {
+   "id": "vc_usury",
+   "name": "고리대금",
+   "type": "money",
+   "cost": 3,
+   "text": "+4원, 빚 +2",
+   "upgradedText": "+5원, 빚 +2",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 4
+    },
+    {
+     "op": "gainDebt",
+     "n": 2
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 5
+    },
+    {
+     "op": "gainDebt",
+     "n": 2
+    }
+   ]
+  },
+  "vc_creditLoan": {
+   "id": "vc_creditLoan",
+   "name": "신용 대출",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 4,
+   "text": "+2 카드, 빚 +2",
+   "upgradedText": "+3 카드, 빚 +2",
+   "effects": [
+    {
+     "op": "draw",
+     "n": 2
+    },
+    {
+     "op": "gainDebt",
+     "n": 2
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "draw",
+     "n": 3
+    },
+    {
+     "op": "gainDebt",
+     "n": 2
+    }
+   ]
+  },
+  "vc_bond": {
+   "id": "vc_bond",
+   "name": "채권 발행",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 4,
+   "text": "거래소에서 구매가 5 이하 카드 1장을 얻는다, 빚 +3",
+   "upgradedText": "구매가 7 이하",
+   "effects": [
+    {
+     "op": "gainFromMarket",
+     "maxCost": 5,
+     "to": "discard",
+     "debt": 3
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainFromMarket",
+     "maxCost": 7,
+     "to": "discard",
+     "debt": 3
+    }
+   ]
+  },
+  "vc_repayPlan": {
+   "id": "vc_repayPlan",
+   "name": "상환 계획",
+   "type": "money",
+   "cost": 4,
+   "text": "+2원, 빚 1을 없앤다",
+   "upgradedText": "+2원, 빚 2를 없앤다",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "reduceDebt",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "reduceDebt",
+     "n": 2
+    }
+   ]
+  },
+  "vc_seizure": {
+   "id": "vc_seizure",
+   "name": "강제 집행",
+   "type": "weapon",
+   "cost": 5,
+   "text": "2 피해. 빚이 없다면 +2 피해",
+   "upgradedText": "3 피해. 빚이 없다면 +2 피해",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "debt",
+      "eq": 0
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 2
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 3
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "debt",
+      "eq": 0
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 2
+      }
+     ]
+    }
+   ]
+  },
+  "vc_advance": {
+   "id": "vc_advance",
+   "name": "선지급",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "+2 카드, +1 행동력, 빚 +1",
+   "upgradedText": "+3 카드, +1 행동력, 빚 +1",
+   "effects": [
+    {
+     "op": "draw",
+     "n": 2
+    },
+    {
+     "op": "gainActions",
+     "n": 1
+    },
+    {
+     "op": "gainDebt",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "draw",
+     "n": 3
+    },
+    {
+     "op": "gainActions",
+     "n": 1
+    },
+    {
+     "op": "gainDebt",
+     "n": 1
+    }
+   ]
+  },
+  "vc_leverage": {
+   "id": "vc_leverage",
+   "name": "레버리지",
+   "type": "money",
+   "cost": 5,
+   "text": "+2원. 빚이 있다면 +2원 더",
+   "upgradedText": "+3원. 빚이 있다면 +2원 더",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "debt",
+      "gte": 1
+     },
+     "then": [
+      {
+       "op": "gainCoins",
+       "n": 2
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 3
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "debt",
+      "gte": 1
+     },
+     "then": [
+      {
+       "op": "gainCoins",
+       "n": 2
+      }
+     ]
+    }
+   ]
+  },
+  "vc_futures": {
+   "id": "vc_futures",
+   "name": "미래 자원",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 5,
+   "text": "거래소에서 구매가 6 이하 카드 1장을 손으로 얻는다, 빚 +3",
+   "upgradedText": "구매가 8 이하",
+   "effects": [
+    {
+     "op": "gainFromMarket",
+     "maxCost": 6,
+     "to": "hand",
+     "debt": 3
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainFromMarket",
+     "maxCost": 8,
+     "to": "hand",
+     "debt": 3
+    }
+   ]
+  },
+  "vc_blameShift": {
+   "id": "vc_blameShift",
+   "name": "책임 전가",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 4,
+   "text": "내 빚을 최대 3까지 상대에게 넘긴다",
+   "upgradedText": "최대 5",
+   "effects": [
+    {
+     "op": "transferDebt",
+     "max": 3
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "transferDebt",
+     "max": 5
+    }
+   ]
+  },
+  "vc_bankruptcy": {
+   "id": "vc_bankruptcy",
+   "name": "파산 신청",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 5,
+   "text": "내 빚을 모두 없앤다. 사용 후 제거된다",
+   "upgradedText": "내 빚을 모두 없앤다, +1 카드. 사용 후 제거된다",
+   "effects": [
+    {
+     "op": "clearDebt"
+    },
+    {
+     "op": "trashSelfAtCleanup"
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "clearDebt"
+    },
+    {
+     "op": "draw",
+     "n": 1
+    },
+    {
+     "op": "trashSelfAtCleanup"
+    }
+   ]
+  },
+  "vc_freeze": {
+   "id": "vc_freeze",
+   "name": "채무 동결",
+   "type": "money",
+   "cost": 4,
+   "text": "+2원. 이번 차례 빚이 있어도 구매할 수 있다",
+   "upgradedText": "+3원. 같은 효과",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "addMod",
+     "key": "ignoreDebt",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 3
+    },
+    {
+     "op": "addMod",
+     "key": "ignoreDebt",
+     "n": 1
+    }
+   ]
+  },
+  "vc_interest": {
+   "id": "vc_interest",
+   "name": "이자 계산",
+   "type": "weapon",
+   "cost": 6,
+   "text": "1 피해. 내 빚 1당 +1 피해 (최대 +5)",
+   "upgradedText": "2 피해. 내 빚 1당 +1 피해 (최대 +6)",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 1
+    },
+    {
+     "op": "damagePerStat",
+     "stat": "debt",
+     "per": 1,
+     "max": 5
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "damagePerStat",
+     "stat": "debt",
+     "per": 1,
+     "max": 6
+    }
+   ]
+  },
+  "vc_balanceSheet": {
+   "id": "vc_balanceSheet",
+   "name": "대차대조표",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "내 빚 1당 +1원 (최대 4)",
+   "upgradedText": "최대 6",
+   "effects": [
+    {
+     "op": "gainCoinsPerStat",
+     "stat": "debt",
+     "per": 1,
+     "max": 4
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoinsPerStat",
+     "stat": "debt",
+     "per": 1,
+     "max": 6
+    }
+   ]
+  },
+  "vc_debtRepay": {
+   "id": "vc_debtRepay",
+   "name": "채무 상환",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 5,
+   "dealsDamage": true,
+   "text": "원 없이 빚을 최대 3 갚고, 갚은 빚 1당 +1 피해",
+   "upgradedText": "최대 5",
+   "effects": [
+    {
+     "op": "debtToDamage",
+     "max": 3,
+     "per": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "debtToDamage",
+     "max": 5,
+     "per": 1
+    }
+   ]
+  },
+  "n_restructure": {
+   "id": "n_restructure",
+   "name": "구조조정",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 2,
+   "text": "손에서 카드 1장을 제거할 수 있다",
+   "upgradedText": "손에서 카드 2장까지 제거할 수 있다",
+   "effects": [
+    {
+     "op": "trashFromHand",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "trashFromHand",
+     "n": 2
+    }
+   ]
+  },
+  "n_informant": {
+   "id": "n_informant",
+   "name": "정보원",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "뽑을 덱 위 3장을 보고 원하는 순서로 되돌린다",
+   "upgradedText": "뽑을 덱 위 3장을 보고 그중 1장을 제거할 수 있다",
+   "effects": [
+    {
+     "op": "reorderTop",
+     "n": 3
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "reorderTop",
+     "n": 3,
+     "trashUpTo": 1
+    }
+   ]
+  },
+  "n_reorganize": {
+   "id": "n_reorganize",
+   "name": "재편성",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 5,
+   "text": "버린 더미의 카드 1장을 손으로 가져온다",
+   "upgradedText": "버린 더미의 카드 2장을 손으로 가져온다",
+   "effects": [
+    {
+     "op": "retrieveFromDiscard",
+     "n": 1,
+     "to": "hand",
+     "min": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "retrieveFromDiscard",
+     "n": 2,
+     "to": "hand",
+     "min": 1
+    }
+   ]
+  },
+  "n_incinerator": {
+   "id": "n_incinerator",
+   "name": "소각로",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 4,
+   "text": "버린 더미의 카드 최대 2장을 제거한다",
+   "upgradedText": "버린 더미의 카드 최대 3장을 제거하고 +1원",
+   "effects": [
+    {
+     "op": "trashFromDiscard",
+     "n": 2
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "trashFromDiscard",
+     "n": 3
+    },
+    {
+     "op": "gainCoins",
+     "n": 1
+    }
+   ]
+  },
+  "n_reinforce": {
+   "id": "n_reinforce",
+   "name": "증원 요청",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 4,
+   "text": "+2 카드",
+   "upgradedText": "+3 카드",
+   "effects": [
+    {
+     "op": "draw",
+     "n": 2
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "draw",
+     "n": 3
+    }
+   ]
+  },
+  "n_briefing": {
+   "id": "n_briefing",
+   "name": "작전 회의",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 4,
+   "text": "+2 행동력, +1 카드",
+   "upgradedText": "+2 행동력, +2 카드",
+   "effects": [
+    {
+     "op": "gainActions",
+     "n": 2
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainActions",
+     "n": 2
+    },
+    {
+     "op": "draw",
+     "n": 2
+    }
+   ]
+  },
+  "n_radio": {
+   "id": "n_radio",
+   "name": "무전 지시",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "+1 행동력. 손에 행동카드가 없다면 +1 카드",
+   "upgradedText": "+1 행동력, +1 카드",
+   "effects": [
+    {
+     "op": "gainActions",
+     "n": 1
+    },
+    {
+     "op": "if",
+     "cond": {
+      "handHasNoType": "action"
+     },
+     "then": [
+      {
+       "op": "draw",
+       "n": 1
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainActions",
+     "n": 1
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ]
+  },
+  "n_contraband": {
+   "id": "n_contraband",
+   "name": "밀수품",
+   "type": "money",
+   "cost": 2,
+   "text": "+1원, +1 카드",
+   "upgradedText": "+2원, +1 카드",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 1
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ]
+  },
+  "n_bonus": {
+   "id": "n_bonus",
+   "name": "보너스 지급",
+   "type": "money",
+   "cost": 7,
+   "text": "+4원",
+   "upgradedText": "+5원, +1 구매",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 4
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 5
+    },
+    {
+     "op": "gainBuys",
+     "n": 1
+    }
+   ]
+  },
+  "n_rainyDay": {
+   "id": "n_rainyDay",
+   "name": "비상금",
+   "type": "money",
+   "cost": 5,
+   "text": "+2원. 이번 차례 별을 쓰지 않았다면 +1원",
+   "upgradedText": "+3원. 이번 차례 별을 쓰지 않았다면 +2원",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "starsSpent",
+      "eq": 0
+     },
+     "then": [
+      {
+       "op": "gainCoins",
+       "n": 1
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 3
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "starsSpent",
+      "eq": 0
+     },
+     "then": [
+      {
+       "op": "gainCoins",
+       "n": 2
+      }
+     ]
+    }
+   ]
+  },
+  "n_blackMarket": {
+   "id": "n_blackMarket",
+   "name": "암시장",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 3,
+   "text": "+2원. 손에서 카드 1장을 버릴 수 있다. 그렇게 했다면 +1 카드",
+   "upgradedText": "+3원. 손에서 카드 1장을 버릴 수 있다. 그렇게 했다면 +1 카드",
+   "effects": [
+    {
+     "op": "gainCoins",
+     "n": 2
+    },
+    {
+     "op": "discardFromHand",
+     "n": 1,
+     "thenIfAny": [
+      {
+       "op": "draw",
+       "n": 1
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainCoins",
+     "n": 3
+    },
+    {
+     "op": "discardFromHand",
+     "n": 1,
+     "thenIfAny": [
+      {
+       "op": "draw",
+       "n": 1
+      }
+     ]
+    }
+   ]
+  },
+  "n_priceRig": {
+   "id": "n_priceRig",
+   "name": "시세 교란",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 4,
+   "text": "이번 차례 거래소 모든 카드 구매가 -1",
+   "upgradedText": "이번 차례 거래소 모든 카드 구매가 -2",
+   "effects": [
+    {
+     "op": "addMod",
+     "key": "marketDiscount",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "addMod",
+     "key": "marketDiscount",
+     "n": 2
+    }
+   ]
+  },
+  "n_grenade": {
+   "id": "n_grenade",
+   "name": "수류탄",
+   "type": "weapon",
+   "cost": 3,
+   "text": "3 피해. 사용 후 제거된다",
+   "upgradedText": "5 피해. 사용 후 제거된다",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 3
+    },
+    {
+     "op": "trashSelfAtCleanup"
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 5
+    },
+    {
+     "op": "trashSelfAtCleanup"
+    }
+   ]
+  },
+  "n_shotgun": {
+   "id": "n_shotgun",
+   "name": "산탄총",
+   "type": "weapon",
+   "cost": 6,
+   "text": "3 피해. 상대 체력이 절반 이하라면 +2 피해",
+   "upgradedText": "4 피해. 상대 체력이 절반 이하라면 +2 피해",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 3
+    },
+    {
+     "op": "if",
+     "cond": {
+      "opponentHpAtMostHalf": true
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 2
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 4
+    },
+    {
+     "op": "if",
+     "cond": {
+      "opponentHpAtMostHalf": true
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 2
+      }
+     ]
+    }
+   ]
+  },
+  "n_sniper": {
+   "id": "n_sniper",
+   "name": "저격소총",
+   "type": "weapon",
+   "cost": 7,
+   "text": "4 피해. 이번 차례 다른 무기카드를 내지 않았다면 +3 피해",
+   "upgradedText": "5 피해. 이번 차례 다른 무기카드를 내지 않았다면 +3 피해",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 4
+    },
+    {
+     "op": "addAttackBonus",
+     "flat": 3,
+     "cond": {
+      "stat": "weaponsPlayed",
+      "eq": 1
+     }
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 5
+    },
+    {
+     "op": "addAttackBonus",
+     "flat": 3,
+     "cond": {
+      "stat": "weaponsPlayed",
+      "eq": 1
+     }
+    }
+   ]
+  },
+  "n_sabotage": {
+   "id": "n_sabotage",
+   "name": "사보타주",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 5,
+   "text": "상대의 뽑을 덱 맨 위 카드를 버리게 한다",
+   "upgradedText": "상대의 뽑을 덱 맨 위 카드 2장을 버리게 한다",
+   "effects": [
+    {
+     "op": "opponentMillTop",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "opponentMillTop",
+     "n": 2
+    }
+   ]
+  },
+  "n_vest": {
+   "id": "n_vest",
+   "name": "방탄 조끼",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 4,
+   "text": "상대의 다음 공격 피해 -3",
+   "upgradedText": "상대의 다음 공격 피해 -5",
+   "effects": [
+    {
+     "op": "addDefense",
+     "n": 3
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "addDefense",
+     "n": 5
+    }
+   ]
+  },
+  "n_firstAid": {
+   "id": "n_firstAid",
+   "name": "응급 처치",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 3,
+   "text": "체력 4 회복",
+   "upgradedText": "체력 7 회복",
+   "effects": [
+    {
+     "op": "heal",
+     "n": 4
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "heal",
+     "n": 7
+    }
+   ]
+  },
+  "n_observatory": {
+   "id": "n_observatory",
+   "name": "별 관측소",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 6,
+   "text": "별 +1",
+   "upgradedText": "별 +2",
+   "effects": [
+    {
+     "op": "gainStars",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainStars",
+     "n": 2
+    }
+   ]
+  },
+  "sb_fang": {
+   "id": "sb_fang",
+   "name": "송곳니",
+   "type": "weapon",
+   "cost": 2,
+   "text": "1 피해. 상대가 출혈 상태면 +1 피해",
+   "upgradedText": "2 피해. 상대가 출혈 상태면 +1 피해",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 1
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "oppBleed",
+      "gte": 1
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 1
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "oppBleed",
+      "gte": 1
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 1
+      }
+     ]
+    }
+   ]
+  },
+  "sb_claw": {
+   "id": "sb_claw",
+   "name": "은빛 발톱",
+   "type": "weapon",
+   "cost": 4,
+   "text": "2 피해. 피해를 줬다면 상대에게 출혈",
+   "upgradedText": "3 피해. 피해를 줬다면 상대에게 출혈",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "applyBleed",
+     "timing": "afterAttack"
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 3
+    },
+    {
+     "op": "applyBleed",
+     "timing": "afterAttack"
+    }
+   ]
+  },
+  "sb_rend": {
+   "id": "sb_rend",
+   "name": "찢어발기기",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 4,
+   "dealsDamage": true,
+   "text": "1 피해, 상대에게 출혈",
+   "upgradedText": "2 피해, 상대에게 출혈",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 1
+    },
+    {
+     "op": "applyBleed"
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "applyBleed"
+    }
+   ]
+  },
+  "sb_scent": {
+   "id": "sb_scent",
+   "name": "피 냄새",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "+1 카드. 상대가 출혈 상태면 +1 행동력",
+   "upgradedText": "+2 카드. 상대가 출혈 상태면 +1 행동력",
+   "effects": [
+    {
+     "op": "draw",
+     "n": 1
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "oppBleed",
+      "gte": 1
+     },
+     "then": [
+      {
+       "op": "gainActions",
+       "n": 1
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "draw",
+     "n": 2
+    },
+    {
+     "op": "if",
+     "cond": {
+      "stat": "oppBleed",
+      "gte": 1
+     },
+     "then": [
+      {
+       "op": "gainActions",
+       "n": 1
+      }
+     ]
+    }
+   ]
+  },
+  "sb_howl": {
+   "id": "sb_howl",
+   "name": "포효",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "+2 행동력",
+   "upgradedText": "+2 행동력, +1 카드",
+   "effects": [
+    {
+     "op": "gainActions",
+     "n": 2
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "gainActions",
+     "n": 2
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ]
+  },
+  "sb_pack": {
+   "id": "sb_pack",
+   "name": "무리 사냥",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 5,
+   "dealsDamage": true,
+   "text": "이번 차례 낸 무기카드 1장당 +1 피해 (최대 3)",
+   "upgradedText": "최대 5",
+   "effects": [
+    {
+     "op": "addAttackBonus",
+     "perWeapon": 1,
+     "cap": 3
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "addAttackBonus",
+     "perWeapon": 1,
+     "cap": 5
+    }
+   ]
+  },
+  "sb_mane": {
+   "id": "sb_mane",
+   "name": "은빛 갈기",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 3,
+   "text": "방어 +2",
+   "upgradedText": "방어 +3, +1 카드",
+   "effects": [
+    {
+     "op": "addDefense",
+     "n": 2
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "addDefense",
+     "n": 3
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ]
+  },
+  "sb_regen": {
+   "id": "sb_regen",
+   "name": "은빛 재생",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 4,
+   "text": "체력 3 회복",
+   "upgradedText": "체력 5 회복",
+   "effects": [
+    {
+     "op": "heal",
+     "n": 3
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "heal",
+     "n": 5
+    }
+   ]
+  },
+  "sb_maul": {
+   "id": "sb_maul",
+   "name": "우두머리의 일격",
+   "type": "weapon",
+   "cost": 8,
+   "text": "4 피해",
+   "upgradedText": "5 피해. 피해를 줬다면 상대에게 출혈",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 4
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 5
+    },
+    {
+     "op": "applyBleed",
+     "timing": "afterAttack"
+    }
+   ]
+  },
+  "sb_frenzy": {
+   "id": "sb_frenzy",
+   "name": "핏빛 광란",
+   "type": "action",
+   "actionCost": 1,
+   "cost": 6,
+   "dealsDamage": true,
+   "text": "2 피해, 상대에게 출혈, +1 행동력",
+   "upgradedText": "3 피해, 상대에게 출혈, +1 행동력",
+   "effects": [
+    {
+     "op": "damage",
+     "n": 2
+    },
+    {
+     "op": "applyBleed"
+    },
+    {
+     "op": "gainActions",
+     "n": 1
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "damage",
+     "n": 3
+    },
+    {
+     "op": "applyBleed"
+    },
+    {
+     "op": "gainActions",
+     "n": 1
+    }
+   ]
+  },
+  "sb_wound": {
+   "id": "sb_wound",
+   "name": "상처 벌리기",
+   "type": "action",
+   "actionCost": 0,
+   "cost": 5,
+   "dealsDamage": true,
+   "text": "상대가 출혈 상태면 3 피해, 아니면 1 피해",
+   "upgradedText": "상대가 출혈 상태면 4 피해, 아니면 2 피해",
+   "effects": [
+    {
+     "op": "if",
+     "cond": {
+      "stat": "oppBleed",
+      "gte": 1
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 3
+      }
+     ],
+     "else": [
+      {
+       "op": "damage",
+       "n": 1
+      }
+     ]
+    }
+   ],
+   "upgradedEffects": [
+    {
+     "op": "if",
+     "cond": {
+      "stat": "oppBleed",
+      "gte": 1
+     },
+     "then": [
+      {
+       "op": "damage",
+       "n": 4
+      }
+     ],
+     "else": [
+      {
+       "op": "damage",
+       "n": 2
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "factions": {
+  "section8": {
+   "id": "section8",
+   "name": "Section 8",
+   "cardIds": [
+    "s8_supplyOrder",
+    "s8_logistics",
+    "s8_opFunds",
+    "s8_maintenance",
+    "s8_serviceSmg"
+   ],
+   "characterIds": [
+    "hayun",
+    "kangjin",
+    "doyun"
+   ]
+  },
+  "neuro": {
+   "id": "neuro",
+   "name": "뉴로 연합",
+   "cardIds": [
+    "nu_synapse",
+    "nu_sync",
+    "nu_overload",
+    "nu_recursion",
+    "nu_emp"
+   ],
+   "characterIds": [
+    "jin",
+    "gemini",
+    "echo"
+   ]
+  },
+  "ligand": {
+   "id": "ligand",
+   "name": "리간드 왕국",
+   "cardIds": [
+    "lg_offering",
+    "lg_ritual",
+    "lg_blessing",
+    "lg_meteor",
+    "lg_observatory"
+   ],
+   "characterIds": [
+    "jace",
+    "elena",
+    "astra"
+   ]
+  },
+  "vincent": {
+   "id": "vincent",
+   "name": "빈센트 공화국",
+   "cardIds": [
+    "vc_usury",
+    "vc_creditLoan",
+    "vc_bond",
+    "vc_repayPlan",
+    "vc_seizure"
+   ],
+   "characterIds": [
+    "lime",
+    "sol",
+    "argus"
+   ]
+  },
+  "silverbeast": {
+   "id": "silverbeast",
+   "name": "은빛 야수",
+   "enemy": true,
+   "cardIds": [],
+   "characterIds": [
+    "sb_pup",
+    "sb_wolfpack",
+    "sb_stalker",
+    "sb_bear",
+    "sb_king"
+   ]
+  }
+ },
+ "characters": {
+  "hayun": {
+   "id": "hayun",
+   "name": "보급관 하윤",
+   "factionId": "section8",
+   "maxHp": 56,
+   "cardIds": [
+    "s8_emergencyProc",
+    "s8_budget",
+    "s8_depot"
+   ],
+   "ability": {
+    "activeAbility": {
+     "maxUses": 2,
+     "minOwnTurn": 5,
+     "effects": [
+      {
+       "op": "addMod",
+       "key": "firstWeaponDiscount",
+       "n": 1
+      }
+     ],
+     "text": "이번 차례 처음으로 구매하는 무기카드의 구매가 -1"
+    }
+   },
+   "abilityText": "발동(내 5번째 차례부터, 경기 중 2번): 이번 차례 처음으로 구매하는 무기카드의 구매가 -1"
+  },
+  "kangjin": {
+   "id": "kangjin",
+   "name": "돌격대장 강진",
+   "factionId": "section8",
+   "maxHp": 52,
+   "cardIds": [
+    "s8_breakthrough",
+    "s8_loot",
+    "s8_heavyMg"
+   ],
+   "ability": {
+    "attackBonuses": [
+     {
+      "flat": 2,
+      "cond": {
+       "stat": "weaponsPlayed",
+       "gte": 3
+      }
+     }
+    ]
+   },
+   "abilityText": "공격단계에 무기카드를 3장 이상 냈다면 +2 피해"
+  },
+  "doyun": {
+   "id": "doyun",
+   "name": "방어선 지휘관 도윤",
+   "factionId": "section8",
+   "maxHp": 60,
+   "cardIds": [
+    "s8_trench",
+    "s8_suppress",
+    "s8_cutSupply"
+   ],
+   "ability": {
+    "endTriggers": [
+     {
+      "cond": {
+       "stat": "weaponsPlayed",
+       "eq": 0
+      },
+      "effects": [
+       {
+        "op": "addDefense",
+        "n": 2
+       }
+      ]
+     }
+    ]
+   },
+   "abilityText": "이번 차례 무기카드를 내지 않았다면, 차례가 끝날 때 방어 +2 (상대의 다음 공격 피해 -2)"
+  },
+  "jin": {
+   "id": "jin",
+   "name": "진",
+   "factionId": "neuro",
+   "maxHp": 56,
+   "cardIds": [
+    "nu_barrage",
+    "nu_runaway",
+    "nu_chain"
+   ],
+   "ability": {
+    "opponentActionStar": {
+     "threshold": 6,
+     "stars": 1
+    }
+   },
+   "abilityText": "상대가 한 차례에 행동카드를 6장 이상 내면 별 +1 (한 차례에 한 번)"
+  },
+  "gemini": {
+   "id": "gemini",
+   "name": "제미니아노",
+   "factionId": "neuro",
+   "maxHp": 52,
+   "cardIds": [
+    "nu_thought",
+    "nu_brainwave",
+    "nu_resonance"
+   ],
+   "ability": {
+    "activeAbility": {
+     "oncePerGame": true,
+     "effects": [
+      {
+       "op": "addMod",
+       "key": "actionDamageBonus",
+       "n": 2
+      }
+     ],
+     "text": "이번 차례 동안 피해를 주는 행동카드가 +2 피해"
+    }
+   },
+   "abilityText": "경기 중 1번 발동: 이번 차례 동안 피해를 주는 행동카드가 +2 피해"
+  },
+  "echo": {
+   "id": "echo",
+   "name": "에코",
+   "factionId": "neuro",
+   "maxHp": 52,
+   "cardIds": [
+    "nu_mirror",
+    "nu_loopback",
+    "nu_reverb"
+   ],
+   "ability": {
+    "doubleFirstCostlyAction": {
+     "minOwnTurn": 4
+    }
+   },
+   "abilityText": "내 4번째 차례부터, 매 차례 처음 내는 ⚡1 행동카드의 효과가 2번 발동"
+  },
+  "jace": {
+   "id": "jace",
+   "name": "제이스",
+   "factionId": "ligand",
+   "maxHp": 55,
+   "cardIds": [
+    "lg_hone",
+    "lg_masterSword",
+    "lg_collection"
+   ],
+   "ability": {
+    "permUpgradeCost": 3
+   },
+   "abilityText": "영구 강화 비용이 별 3개"
+  },
+  "elena": {
+   "id": "elena",
+   "name": "엘레나",
+   "factionId": "ligand",
+   "maxHp": 54,
+   "cardIds": [
+    "lg_starburst",
+    "lg_pact",
+    "lg_nebulaCoin"
+   ],
+   "ability": {
+    "endTriggers": [
+     {
+      "cond": {
+       "stat": "starsSpent",
+       "gte": 3
+      },
+      "effects": [
+       {
+        "op": "gainStars",
+        "n": 1
+       }
+      ]
+     }
+    ]
+   },
+   "abilityText": "이번 차례 별을 3개 이상 썼다면 차례 끝에 별 +1"
+  },
+  "astra": {
+   "id": "astra",
+   "name": "별지기 아스트라",
+   "factionId": "ligand",
+   "maxHp": 54,
+   "cardIds": [
+    "lg_constellShield",
+    "lg_starWeight",
+    "lg_galaxyVault"
+   ],
+   "ability": {
+    "maxStars": 7,
+    "startTriggers": [
+     {
+      "cond": {
+       "stat": "stars",
+       "gte": 5
+      },
+      "effects": [
+       {
+        "op": "gainCoins",
+        "n": 1
+       }
+      ]
+     }
+    ]
+   },
+   "abilityText": "별 최대치가 7. 차례 시작 시 별이 5개 이상이면 +1원"
+  },
+  "lime": {
+   "id": "lime",
+   "name": "라임",
+   "factionId": "vincent",
+   "maxHp": 54,
+   "cardIds": [
+    "vc_advance",
+    "vc_leverage",
+    "vc_futures"
+   ],
+   "ability": {
+    "extraDrawIfDebt": 1
+   },
+   "abilityText": "빚이 있으면 차례 끝에 1장 더 뽑는다 (6장)"
+  },
+  "sol": {
+   "id": "sol",
+   "name": "솔",
+   "factionId": "vincent",
+   "maxHp": 56,
+   "cardIds": [
+    "vc_blameShift",
+    "vc_bankruptcy",
+    "vc_freeze"
+   ],
+   "ability": {
+    "startTriggers": [
+     {
+      "cond": {
+       "stat": "debt",
+       "gte": 1
+      },
+      "effects": [
+       {
+        "op": "reduceDebt",
+        "n": 1
+       }
+      ]
+     }
+    ]
+   },
+   "abilityText": "내 차례 시작 시 빚이 있으면 빚 1을 없앤다"
+  },
+  "argus": {
+   "id": "argus",
+   "name": "아르거스",
+   "factionId": "vincent",
+   "maxHp": 56,
+   "cardIds": [
+    "vc_interest",
+    "vc_balanceSheet",
+    "vc_debtRepay"
+   ],
+   "ability": {
+    "attackBonuses": [
+     {
+      "perStat": {
+       "stat": "debtHalf",
+       "per": 1
+      },
+      "cap": 3
+     }
+    ]
+   },
+   "abilityText": "공격할 때 내 빚 2당 +1 피해 (최대 +3)"
+  },
+  "sb_pup": {
+   "id": "sb_pup",
+   "name": "어린 은빛늑대",
+   "factionId": "silverbeast",
+   "enemy": true,
+   "maxHp": 24,
+   "cardIds": [],
+   "startDeck": [
+    "pistol",
+    "pistol",
+    "pistol",
+    "pistol",
+    "stone",
+    "stone",
+    "stone",
+    "stone",
+    "sb_fang",
+    "sb_fang"
+   ],
+   "ability": {
+    "noBuy": true,
+    "startTriggers": [
+     {
+      "effects": [
+       {
+        "op": "gainRandomCard",
+        "pool": [
+         "sb_fang"
+        ],
+        "n": 1,
+        "to": "discard"
+       }
+      ]
+     }
+    ]
+   },
+   "abilityText": "매 차례 시작 시 카드 1장을 얻는다."
+  },
+  "sb_wolfpack": {
+   "id": "sb_wolfpack",
+   "name": "은빛 늑대 무리",
+   "factionId": "silverbeast",
+   "enemy": true,
+   "maxHp": 30,
+   "cardIds": [],
+   "startDeck": [
+    "pistol",
+    "pistol",
+    "pistol",
+    "stone",
+    "stone",
+    "stone",
+    "stone",
+    "stone",
+    "sb_fang",
+    "sb_fang"
+   ],
+   "ability": {
+    "noBuy": true,
+    "startTriggers": [
+     {
+      "effects": [
+       {
+        "op": "gainRandomCard",
+        "pool": [
+         "sb_fang",
+         "sb_claw",
+         "stone",
+         "stone"
+        ],
+        "n": 1,
+        "to": "discard"
+       }
+      ]
+     }
+    ]
+   },
+   "abilityText": "매 차례 시작 시 카드 1장을 얻는다 (야수 카드 50%, 아니면 돌)."
+  },
+  "sb_stalker": {
+   "id": "sb_stalker",
+   "name": "은빛 추적자",
+   "factionId": "silverbeast",
+   "enemy": true,
+   "maxHp": 38,
+   "cardIds": [],
+   "startDeck": [
+    "pistol",
+    "pistol",
+    "pistol",
+    "stone",
+    "stone",
+    "stone",
+    "stone",
+    "stone",
+    "sb_fang",
+    "sb_fang"
+   ],
+   "ability": {
+    "noBuy": true,
+    "startTriggers": [
+     {
+      "effects": [
+       {
+        "op": "gainRandomCard",
+        "pool": [
+         "sb_fang",
+         "sb_claw",
+         "sb_scent",
+         "sb_rend",
+         "stone",
+         "stone",
+         "stone",
+         "stone"
+        ],
+        "n": 1,
+        "to": "discard"
+       }
+      ]
+     }
+    ],
+    "attackBonuses": [
+     {
+      "flat": 1,
+      "cond": {
+       "stat": "oppBleed",
+       "gte": 1
+      }
+     }
+    ]
+   },
+   "abilityText": "매 차례 시작 시 카드 1장을 얻는다 (야수 카드 50%, 아니면 돌). 출혈 상태인 상대를 공격하면 +1 피해."
+  },
+  "sb_bear": {
+   "id": "sb_bear",
+   "name": "은빛 갑주곰",
+   "factionId": "silverbeast",
+   "enemy": true,
+   "maxHp": 46,
+   "cardIds": [],
+   "startDeck": [
+    "pistol",
+    "pistol",
+    "pistol",
+    "stone",
+    "stone",
+    "stone",
+    "stone",
+    "stone",
+    "stone",
+    "sb_fang",
+    "sb_mane"
+   ],
+   "ability": {
+    "noBuy": true,
+    "startTriggers": [
+     {
+      "effects": [
+       {
+        "op": "gainRandomCard",
+        "pool": [
+         "sb_claw",
+         "sb_maul",
+         "sb_mane",
+         "sb_fang",
+         "sb_regen",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone"
+        ],
+        "n": 1,
+        "to": "discard"
+       }
+      ]
+     }
+    ],
+    "endTriggers": [
+     {
+      "effects": [
+       {
+        "op": "addDefense",
+        "n": 1
+       }
+      ]
+     }
+    ]
+   },
+   "abilityText": "매 차례 시작 시 카드 1장을 얻는다 (야수 카드 28%, 아니면 돌). 차례가 끝날 때 방어 +1."
+  },
+  "sb_king": {
+   "id": "sb_king",
+   "name": "은빛 야수왕",
+   "factionId": "silverbeast",
+   "enemy": true,
+   "maxHp": 56,
+   "cardIds": [],
+   "startDeck": [
+    "pistol",
+    "pistol",
+    "pistol",
+    "pistol",
+    "stone",
+    "stone",
+    "stone",
+    "stone",
+    "stone",
+    "sb_fang",
+    "sb_claw"
+   ],
+   "ability": {
+    "noBuy": true,
+    "startTriggers": [
+     {
+      "effects": [
+       {
+        "op": "gainRandomCard",
+        "pool": [
+         "sb_claw",
+         "sb_rend",
+         "sb_maul",
+         "sb_wound",
+         "sb_frenzy",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone",
+         "stone"
+        ],
+        "n": 1,
+        "to": "discard"
+       }
+      ]
+     }
+    ],
+    "attackBonuses": [
+     {
+      "flat": 1,
+      "cond": {
+       "stat": "oppBleed",
+       "gte": 1
+      }
+     }
+    ]
+   },
+   "abilityText": "매 차례 시작 시 카드 1장을 얻는다 (야수 카드 19%, 아니면 돌). 출혈 상태인 상대를 공격하면 +1 피해."
+  }
+ },
+ "neutralCardIds": [
+  "n_restructure",
+  "n_informant",
+  "n_reorganize",
+  "n_incinerator",
+  "n_reinforce",
+  "n_briefing",
+  "n_radio",
+  "n_contraband",
+  "n_bonus",
+  "n_rainyDay",
+  "n_blackMarket",
+  "n_priceRig",
+  "n_grenade",
+  "n_shotgun",
+  "n_sniper",
+  "n_sabotage",
+  "n_vest",
+  "n_firstAid",
+  "n_observatory"
+ ],
+ "basicPileSizes": {
+  "stone": 30,
+  "silver": 30,
+  "gold": 20,
+  "pistol": 30,
+  "rifle": 12,
+  "assaultRifle": 10
+ },
+ "augments": [
+  {
+   "id": "field_rations",
+   "rarity": 1,
+   "name": "야전 식량",
+   "text": "매 전투 최대 체력 +6",
+   "maxHp": 6
+  },
+  {
+   "id": "star_cache",
+   "rarity": 1,
+   "name": "별 조각 보관함",
+   "text": "매 전투 별 2개를 가지고 시작한다",
+   "stars": 2
+  },
+  {
+   "id": "quick_hands",
+   "rarity": 1,
+   "name": "빠른 손",
+   "text": "첫 차례에 행동력 +1, 카드 1장"
+  },
+  {
+   "id": "supply_pouch",
+   "rarity": 1,
+   "name": "보급 주머니",
+   "text": "내 첫 3차례 시작 시 +1원"
+  },
+  {
+   "id": "iron_guard",
+   "rarity": 1,
+   "name": "철벽 방어",
+   "text": "내 차례 시작 시 방어 +1",
+   "startEffects": [
+    {
+     "op": "addDefense",
+     "n": 1
+    }
+   ]
+  },
+  {
+   "id": "focused_aim",
+   "rarity": 1,
+   "name": "집중 조준",
+   "text": "무기를 2장 이상 낸 차례 공격 피해 +1",
+   "attackBonus": {
+    "flat": 1,
+    "cond": {
+     "stat": "weaponsPlayed",
+     "gte": 2
+    }
+   }
+  },
+  {
+   "id": "battle_medicine",
+   "rarity": 1,
+   "name": "전투 의무관",
+   "text": "내 차례 시작 시 체력 1 회복",
+   "startEffects": [
+    {
+     "op": "heal",
+     "n": 1
+    }
+   ]
+  },
+  {
+   "id": "overcharge",
+   "rarity": 2,
+   "name": "과충전 탄환",
+   "text": "낸 무기 1장당 공격 피해 +1 (차례당 최대 +4)",
+   "attackBonus": {
+    "perWeapon": 1,
+    "cap": 4
+   }
+  },
+  {
+   "id": "second_wind",
+   "rarity": 2,
+   "name": "두 번째 바람",
+   "text": "내 차례 시작 시 체력이 절반 이하면 체력 3 회복"
+  },
+  {
+   "id": "tactical_link",
+   "rarity": 2,
+   "name": "전술 연결망",
+   "text": "내 차례 시작 시 카드 1장, 행동력 +1",
+   "startEffects": [
+    {
+     "op": "draw",
+     "n": 1
+    },
+    {
+     "op": "gainActions",
+     "n": 1
+    }
+   ]
+  },
+  {
+   "id": "arsenal",
+   "rarity": 2,
+   "name": "비축 무기고",
+   "text": "매 전투 시작 손패에 소총 1장 추가",
+   "openingEffects": [
+    {
+     "op": "gainRandomCard",
+     "pool": [
+      "rifle"
+     ],
+     "n": 1,
+     "to": "hand"
+    }
+   ]
+  },
+  {
+   "id": "war_economy",
+   "rarity": 2,
+   "name": "전시 경제",
+   "text": "내 차례 시작 시 +1원, +1 구매",
+   "startEffects": [
+    {
+     "op": "gainCoins",
+     "n": 1
+    },
+    {
+     "op": "gainBuys",
+     "n": 1
+    }
+   ]
+  },
+  {
+   "id": "star_engine",
+   "rarity": 2,
+   "name": "성운 기관",
+   "text": "내 차례 시작 시 별 +1 추가 (별 최대치 유지)",
+   "startEffects": [
+    {
+     "op": "gainStars",
+     "n": 1
+    }
+   ]
+  },
+  {
+   "id": "apocalypse",
+   "rarity": 3,
+   "name": "종말의 탄두",
+   "text": "모든 공격 피해 2배 (보너스 합산 후, 상대 방어 적용 전)"
+  },
+  {
+   "id": "chronocrown",
+   "rarity": 3,
+   "name": "시간왕의 왕관",
+   "text": "매 차례 처음 내는 행동력 비용 1 이상 행동카드의 효과를 3회 실행한다. 캐릭터의 추가 실행과 합산"
+  },
+  {
+   "id": "celestial_forge",
+   "rarity": 3,
+   "name": "천상의 대장간",
+   "text": "구매한 강화 가능한 카드가 즉시 영구 강화된다. 기본 공급 카드는 제외"
+  },
+  {
+   "id": "titan_heart",
+   "rarity": 3,
+   "name": "거신의 심장",
+   "text": "매 전투 최대 체력 +24. 내 차례 시작 시 방어 +4",
+   "maxHp": 24,
+   "startEffects": [
+    {
+     "op": "addDefense",
+     "n": 4
+    }
+   ]
+  },
+  {
+   "id": "infinite_library",
+   "rarity": 3,
+   "name": "무한의 서고",
+   "text": "내 차례 시작 시 카드 2장, 행동력 +2",
+   "startEffects": [
+    {
+     "op": "draw",
+     "n": 2
+    },
+    {
+     "op": "gainActions",
+     "n": 2
+    }
+   ]
+  },
+  {
+   "id": "imperial_treasury",
+   "rarity": 3,
+   "name": "제국의 금고",
+   "text": "내 차례 시작 시 +3원, +1 구매",
+   "startEffects": [
+    {
+     "op": "gainCoins",
+     "n": 3
+    },
+    {
+     "op": "gainBuys",
+     "n": 1
+    }
+   ]
+  }
+ ],
+ "campaigns": {
+  "silverbeast": {
+   "id": "silverbeast",
+   "name": "은빛 야수 소탕 작전",
+   "description": "숲을 피로 물들이는 은빛 야수들을 소탕하라. 그들의 발톱은 출혈을 남긴다.",
+   "stages": [
+    {
+     "name": "숲 어귀",
+     "bossId": "sb_pup",
+     "intro": "무리에서 떨어진 어린 늑대다. 아직 이빨이 무르다."
+    },
+    {
+     "name": "달빛 계곡",
+     "bossId": "sb_wolfpack",
+     "intro": "은빛 늑대들이 무리를 지어 덤벼든다. 발톱에 베이면 피가 멎지 않는다."
+    },
+    {
+     "name": "안개 덤불",
+     "bossId": "sb_stalker",
+     "intro": "보이지 않는 곳에서 상처를 노린다. 피를 흘리는 사냥감일수록 더 사납게 문다."
+    },
+    {
+     "name": "은빛 동굴",
+     "bossId": "sb_bear",
+     "intro": "은빛 갑주를 두른 곰. 웬만한 공격은 튕겨 낸다."
+    },
+    {
+     "name": "야수왕의 둥지",
+     "bossId": "sb_king",
+     "intro": "모든 은빛 야수를 다스리는 왕. 피 냄새를 맡으면 멈추지 않는다."
+    }
+   ]
+  }
+ },
+ "aiValues": {
+  "tuned": {
+   "hayun": {
+    "s8_supplyOrder": -0.54,
+    "s8_logistics": 3.2,
+    "s8_opFunds": 3.58,
+    "s8_maintenance": 0.98,
+    "s8_serviceSmg": 6,
+    "s8_emergencyProc": 3.82,
+    "s8_budget": 1.75,
+    "s8_depot": 3.97,
+    "silver": 2.25,
+    "gold": 3.64,
+    "rifle": 2.21,
+    "assaultRifle": 8.13
+   },
+   "kangjin": {
+    "s8_supplyOrder": 1.98,
+    "s8_logistics": 4.29,
+    "s8_opFunds": 2.78,
+    "s8_maintenance": -0.82,
+    "s8_serviceSmg": 6.08,
+    "s8_breakthrough": 3.01,
+    "s8_loot": 0.74,
+    "s8_heavyMg": 7.68,
+    "silver": -1.06,
+    "gold": 1.16,
+    "rifle": 2.53,
+    "assaultRifle": 8.6
+   },
+   "doyun": {
+    "s8_supplyOrder": -0.58,
+    "s8_logistics": 3.18,
+    "s8_opFunds": 3.49,
+    "s8_maintenance": 1.08,
+    "s8_serviceSmg": 5.72,
+    "s8_trench": 3.25,
+    "s8_suppress": 2.77,
+    "s8_cutSupply": 3.07,
+    "silver": 2.62,
+    "gold": 3.39,
+    "rifle": 2.49,
+    "assaultRifle": 7.49
+   },
+   "jin": {
+    "nu_synapse": 1.82,
+    "nu_sync": 3.83,
+    "nu_overload": 0.42,
+    "nu_recursion": 0.89,
+    "nu_emp": 4.46,
+    "nu_barrage": 3.34,
+    "nu_runaway": 3.1,
+    "nu_chain": 5.07,
+    "silver": 1.93,
+    "gold": 3.64,
+    "rifle": 2.77,
+    "assaultRifle": 5.82
+   },
+   "gemini": {
+    "nu_synapse": 0.82,
+    "nu_sync": 3.82,
+    "nu_overload": 0.91,
+    "nu_recursion": 2.53,
+    "nu_emp": 5.43,
+    "nu_thought": 4,
+    "nu_brainwave": 1.8,
+    "nu_resonance": 2.2,
+    "silver": 1.83,
+    "gold": 3.83,
+    "rifle": 4.31,
+    "assaultRifle": 8
+   },
+   "echo": {
+    "nu_synapse": 1.46,
+    "nu_sync": 3.42,
+    "nu_overload": 0.94,
+    "nu_recursion": -1.92,
+    "nu_emp": 5.67,
+    "nu_mirror": 1.86,
+    "nu_loopback": -0.79,
+    "nu_reverb": 2.77,
+    "silver": -1.72,
+    "gold": 1.13,
+    "rifle": 2.18,
+    "assaultRifle": 8.15
+   },
+   "jace": {
+    "lg_offering": 4.89,
+    "lg_ritual": -0.69,
+    "lg_blessing": 1.52,
+    "lg_meteor": 6.79,
+    "lg_observatory": 4.54,
+    "lg_hone": 3.57,
+    "lg_masterSword": 5.89,
+    "lg_collection": 2.55,
+    "silver": 2.08,
+    "gold": 3.34,
+    "rifle": 3.72,
+    "assaultRifle": 3.69
+   },
+   "lime": {
+    "vc_usury": 3.5,
+    "vc_creditLoan": 2.12,
+    "vc_bond": 1.27,
+    "vc_repayPlan": 0.41,
+    "vc_seizure": 4.49,
+    "vc_leverage": 3.47,
+    "vc_futures": 5.39,
+    "silver": 0.34,
+    "gold": 2.69,
+    "rifle": 2.57,
+    "assaultRifle": 7.48
+   },
+   "sol": {
+    "vc_usury": 3.06,
+    "vc_creditLoan": 3.68,
+    "vc_bond": 3.68,
+    "vc_repayPlan": 0.7,
+    "vc_seizure": 6.42,
+    "vc_blameShift": 1.91,
+    "vc_bankruptcy": 2.57,
+    "vc_freeze": 4.04,
+    "silver": 2.01,
+    "gold": 3.27,
+    "rifle": 2.39,
+    "assaultRifle": 7.59
+   },
+   "argus": {
+    "vc_usury": 2.12,
+    "vc_creditLoan": 3.35,
+    "vc_bond": 2.41,
+    "vc_repayPlan": 2.13,
+    "vc_seizure": 5.03,
+    "vc_interest": 5.64,
+    "vc_balanceSheet": 1.45,
+    "vc_debtRepay": 3.69,
+    "silver": 2.11,
+    "gold": 3.99,
+    "rifle": 2.75,
+    "assaultRifle": 7
+   },
+   "elena": {
+    "lg_offering": 3.14,
+    "lg_ritual": 1.71,
+    "lg_blessing": 2.25,
+    "lg_meteor": 5.8,
+    "lg_observatory": 2.9,
+    "lg_starburst": 4.04,
+    "lg_pact": 0.74,
+    "lg_nebulaCoin": 2.92,
+    "silver": 2.43,
+    "gold": 4.02,
+    "rifle": 3.8,
+    "assaultRifle": 5.78
+   },
+   "astra": {
+    "lg_offering": 2.95,
+    "lg_ritual": 1.31,
+    "lg_blessing": 2.08,
+    "lg_meteor": 5.2,
+    "lg_observatory": 1.32,
+    "lg_constellShield": 4.21,
+    "lg_starWeight": 5.36,
+    "lg_galaxyVault": 4.13,
+    "silver": 3.27,
+    "gold": 3.29,
+    "rifle": 2.21,
+    "assaultRifle": 6.67
+   }
+  },
+  "defaults": {
+   "stone": -1,
+   "silver": 2.2,
+   "gold": 4.6,
+   "pistol": -0.6,
+   "rifle": 3.6,
+   "assaultRifle": 6.2,
+   "s8_supplyOrder": 1.2,
+   "s8_logistics": 2.4,
+   "s8_opFunds": 4,
+   "s8_maintenance": 1.7999999999999998,
+   "s8_serviceSmg": 4,
+   "s8_emergencyProc": 1.7999999999999998,
+   "s8_budget": 3.2,
+   "s8_depot": 3.5999999999999996,
+   "s8_breakthrough": 1.7999999999999998,
+   "s8_loot": 2.4,
+   "s8_heavyMg": 5.6000000000000005,
+   "s8_trench": 1.7999999999999998,
+   "s8_suppress": 4,
+   "s8_cutSupply": 3,
+   "nu_synapse": 1.2,
+   "nu_sync": 2.4,
+   "nu_overload": 1.7999999999999998,
+   "nu_recursion": 2.4,
+   "nu_emp": 3,
+   "nu_barrage": 2.4,
+   "nu_runaway": 1.7999999999999998,
+   "nu_chain": 3,
+   "nu_thought": 1.7999999999999998,
+   "nu_brainwave": 3,
+   "nu_resonance": 3,
+   "nu_mirror": 3,
+   "nu_loopback": 1.7999999999999998,
+   "nu_reverb": 3.2,
+   "lg_offering": 3.2,
+   "lg_ritual": 1.7999999999999998,
+   "lg_blessing": 2.4,
+   "lg_meteor": 4,
+   "lg_observatory": 3,
+   "lg_hone": 1.7999999999999998,
+   "lg_masterSword": 4.800000000000001,
+   "lg_collection": 4,
+   "lg_starburst": 2.4,
+   "lg_pact": 1.7999999999999998,
+   "lg_nebulaCoin": 3.2,
+   "lg_constellShield": 2.4,
+   "lg_starWeight": 4.800000000000001,
+   "lg_galaxyVault": 3,
+   "vc_usury": 2.4000000000000004,
+   "vc_creditLoan": 2.4,
+   "vc_bond": 2.4,
+   "vc_repayPlan": 3.2,
+   "vc_seizure": 4,
+   "vc_advance": 1.7999999999999998,
+   "vc_leverage": 4,
+   "vc_futures": 3,
+   "vc_blameShift": 2.4,
+   "vc_bankruptcy": 3,
+   "vc_freeze": 3.2,
+   "vc_interest": 4.800000000000001,
+   "vc_balanceSheet": 1.7999999999999998,
+   "vc_debtRepay": 3,
+   "n_restructure": 1.2,
+   "n_informant": 1.7999999999999998,
+   "n_reorganize": 3,
+   "n_incinerator": 2.4,
+   "n_reinforce": 2.4,
+   "n_briefing": 2.4,
+   "n_radio": 1.7999999999999998,
+   "n_contraband": 1.6,
+   "n_bonus": 5.6000000000000005,
+   "n_rainyDay": 4,
+   "n_blackMarket": 1.7999999999999998,
+   "n_priceRig": 2.4,
+   "n_grenade": 2.4000000000000004,
+   "n_shotgun": 4.800000000000001,
+   "n_sniper": 5.6000000000000005,
+   "n_sabotage": 3,
+   "n_vest": 2.4,
+   "n_firstAid": 1.7999999999999998,
+   "n_observatory": 3.5999999999999996,
+   "sb_fang": 1.6,
+   "sb_claw": 3.2,
+   "sb_rend": 2.4,
+   "sb_scent": 1.7999999999999998,
+   "sb_howl": 1.7999999999999998,
+   "sb_pack": 3,
+   "sb_mane": 1.7999999999999998,
+   "sb_regen": 2.4,
+   "sb_maul": 6.4,
+   "sb_frenzy": 3.5999999999999996,
+   "sb_wound": 3
+  }
+ },
+ "aiWeights": {
+  "damage": 1,
+  "selfHp": 0.8,
+  "star": 0.5,
+  "permUpgrade": 2.5,
+  "defense": 0.6,
+  "debt": 0.9,
+  "oppDebt": 0.9,
+  "oppBleed": 1.3,
+  "selfBleed": 1.3,
+  "oppStar": 0.5,
+  "lethal": 25,
+  "targetWeaponShare": 0.4,
+  "win": 1000
+ },
+ "aiSpeeds": [
+  {
+   "id": "slow",
+   "label": "느림",
+   "delay": 1400
+  },
+  {
+   "id": "normal",
+   "label": "보통",
+   "delay": 850
+  },
+  {
+   "id": "fast",
+   "label": "빠름",
+   "delay": 350
+  },
+  {
+   "id": "veryFast",
+   "label": "매우 빠름",
+   "delay": 0
+  }
+ ],
+ "defaultAiSpeed": "normal",
+ "recommendations": {
+  "hayun": [
+   {
+    "name": "군수 전환과 무기 조달",
+    "strategy": "예산 집행으로 구매력을 쌓고, 군수 전환으로 돌을 무기로 바꾸세요. 긴급 조달로 무기를 덱 위에 놓고 정비 교대로 다시 돌립니다. 무기 할증 때문에 조달 가능한 카드가 달라지니 현재 가격을 확인하세요.",
+    "cardIds": [
+     "s8_logistics",
+     "s8_maintenance",
+     "s8_emergencyProc",
+     "s8_budget"
+    ]
+   },
+   {
+    "name": "보급 경제와 연속 구매",
+    "strategy": "보급 지령으로 손패와 원을 보충하고 작전 자금으로 무기 구매 후 환급받으세요. 보급 창고로 구매 횟수를 늘린 뒤 무기를 두 장 이상 사면 별도 얻습니다. 하윤의 능력은 내 다섯 번째 차례부터 쓸 수 있습니다.",
+    "cardIds": [
+     "s8_supplyOrder",
+     "s8_opFunds",
+     "s8_emergencyProc",
+     "s8_depot"
+    ]
+   }
+  ],
+  "kangjin": [
+   {
+    "name": "중기관총 집중 화력",
+    "strategy": "작전 자금과 보급 지령으로 무기 구매를 준비하세요. 제식 기관단총은 재화 세 장을 낸 차례에 강해지고, 중기관총은 무기를 많이 낼수록 강해집니다. 무기 세 장을 모아 강진의 추가 피해를 노리세요.",
+    "cardIds": [
+     "s8_supplyOrder",
+     "s8_opFunds",
+     "s8_serviceSmg",
+     "s8_heavyMg"
+    ]
+   },
+   {
+    "name": "무기 전환과 재순환",
+    "strategy": "군수 전환으로 돌을 무기로 바꾸고 정비 교대로 무기를 다시 준비하세요. 보급 지령은 손패와 구매력을 보충합니다. 제식 기관단총과 권총을 함께 모아 무기 세 장 조건을 맞추세요.",
+    "cardIds": [
+     "s8_supplyOrder",
+     "s8_logistics",
+     "s8_maintenance",
+     "s8_serviceSmg"
+    ]
+   }
+  ],
+  "doyun": [
+   {
+    "name": "참호와 제압 사격",
+    "strategy": "참호 구축으로 방어를 얻은 뒤 제압 사격을 내면 추가 피해를 줍니다. 보급 지령으로 손패를 잇고 군수 전환으로 무기를 마련하세요. 공격이 약한 차례에는 무기를 내지 않고 도윤의 방어를 받는 선택도 좋습니다.",
+    "cardIds": [
+     "s8_supplyOrder",
+     "s8_logistics",
+     "s8_trench",
+     "s8_suppress"
+    ]
+   },
+   {
+    "name": "참호 방어와 보급선 차단",
+    "strategy": "참호 구축으로 버티면서 보급선 차단으로 상대 덱의 카드를 버리게 합니다. 작전 자금으로 구매력을 키우고 군수 전환으로 무기를 확보하세요. 무기를 내지 않는 차례에는 도윤의 추가 방어를 얻습니다.",
+    "cardIds": [
+     "s8_logistics",
+     "s8_opFunds",
+     "s8_trench",
+     "s8_cutSupply"
+    ]
+   }
+  ],
+  "jin": [
+   {
+    "name": "연쇄 반응과 행동 연결",
+    "strategy": "시냅스 점화와 폭주 연산으로 행동력을 잇고 신경망 동기화로 손패를 늘리세요. 연쇄 반응은 낸 행동카드 수에 비례해 피해를 주므로 여러 장을 연결한 차례에 힘을 냅니다. 폭주 연산은 다른 행동 뒤에 내면 카드 뽑기 조건을 맞추기 쉽습니다.",
+    "cardIds": [
+     "nu_synapse",
+     "nu_sync",
+     "nu_runaway",
+     "nu_chain"
+    ]
+   },
+   {
+    "name": "재귀 호출과 전자기 펄스",
+    "strategy": "시냅스 점화로 행동력을 보충하고 신경망 동기화로 카드를 뽑으세요. 재귀 호출로 버린 행동카드를 다시 사용하며 행동카드 네 장 조건을 맞추면 전자기 펄스가 추가 피해를 줍니다. 진의 별은 상대 행동카드 여섯 장 조건에서 얻습니다.",
+    "cardIds": [
+     "nu_synapse",
+     "nu_sync",
+     "nu_recursion",
+     "nu_emp"
+    ]
+   }
+  ],
+  "gemini": [
+   {
+    "name": "과부하 자금과 뇌파 공격",
+    "strategy": "사고 전파로 행동력을 유지하며 피해를 쌓고 신경망 동기화와 뇌파 공격으로 손패를 보충하세요. 과부하는 다른 행동카드를 낸 뒤 사용하면 구매력이 커집니다. 일회성 능력은 피해 행동카드가 여러 장 모인 차례에 사용하세요.",
+    "cardIds": [
+     "nu_sync",
+     "nu_overload",
+     "nu_thought",
+     "nu_brainwave"
+    ]
+   },
+   {
+    "name": "공명 연속 공격",
+    "strategy": "시냅스 점화와 사고 전파로 행동카드를 잇고 공명으로 낸 행동카드 수를 피해로 바꾸세요. 뇌파 공격도 함께 모인 차례에 제미니아노의 일회성 능력을 쓰면 피해 행동카드마다 추가 피해를 얻습니다.",
+    "cardIds": [
+     "nu_synapse",
+     "nu_thought",
+     "nu_brainwave",
+     "nu_resonance"
+    ]
+   }
+  ],
+  "echo": [
+   {
+    "name": "과부하 복제와 펄스 화력",
+    "strategy": "시냅스 점화로 행동력을 잇고 신경망 동기화로 손패를 늘립니다. 과부하는 행동카드를 여러 장 낸 뒤 사용하고 전자기 펄스로 마무리하세요. 내 네 번째 차례부터 처음 내는 행동력 비용 1 이상 카드가 두 번 발동하므로 어떤 카드를 먼저 낼지 확인하세요.",
+    "cardIds": [
+     "nu_synapse",
+     "nu_sync",
+     "nu_overload",
+     "nu_emp"
+    ]
+   },
+   {
+    "name": "재귀 호출과 루프백 순환",
+    "strategy": "시냅스 점화와 신경망 동기화로 손패를 돌리고 재귀 호출·루프백으로 버린 행동카드를 다시 준비합니다. 공격용 무기도 함께 구매하세요. 루프백은 강화하면 카드를 손으로 가져오며, 내 네 번째 차례부터 첫 행동력 비용 1 이상 카드를 두 번 발동합니다.",
+    "cardIds": [
+     "nu_synapse",
+     "nu_sync",
+     "nu_recursion",
+     "nu_loopback"
+    ]
+   }
+  ],
+  "jace": [
+   {
+    "name": "장인의 검과 강화 경제",
+    "strategy": "제이스의 별 3개 영구 강화를 활용해 장인의 검의 추가 피해를 키우세요. 연마는 일시 강화와 손패 순환을 돕고 명품 컬렉션은 강화 카드를 많이 낸 차례의 구매력을 늘립니다. 성좌 의식으로 별을 보충하세요.",
+    "cardIds": [
+     "lg_ritual",
+     "lg_hone",
+     "lg_masterSword",
+     "lg_collection"
+    ]
+   },
+   {
+    "name": "유성과 장인의 검",
+    "strategy": "연마로 카드를 강화해 손패를 돌리고 유성 낙하로 피해를 더하세요. 영구 강화가 쌓이면 장인의 검이 강해집니다. 별을 사용한 차례에는 왕실 천문대로 카드와 구매력을 보충할 수 있습니다.",
+    "cardIds": [
+     "lg_meteor",
+     "lg_observatory",
+     "lg_hone",
+     "lg_masterSword"
+    ]
+   }
+  ],
+  "elena": [
+   {
+    "name": "별 소모와 성광 폭발",
+    "strategy": "성좌 의식으로 별을 보충하고 강화와 유성 낙하에 별을 사용하세요. 성광 폭발은 쓴 별 수를 피해로, 성운 금화는 구매력으로 바꿉니다. 한 차례 별 세 개 이상을 쓰면 엘레나가 차례 끝에 별을 하나 돌려받습니다.",
+    "cardIds": [
+     "lg_ritual",
+     "lg_meteor",
+     "lg_starburst",
+     "lg_nebulaCoin"
+    ]
+   },
+   {
+    "name": "별의 계약과 천문대 순환",
+    "strategy": "별의 계약으로 별을 사용해 손패와 행동력을 늘린 뒤 왕실 천문대로 이어 가세요. 성광 폭발은 차례 동안 쓴 별 수만큼 강해집니다. 성좌 의식으로 별을 보충하면서 한 차례 별 세 개 사용 조건을 노리세요.",
+    "cardIds": [
+     "lg_ritual",
+     "lg_observatory",
+     "lg_starburst",
+     "lg_pact"
+    ]
+   }
+  ],
+  "astra": [
+   {
+    "name": "별의 무게와 천문대",
+    "strategy": "별빛 헌금으로 별을 쌓고 별의 무게로 보유한 별을 피해에 활용하세요. 별의 무게는 별을 소비하지 않습니다. 유성 낙하와 강화에 별을 쓴 차례에는 천문대로 구매력을 보충하고, 다음 차례 시작에 별 다섯 개를 유지할지 판단하세요.",
+    "cardIds": [
+     "lg_offering",
+     "lg_meteor",
+     "lg_observatory",
+     "lg_starWeight"
+    ]
+   },
+   {
+    "name": "별 보급과 무료 강화",
+    "strategy": "별빛 헌금·성좌 의식으로 별을 모으고 별의 축복으로 별을 쓰지 않고 카드를 강화하세요. 유성 낙하로 공격하면서도 아스트라의 별 다섯 개 보너스를 유지할 여지를 남길 수 있습니다. 기본 무기도 함께 구매해 공격을 보충하세요.",
+    "cardIds": [
+     "lg_offering",
+     "lg_ritual",
+     "lg_blessing",
+     "lg_meteor"
+    ]
+   }
+  ],
+  "lime": [
+   {
+    "name": "대출 순환과 직접 획득",
+    "strategy": "선지급으로 행동력과 손패를 늘리고 신용 대출로 카드를 더 뽑으세요. 채권 발행과 미래 자원은 빚이 있어도 카드를 얻을 수 있습니다. 빚을 남기면 라임은 다음 손패를 여섯 장 뽑지만, 구매하려면 먼저 빚을 갚아야 합니다.",
+    "cardIds": [
+     "vc_creditLoan",
+     "vc_bond",
+     "vc_advance",
+     "vc_futures"
+    ]
+   },
+   {
+    "name": "레버리지 상환과 무기 확보",
+    "strategy": "선지급으로 빚을 만든 뒤 레버리지의 추가 원을 받아 상환하세요. 미래 자원으로 무기를 손에 얻고, 빚을 모두 갚은 차례에는 강제 집행의 추가 피해를 노립니다. 빚을 남겨 여섯 장을 뽑을지 구매를 열지 판단하세요.",
+    "cardIds": [
+     "vc_seizure",
+     "vc_advance",
+     "vc_leverage",
+     "vc_futures"
+    ]
+   }
+  ],
+  "sol": [
+   {
+    "name": "파산 정리와 강제 집행",
+    "strategy": "신용 대출로 손패를 늘리고 고리대금으로 구매력을 보충하세요. 파산 신청은 행동단계에 빚을 정리하며 한 번 쓰면 제거됩니다. 이후 고리대금으로 생긴 빚은 구매단계에 갚아야 강제 집행의 추가 피해를 받을 수 있습니다. 솔은 차례 시작마다 빚 하나를 없앱니다.",
+    "cardIds": [
+     "vc_usury",
+     "vc_creditLoan",
+     "vc_seizure",
+     "vc_bankruptcy"
+    ]
+   },
+   {
+    "name": "채권 획득과 책임 전가",
+    "strategy": "채권 발행으로 빚이 있어도 카드를 얻고 신용 대출로 손패를 보충하세요. 책임 전가로 빚을 상대에게 넘겨 상환 부담을 줄입니다. 솔의 차례 시작 상환도 활용해 빚을 비운 뒤 강제 집행으로 공격하세요.",
+    "cardIds": [
+     "vc_creditLoan",
+     "vc_bond",
+     "vc_seizure",
+     "vc_blameShift"
+    ]
+   }
+  ],
+  "argus": [
+   {
+    "name": "대차대조표와 상환 공격",
+    "strategy": "신용 대출로 손패와 빚을 늘린 뒤 대차대조표로 원을 확보하세요. 채무 상환은 원 없이 빚을 갚으며 피해를 줍니다. 빚을 비우면 강제 집행이 강해지고, 빚을 남기면 아르거스의 공격 보너스가 생기므로 이번 손패에 맞춰 조절하세요.",
+    "cardIds": [
+     "vc_creditLoan",
+     "vc_seizure",
+     "vc_balanceSheet",
+     "vc_debtRepay"
+    ]
+   },
+   {
+    "name": "채권 성장과 이자 화력",
+    "strategy": "신용 대출과 채권 발행으로 빚을 쌓으며 덱을 키우세요. 이자 계산과 아르거스의 능력은 남은 빚을 피해로 바꿉니다. 빚이 있으면 일반 구매는 막히므로 채권 발행으로 필요한 카드를 얻고, 빚을 갚은 차례에는 강제 집행을 활용하세요.",
+    "cardIds": [
+     "vc_creditLoan",
+     "vc_bond",
+     "vc_seizure",
+     "vc_interest"
+    ]
+   }
+  ]
+ }
+}
