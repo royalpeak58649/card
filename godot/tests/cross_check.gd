@@ -134,4 +134,6 @@ func _replay_campaign(gi: int, g: Dictionary) -> Array:
 		if h(c) != step["hash"]:
 			_report(gi, si, "모험 상태가 다름", "조작 %s" % canonical(step["action"]))
 			return [si + 1, ai_n]
+		if step.has("cview") and h(CampaignRules.campaign_view(c)) != step["cview"]:
+			_report(gi, si, "모험 화면 정보(campaignView)가 다름", canonical(CampaignRules.campaign_view(c)).left(400))
 	return [g["steps"].size(), ai_n]

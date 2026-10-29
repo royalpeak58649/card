@@ -169,3 +169,35 @@ static func settle(c: Dictionary) -> void:
 			c["augmentChoices"] = roll_augment_choices(c)
 	else:
 		c["status"] = "lost"
+
+
+## 플레이어(0번) 기준으로 보여줄 모험 상태. JS campaignView 와 같은 모양.
+static func campaign_view(c: Dictionary) -> Dictionary:
+	var cdef := GameData.campaign(c["campaignId"])
+	var status: String = c["status"]
+	var stages := []
+	var stage_list: Array = cdef["stages"]
+	for i in stage_list.size():
+		var stage: Dictionary = stage_list[i]
+		var boss := GameData.character(stage["bossId"])
+		stages.append({
+			"name": stage["name"],
+			"intro": stage["intro"],
+			"bossId": stage["bossId"],
+			"bossName": boss["name"],
+			"bossMaxHp": boss["maxHp"],
+			"cleared": i < int(c["stageIndex"]) or (i == int(c["stageIndex"]) and (status == "stageWon" or status == "cleared")),
+		})
+	return {
+		"campaignId": c["campaignId"],
+		"name": cdef["name"],
+		"description": cdef["description"],
+		"stageIndex": c["stageIndex"],
+		"stageCount": stage_list.size(),
+		"status": status,
+		"augments": c["augments"].duplicate(true),
+		"augmentChoices": c["augmentChoices"].duplicate(),
+		"history": c["history"].duplicate(true),
+		"stages": stages,
+		"match": MatchRules.view_for(c["match"], 0),
+	}

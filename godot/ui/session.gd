@@ -1,6 +1,6 @@
 class_name GameSession
 extends Node
-## AI 연습 한 판을 진행한다. 플레이어는 0번, AI 는 1번.
+## AI 연습 한 판 또는 모험 모드를 진행한다. 플레이어는 0번, AI(모험에서는 보스)는 1번.
 ## 사람의 조작은 act() 로 엔진에 넘기고, AI 차례는 설정한 속도로 한 행동씩 진행한다.
 ## AI 판단(모의 실행)은 화면이 멈추지 않도록 별도 스레드에서 상태 복사본으로 계산한다.
 
@@ -13,6 +13,8 @@ const HUMAN := 0
 const AI := 1
 
 var match_state: Dictionary = {}
+## 모험 모드 상태(연습이면 빈 Dictionary). match_state 는 campaign.match 를 가리킨다.
+var campaign: Dictionary = {}
 var rng := RandomNumberGenerator.new()
 var _thread: Thread
 var _thinking := false
@@ -33,12 +35,34 @@ func _exit_tree() -> void:
 func start_vs_ai(player_name: String) -> void:
 	_generation += 1
 	_join_thread()
+	campaign = {}
 	match_state = MatchRules.create_match(rng.randi_range(0, 0x7fffffff), [
 		{"id": "p0", "name": player_name},
 		{"id": "p1", "name": "AI"},
 	])
 	_ai_setup_step()
 	changed.emit()
+
+
+func start_campaign(campaign_id: String, player_name: String) -> void:
+	_generation += 1
+	_join_thread()
+	campaign = CampaignRules.create_campaign(rng.randi_range(0, 0x7fffffff), campaign_id, player_name)
+	match_state = campaign["match"]
+	changed.emit()
+
+
+func is_campaign() -> bool:
+	return not campaign.is_empty()
+
+
+## 모험 모드 화면 정보(JS campaignView 와 같은 모양)
+func campaign_view() -> Dictionary:
+	return CampaignRules.campaign_view(campaign) if is_campaign() else {}
+
+
+func campaign_status() -> String:
+	return campaign.get("status", "") if is_campaign() else ""
 
 
 func stage() -> String:
@@ -56,7 +80,7 @@ func view() -> Dictionary:
 
 ## 지금 AI 가 행동할 차례인가
 func ai_turn() -> bool:
-	if stage() != "playing":
+	if stage() != "playing" or (is_campaign() and campaign["status"] != "battle"):
 		return false
 	var g := game()
 	var pending = g.get("pending")
@@ -73,7 +97,13 @@ func is_thinking() -> bool:
 
 ## 사람의 조작. 성공하면 "".
 func act(action: Dictionary) -> String:
-	var err := MatchRules.apply_match_action(match_state, HUMAN, action)
+	var err := ""
+	if is_campaign():
+		err = CampaignRules.apply_campaign_action(campaign, action)
+		# 다음 스테이지·처음부터 다시는 경기 상태를 새로 만든다.
+		match_state = campaign["match"]
+	else:
+		err = MatchRules.apply_match_action(match_state, HUMAN, action)
 	if err != "":
 		toast.emit(err)
 		return err
@@ -90,6 +120,8 @@ func act_game(action: Dictionary) -> String:
 
 ## 캐릭터 선택·입고 단계의 AI 조작(즉시)
 func _ai_setup_step() -> void:
+	if is_campaign():
+		return
 	var picks: Array = match_state["picks"]
 	if match_state["stage"] == "select" and picks[AI]["characterId"] == null:
 		var ids := GameData.all_character_ids()
@@ -146,16 +178,25 @@ func _finish_thinking(gen: int, action) -> void:
 		push_warning("AI 가 조작을 고르지 못했습니다")
 		changed.emit()
 		return
-	var err := MatchRules.apply_match_action(match_state, AI, {"type": "game", "action": action})
+	var err := _apply_ai(action)
 	if err != "":
 		# 있을 수 없는 일이지만 멈추지 않도록 규칙 기반 AI 로 한 번 더 시도한다.
 		push_warning("AI 조작 실패: %s" % err)
 		var fallback = AiBasic.choose_action(game(), AI)
 		if fallback != null:
-			MatchRules.apply_match_action(match_state, AI, {"type": "game", "action": fallback})
+			_apply_ai(fallback)
 	ai_acted.emit(action)
 	changed.emit()
 	_schedule_ai()
+
+
+## 연습은 경기 조작으로, 모험은 서버의 runEnemy 처럼 엔진에 직접 적용한 뒤 결과를 반영한다.
+func _apply_ai(action: Dictionary) -> String:
+	if is_campaign():
+		var err := Rules.apply_action(game(), AI, action)
+		CampaignRules.settle(campaign)
+		return err
+	return MatchRules.apply_match_action(match_state, AI, {"type": "game", "action": action})
 
 
 func _join_thread() -> void:
@@ -171,3 +212,4 @@ func stop() -> void:
 	_join_thread()
 	_thinking = false
 	match_state = {}
+	campaign = {}

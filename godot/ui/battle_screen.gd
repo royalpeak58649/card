@@ -42,6 +42,10 @@ func render() -> void:
 	var can_act: bool = session.human_can_act() and pending == null and my_turn
 
 	var title := "AI 연습 · %d턴 · %s" % [int(g["turn"]), "선공" if int(g["firstPlayerIndex"]) == you else "후공"]
+	var cv := session.campaign_view()
+	if not cv.is_empty():
+		var st: Dictionary = cv["stages"][int(cv["stageIndex"])]
+		title = "스테이지 %d · %s · %d턴" % [int(cv["stageIndex"]) + 1, st["name"], int(g["turn"])]
 	add_child(UiKit.top_bar(title, app._top_right_buttons()))
 
 	var body := MarginContainer.new()
@@ -54,6 +58,8 @@ func render() -> void:
 	var col := UiKit.vbox(8)
 	body.add_child(col)
 
+	if not cv.is_empty():
+		col.add_child(CampaignUi.owned_augments(cv, true))
 	col.add_child(_opponent_area(g, opp, my_turn, finished))
 
 	var middle := UiKit.hbox(10)
@@ -82,7 +88,8 @@ func render() -> void:
 			_upgrade_uid = ""
 	elif _discard_open:
 		_discard_modal(me)
-	if finished:
+	# 모험 모드의 결과는 별도 화면(CampaignUi.result_screen)에서 보여 준다.
+	if finished and cv.is_empty():
 		_finished_overlay(v, g, you)
 
 

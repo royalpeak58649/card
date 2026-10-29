@@ -59,6 +59,9 @@ func _set_screen(node: Control, key: String) -> void:
 
 
 func _refresh() -> void:
+	if session.is_campaign() and session.campaign_status() != "battle":
+		_show_campaign_result()
+		return
 	match session.stage():
 		"":
 			if _screen_key != "lobby":
@@ -82,10 +85,27 @@ func go_lobby() -> void:
 
 
 func confirm_leave() -> void:
+	if session.is_campaign():
+		if session.campaign_status() in ["lost", "cleared"]:
+			go_lobby()
+			return
+		Dialogs.confirm(self, "로비로 돌아갈까요?", "모험을 종료하고 로비로 돌아갑니다. 지금까지의 진행 상황과 증강은 사라집니다.", "로비로", go_lobby)
+		return
 	if session.stage() == "" or session.stage() == "finished":
 		go_lobby()
 		return
 	Dialogs.confirm(self, "로비로 돌아갈까요?", "진행 중인 경기를 종료하고 로비로 돌아갑니다.", "로비로", go_lobby)
+
+
+func _save_name(edit: LineEdit) -> void:
+	var n := edit.text.strip_edges()
+	UiKit.settings().player_name = n if n != "" else "나"
+	UiKit.settings()._save()
+
+
+func _show_campaign_result() -> void:
+	var cv := session.campaign_view()
+	_set_screen(CampaignUi.result_screen(cv, func(a): session.act(a), confirm_leave, _top_right_buttons()), "campaign_result")
 
 
 func _top_right_buttons() -> Array:
@@ -125,21 +145,41 @@ func _show_lobby() -> void:
 	inner.add_child(name_edit)
 
 	var start := UiKit.button("AI와 연습하기", func():
-		var n := name_edit.text.strip_edges()
-		UiKit.settings().player_name = n if n != "" else "나"
-		UiKit.settings()._save()
+		_save_name(name_edit)
 		Dialogs.guide(self, "AI를 상대로 차례의 흐름을 익혀 보세요. 시간에 쫓기지 않고 카드 효과와 강화 조합을 연습할 수 있습니다.",
 			func(): session.start_vs_ai(UiKit.settings().player_name), "연습 시작"), true)
 	start.custom_minimum_size.y = 56
 	start.add_theme_font_size_override("font_size", 20)
 	inner.add_child(start)
 
-	var later := UiKit.hbox(10)
-	later.add_child(_disabled_mode("친구와 대전 (준비 중)"))
-	later.add_child(_disabled_mode("모험 모드 (준비 중)"))
-	inner.add_child(later)
-	var note := UiKit.wrap_label("Godot 이식판 1단계: AI 연습 대전을 지원합니다. 온라인 대전·모험 모드·도감은 다음 단계에서 옮깁니다.", 13, UiKit.MUTED)
-	inner.add_child(note)
+	inner.add_child(_disabled_mode("친구와 대전 (준비 중)"))
+
+	# 모험 모드
+	var adv := UiKit.panel("WhitePanel")
+	col.add_child(adv)
+	var ac := UiKit.vbox(8)
+	adv.add_child(ac)
+	ac.add_child(UiKit.label("모험 모드", "HeaderLabel", 20, UiKit.PURPLE_DARK))
+	for cid in GameData.all_campaign_ids():
+		var id: String = cid
+		var cdef := GameData.campaign(id)
+		var row := UiKit.hbox(12)
+		var info := UiKit.vbox(2)
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		info.add_child(UiKit.bold(cdef["name"], 17))
+		info.add_child(UiKit.wrap_label("%s (스테이지 %d개)" % [cdef["description"], cdef["stages"].size()], 13, UiKit.MUTED))
+		row.add_child(info)
+		var go := UiKit.button("작전 시작", func():
+			_save_name(name_edit)
+			Dialogs.guide(self, "카드를 모으고, 별로 강화하고, 결정적인 한 차례를 만드세요.",
+				func(): session.start_campaign(id, UiKit.settings().player_name), "작전 시작",
+				cdef["name"], CampaignUi.STORY_TITLE, CampaignUi.STORY), true)
+		go.custom_minimum_size = Vector2(130, 48)
+		go.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(go)
+		ac.add_child(row)
+	var note := UiKit.wrap_label("Godot 이식판: AI 연습과 모험 모드를 지원합니다. 온라인 대전·도감은 다음 단계에서 옮깁니다.", 13, UiKit.MUTED)
+	col.add_child(note)
 	_set_screen(root, "lobby")
 
 
@@ -191,6 +231,8 @@ func _show_select() -> void:
 	scroll.add_child(margin)
 	var col := UiKit.vbox(14)
 	margin.add_child(col)
+	if session.is_campaign():
+		col.add_child(CampaignUi.header(session.campaign_view()))
 	for fid in GameData.all_faction_ids():
 		var f := GameData.faction(fid)
 		col.add_child(UiKit.label(f["name"], "HeaderLabel", 22, UiKit.PURPLE_DARK))
@@ -238,6 +280,8 @@ func _show_draft() -> void:
 	var main := UiKit.vbox(12)
 	main.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(main)
+	if session.is_campaign():
+		main.add_child(CampaignUi.header(session.campaign_view()))
 	main.add_child(UiKit.label("%s · 거래소에 입고할 카드 %d종류를 선택해주세요." % [ch["name"], MatchRules.DRAFT_SIZE], "HeaderLabel", 20))
 
 	var cands := MatchRules.get_candidates(my_pick["characterId"])
@@ -327,7 +371,10 @@ func _show_draft() -> void:
 		nc.add_child(row)
 
 	var op := UiKit.panel("WhitePanel")
-	side.add_child(op)
+	if session.is_campaign():
+		op.queue_free()  # 모험에서는 머리말에 보스 정보가 있다
+	else:
+		side.add_child(op)
 	var oc := UiKit.vbox(6)
 	op.add_child(oc)
 	oc.add_child(UiKit.label("상대의 상황", "HeaderLabel"))

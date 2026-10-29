@@ -31,12 +31,21 @@ static func modal(host: Control, title: String, content: Control, width := 640.0
 	return overlay
 
 
-static func guide(host: Control, lead := "", on_start := Callable(), start_label := "시작하기") -> Control:
+static func guide(host: Control, lead := "", on_start := Callable(), start_label := "시작하기",
+		title := "플레이 가이드", story_title := "", story: Array = []) -> Control:
 	var col := UiKit.vbox(10)
 	if lead != "":
 		col.add_child(UiKit.wrap_label(lead, 16, UiKit.MUTED))
+	if story_title != "":
+		var sp := UiKit.panel("", UiKit.box(Color("#f8eafc"), UiKit.PURPLE, 2, 12, 12))
+		var sc := UiKit.vbox(6)
+		sp.add_child(sc)
+		sc.add_child(UiKit.bold(story_title, 18, UiKit.PURPLE_DARK))
+		for para in story:
+			sc.add_child(UiKit.wrap_label(para, 15))
+		col.add_child(sp)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0, 420)
+	scroll.custom_minimum_size = Vector2(0, 300 if story_title != "" else 420)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	var inner := UiKit.vbox(12)
 	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -60,7 +69,7 @@ static func guide(host: Control, lead := "", on_start := Callable(), start_label
 		row.add_child(UiKit.button(start_label, func():
 			holder[0].queue_free()
 			on_start.call(), true))
-	holder[0] = modal(host, "플레이 가이드", col, 720)
+	holder[0] = modal(host, title, col, 720)
 	return holder[0]
 
 

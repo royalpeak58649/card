@@ -6,7 +6,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import {
   createMatch, applyMatchAction, viewFor, getCandidates, allCharacterIds,
-  createCampaign, applyCampaignAction,
+  createCampaign, applyCampaignAction, campaignView,
 } from '../../engine/index.js';
 import { chooseAiAction } from '../../engine/ai.js';
 import { chooseSmartAction, candidates } from '../../engine/aiSmart.js';
@@ -124,7 +124,7 @@ function runCampaign(index) {
       error = e.message;
     }
     if (actor === 1) settleApi.settle(campaign);
-    steps.push({ actor, action, ai, error, hash: hash(campaign) });
+    steps.push({ actor, action, ai, error, hash: hash(campaign), cview: hash(campaignView(campaign)) });
   };
   const chars = allCharacterIds();
   for (let stage = 0; stage < 5; stage++) {

@@ -3,20 +3,19 @@
 웹판(바닐라 JS + Node 서버)을 **Godot 4.7 + GDScript** 로 옮기는 중인 프로젝트다.
 규칙 엔진과 AI 를 GDScript 로 다시 써서 서버 없이 혼자(AI 연습) 플레이할 수 있다.
 
-## 지금 되는 것 (1단계)
+## 지금 되는 것
 
 - 로비 → 플레이 가이드 → 캐릭터 선택(12명) → 거래소 입고(추천 구성 적용·강화 미리보기) → 대전 → 결과 → 다시 하기/로비
 - 대전: 행동·구매·공격 단계, 카드 사용, 재화/무기 모두 내기, 구매, 빚 갚기, 캐릭터 능력 발동,
   ★ 강화 비교(일시·영구), 선택형 효과 창(제거·버리기·가져오기·순서 정하기·별 사용 등), 버린 더미 보기, 기록
 - AI: 웹판과 같은 모의 실행 AI. 판단은 별도 스레드에서 계산하고, 상단 'AI 속도'(느림·보통·빠름·매우 빠름)로 한 행동씩 보여 준다.
-- 엔진에는 모험 모드 진행(캠페인·보스·증강)도 옮겨 두었다. 화면은 다음 단계.
+- 모험 모드 「은빛 야수 소탕 작전」: 로비의 '작전 시작' → 이야기·규칙 안내 → 스테이지마다 진행 막대·보스 소개(능력·야수 카드)를 보며 캐릭터 선택·입고 → 보스전(보유 증강 표시) → 스테이지 결과(증강 3택 보상 · 다음 스테이지) / 실패·완료(기록 · 처음부터 다시).
 
 ## 아직 안 된 것 (다음 단계 후보)
 
-1. 모험 모드 화면(스테이지 지도·보스 소개·증강 3택 보상)
-2. 온라인 대전(방 코드) — Godot WebSocket 클라이언트로 기존 Node 서버에 붙이거나 Godot 서버로 새로 구성
-3. 도감, BGM(「별의 돌격」 MP3 재사용 가능), 카드 일러스트·애니메이션
-4. 모바일 세로 화면 배치
+1. 온라인 대전(방 코드) — Godot WebSocket 클라이언트로 기존 Node 서버에 붙이거나 Godot 서버로 새로 구성
+2. 도감, BGM(「별의 돌격」 MP3 재사용 가능), 카드 일러스트·애니메이션
+3. 모바일 세로 화면 배치
 
 ## 폴더
 
@@ -24,8 +23,8 @@
 |---|---|
 | `engine/` | 순수 규칙. `rules.gd`(상태·효과·선택·차례·증강 적용), `match_rules.gd`(선택→입고→대전, view), `campaign_rules.gd`(모험), `ai_basic.gd`·`ai_smart.gd`(AI), `game_data.gd`(데이터 읽기) |
 | `data/game_data.json` | 카드·캐릭터·진영·증강·캠페인·AI 가치·추천 구성. **JS 엔진에서 내보낸 것**이다 |
-| `ui/` | 화면. `main.gd`(로비·선택·입고), `battle_screen.gd`(대전), `card_view.gd`(카드), `session.gd`(AI 연습 진행), `ui_kit.gd`(테마), `dialogs.gd`, `settings.gd`(자동 로드) |
-| `tests/` | `cross_check.gd`(JS 와 단계별 비교), `sim.gd`(AI 대전), `ui_smoke.gd`(화면 자동 진행·스크린샷) |
+| `ui/` | 화면. `main.gd`(로비·선택·입고), `battle_screen.gd`(대전), `campaign_ui.gd`(모험 진행 막대·보스 소개·결과·증강 보상), `card_view.gd`(카드), `session.gd`(AI 연습·모험 진행), `ui_kit.gd`(테마), `dialogs.gd`, `settings.gd`(자동 로드) |
+| `tests/` | `cross_check.gd`(JS 와 단계별 비교), `sim.gd`(AI 대전), `ui_smoke.gd`(AI 연습 화면 자동 진행·스크린샷), `campaign_smoke.gd`(모험 화면 자동 진행, `--lose` 로 실패 화면) |
 | `tools/` | `export_data.mjs`(데이터 내보내기), `make_trace.mjs`(교차 검증 기록 만들기) |
 | `fonts/` | Pretendard(OFL-1.1). 웹 내보내기에서도 한글이 보이도록 글꼴을 넣었다 |
 
@@ -53,11 +52,13 @@ node godot/tools/make_trace.mjs --games 60 --campaigns 8            # JS 기준 
 godot --headless --path godot --import                              # 처음 한 번(가져오기)
 godot --headless --path godot -s res://tests/cross_check.gd         # 조작마다 오류·상태·화면 정보·AI 선택이 JS 와 같은지
 godot --headless --path godot -s res://tests/sim.gd -- --games 20   # AI 끼리 끝까지 도는지, 판단 시간
-xvfb-run godot --path godot -s res://tests/ui_smoke.gd -- --shots /tmp/shots   # 화면 자동 진행 + 스크린샷
+xvfb-run godot --path godot -s res://tests/ui_smoke.gd -- --shots /tmp/shots   # AI 연습 화면 자동 진행 + 스크린샷
+xvfb-run godot --path godot -s res://tests/campaign_smoke.gd -- --shots /tmp/cshots [--lose]   # 모험 화면 자동 진행
 ```
 
 `cross_check` 는 JS 엔진이 남긴 기록을 같은 순서로 다시 적용해 **조작 하나하나의 오류 문구·상태 해시·가려진 화면 해시·AI 가 고른 조작**을 비교한다.
-기록에는 일부러 넣은 잘못된 조작과 무작위 조작, 모의 실행 AI·규칙 기반 AI 경기, 모험 모드 5스테이지(보스·출혈·증강)가 섞여 있다.
+기록에는 일부러 넣은 잘못된 조작과 무작위 조작, 모의 실행 AI·규칙 기반 AI 경기, 모험 모드 5스테이지(보스·출혈·증강, 모험 화면 정보 campaignView 포함)가 섞여 있다.
+새 `class_name` 파일을 추가했다면 테스트 전에 `--import` 를 한 번 더 실행해야 전역 클래스 목록에 들어간다.
 
 ## 내보내기
 
