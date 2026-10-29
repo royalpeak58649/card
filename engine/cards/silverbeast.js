@@ -390,18 +390,7 @@ export const SILVERBEAST_BOSSES = {
     enemy: true,
     maxHp: 24,
     cardIds: [],
-    startDeck: [
-      'pistol',
-      'pistol',
-      'pistol',
-      'pistol',
-      'stone',
-      'stone',
-      'stone',
-      'stone',
-      'sb_fang',
-      'sb_fang'
-    ],
+    startDeck: ['pistol', 'pistol', 'pistol', 'pistol', 'stone', 'stone', 'stone', 'stone', 'sb_fang', 'sb_fang'],
     ability: {
       noBuy: true,
       startTriggers: [
@@ -409,9 +398,7 @@ export const SILVERBEAST_BOSSES = {
           effects: [
             {
               op: 'gainRandomCard',
-              pool: [
-                'sb_fang'
-              ],
+              pool: ['sb_fang'],
               n: 1,
               to: 'discard'
             }
@@ -419,27 +406,16 @@ export const SILVERBEAST_BOSSES = {
         }
       ]
     },
-    abilityText: '매 차례 시작 시 송곳니 1장을 얻는다'
+    abilityText: '매 차례 시작 시 카드 1장을 얻는다.'
   },
   sb_wolfpack: {
     id: 'sb_wolfpack',
     name: '은빛 늑대 무리',
     factionId: 'silverbeast',
     enemy: true,
-    maxHp: 32,
+    maxHp: 30,
     cardIds: [],
-    startDeck: [
-      'pistol',
-      'pistol',
-      'pistol',
-      'stone',
-      'stone',
-      'stone',
-      'sb_fang',
-      'sb_fang',
-      'sb_claw',
-      'sb_claw'
-    ],
+    startDeck: ['pistol', 'pistol', 'pistol', 'stone', 'stone', 'stone', 'stone', 'stone', 'sb_fang', 'sb_fang'],
     ability: {
       noBuy: true,
       startTriggers: [
@@ -447,11 +423,7 @@ export const SILVERBEAST_BOSSES = {
           effects: [
             {
               op: 'gainRandomCard',
-              pool: [
-                'sb_fang',
-                'sb_claw',
-                'sb_howl'
-              ],
+              pool: ['sb_fang', 'sb_claw', 'stone', 'stone'],
               n: 1,
               to: 'discard'
             }
@@ -459,27 +431,16 @@ export const SILVERBEAST_BOSSES = {
         }
       ]
     },
-    abilityText: '매 차례 시작 시 야수 카드(송곳니·은빛 발톱·포효) 1장을 얻는다'
+    abilityText: '매 차례 시작 시 카드 1장을 얻는다 (야수 카드 50%, 아니면 돌).'
   },
   sb_stalker: {
     id: 'sb_stalker',
     name: '은빛 추적자',
     factionId: 'silverbeast',
     enemy: true,
-    maxHp: 40,
+    maxHp: 38,
     cardIds: [],
-    startDeck: [
-      'pistol',
-      'pistol',
-      'stone',
-      'stone',
-      'sb_fang',
-      'sb_fang',
-      'sb_claw',
-      'sb_claw',
-      'sb_rend',
-      'sb_scent'
-    ],
+    startDeck: ['pistol', 'pistol', 'pistol', 'stone', 'stone', 'stone', 'stone', 'stone', 'sb_fang', 'sb_fang'],
     ability: {
       noBuy: true,
       startTriggers: [
@@ -487,12 +448,7 @@ export const SILVERBEAST_BOSSES = {
           effects: [
             {
               op: 'gainRandomCard',
-              pool: [
-                'sb_claw',
-                'sb_rend',
-                'sb_scent',
-                'sb_pack'
-              ],
+              pool: ['sb_fang', 'sb_claw', 'sb_scent', 'sb_rend', 'stone', 'stone', 'stone', 'stone'],
               n: 1,
               to: 'discard'
             }
@@ -509,27 +465,16 @@ export const SILVERBEAST_BOSSES = {
         }
       ]
     },
-    abilityText: '매 차례 시작 시 야수 카드 1장을 얻는다. 출혈 상태인 상대를 공격하면 +1 피해'
+    abilityText: '매 차례 시작 시 카드 1장을 얻는다 (야수 카드 50%, 아니면 돌). 출혈 상태인 상대를 공격하면 +1 피해.'
   },
   sb_bear: {
     id: 'sb_bear',
     name: '은빛 갑주곰',
     factionId: 'silverbeast',
     enemy: true,
-    maxHp: 52,
+    maxHp: 46,
     cardIds: [],
-    startDeck: [
-      'pistol',
-      'pistol',
-      'stone',
-      'sb_claw',
-      'sb_claw',
-      'sb_claw',
-      'sb_mane',
-      'sb_mane',
-      'sb_maul',
-      'sb_rend'
-    ],
+    startDeck: ['pistol', 'pistol', 'pistol', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'sb_fang', 'sb_mane'],
     ability: {
       noBuy: true,
       startTriggers: [
@@ -537,13 +482,7 @@ export const SILVERBEAST_BOSSES = {
           effects: [
             {
               op: 'gainRandomCard',
-              pool: [
-                'sb_claw',
-                'sb_maul',
-                'sb_mane',
-                'sb_regen',
-                'sb_rend'
-              ],
+              pool: ['sb_claw', 'sb_maul', 'sb_mane', 'sb_fang', 'sb_regen', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone'],
               n: 1,
               to: 'discard'
             }
@@ -555,33 +494,22 @@ export const SILVERBEAST_BOSSES = {
           effects: [
             {
               op: 'addDefense',
-              n: 2
+              n: 1
             }
           ]
         }
       ]
     },
-    abilityText: '매 차례 시작 시 야수 카드 1장을 얻는다. 차례가 끝날 때 방어 +2'
+    abilityText: '매 차례 시작 시 카드 1장을 얻는다 (야수 카드 28%, 아니면 돌). 차례가 끝날 때 방어 +1.'
   },
   sb_king: {
     id: 'sb_king',
     name: '은빛 야수왕',
     factionId: 'silverbeast',
     enemy: true,
-    maxHp: 64,
+    maxHp: 56,
     cardIds: [],
-    startDeck: [
-      'sb_claw',
-      'sb_claw',
-      'sb_claw',
-      'sb_rend',
-      'sb_rend',
-      'sb_frenzy',
-      'sb_maul',
-      'sb_howl',
-      'sb_scent',
-      'sb_wound'
-    ],
+    startDeck: ['pistol', 'pistol', 'pistol', 'pistol', 'stone', 'stone', 'stone', 'stone', 'stone', 'sb_fang', 'sb_claw'],
     ability: {
       noBuy: true,
       startTriggers: [
@@ -589,13 +517,7 @@ export const SILVERBEAST_BOSSES = {
           effects: [
             {
               op: 'gainRandomCard',
-              pool: [
-                'sb_frenzy',
-                'sb_maul',
-                'sb_wound',
-                'sb_pack',
-                'sb_rend'
-              ],
+              pool: ['sb_claw', 'sb_rend', 'sb_maul', 'sb_wound', 'sb_frenzy', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone', 'stone'],
               n: 1,
               to: 'discard'
             }
@@ -604,7 +526,7 @@ export const SILVERBEAST_BOSSES = {
       ],
       attackBonuses: [
         {
-          flat: 2,
+          flat: 1,
           cond: {
             stat: 'oppBleed',
             gte: 1
@@ -612,7 +534,7 @@ export const SILVERBEAST_BOSSES = {
         }
       ]
     },
-    abilityText: '매 차례 시작 시 강력한 야수 카드 1장을 얻는다. 출혈 상태인 상대를 공격하면 +2 피해'
+    abilityText: '매 차례 시작 시 카드 1장을 얻는다 (야수 카드 19%, 아니면 돌). 출혈 상태인 상대를 공격하면 +1 피해.'
   },
 };
 

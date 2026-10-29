@@ -10,7 +10,7 @@ import { getCardDef } from './cards/registry.js';
 import { getCharacter } from './characters.js';
 import { maxStarsOf } from './effects.js';
 import { getPurchasePrice } from './state.js';
-import { applyAction, setAtomic, abilityMaxUses } from './turn.js';
+import { applyAction, setAtomic, abilityMaxUses, canBuyCards } from './turn.js';
 import { chooseAiAction } from './ai.js';
 import { cardValue } from './aiValues.js';
 
@@ -23,6 +23,8 @@ export const WEIGHTS = {
   defense: 0.6,
   debt: 0.9,
   oppDebt: 0.9,
+  oppBleed: 1.3,
+  selfBleed: 1.3,
   oppStar: 0.5,
   lethal: 25,
   targetWeaponShare: 0.4,
@@ -179,6 +181,8 @@ export function evaluate(before, after, p, values) {
   score += ((me1.defense ?? 0) - (me0.defense ?? 0)) * WEIGHTS.defense;
   score -= ((me1.debt ?? 0) - (me0.debt ?? 0)) * WEIGHTS.debt;
   score += ((op1.debt ?? 0) - (op0.debt ?? 0)) * WEIGHTS.oppDebt;
+  score += (Number(op1.bleed === true) - Number(op0.bleed === true)) * WEIGHTS.oppBleed;
+  score -= (Number(me1.bleed === true) - Number(me0.bleed === true)) * WEIGHTS.selfBleed;
   return score;
 }
 
@@ -313,7 +317,7 @@ export function candidates(game, p) {
     }
   }
 
-  if (game.phase === 'buy') {
+  if (game.phase === 'buy' && canBuyCards(game, p)) {
     if (player.hand.some((c) => getCardDef(c.cardId).type === 'money')) out.push({ type: 'playAllMoney' });
     if ((player.debt ?? 0) > 0 && player.coins > 0) out.push({ type: 'payDebt' });
     const blocked = (player.debt ?? 0) > 0 && !((game.turnState?.mods?.ignoreDebt ?? 0) > 0);
@@ -351,6 +355,7 @@ function phaseFits(phase, type) {
 export function rolloutPolicy(game, p, values) {
   if (!game.pending && game.activeIndex === p && game.phase === 'buy') {
     const player = game.players[p];
+    if (!canBuyCards(game, p)) return { type: 'endPhase' };
     if (player.hand.some((c) => getCardDef(c.cardId).type === 'money')) return { type: 'playAllMoney' };
     const ignoreDebt = (game.turnState?.mods?.ignoreDebt ?? 0) > 0;
     if ((player.debt ?? 0) > 0 && !ignoreDebt) {

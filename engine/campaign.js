@@ -85,7 +85,7 @@ export function allCampaignIds() {
  * @param {CampaignState} campaign
  * @returns {MatchState}
  */
-function createStageMatch(campaign) {
+export function createStageMatch(campaign) {
   const def = getCampaign(campaign.campaignId);
   const stage = def.stages[campaign.stageIndex];
   const boss = getCharacter(stage.bossId);

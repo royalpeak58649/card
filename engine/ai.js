@@ -1,7 +1,7 @@
 import { getCardDef } from './cards/registry.js';
 import { getPurchasePrice } from './state.js';
 import { getCharacter, getFaction } from './characters.js';
-import { abilityMaxUses } from './turn.js';
+import { abilityMaxUses, canBuyCards } from './turn.js';
 
 /**
  * 지금 발동형 능력을 쓸 수 있는지(횟수·차례 조건).
@@ -252,6 +252,8 @@ function chooseActionPhase(game, playerIndex) {
  */
 function chooseBuyPhase(game, playerIndex) {
   const player = game.players[playerIndex];
+  // 구매할 수 없는 플레이어(모험 모드 보스)는 구매단계를 넘긴다.
+  if (!canBuyCards(game, playerIndex)) return { type: 'endPhase' };
 
   const moneyInHand = player.hand.some((card) => getCardDef(card.cardId).type === 'money');
   if (moneyInHand) return { type: 'playAllMoney' };
