@@ -26,3 +26,13 @@ export { registerCards, getCardDef, allCardIds } from './cards/registry.js';
 export { NEUTRAL_CARD_IDS } from './cards/neutral.js';
 export { createMatch, getCandidates, applyMatchAction } from './match.js';
 export { viewFor } from './view.js';
+export {
+  registerCampaign,
+  getCampaign,
+  allCampaignIds,
+  createCampaign,
+  applyCampaignAction,
+  runEnemy,
+  campaignView,
+  settle,
+} from './campaign.js';
