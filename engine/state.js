@@ -99,8 +99,8 @@ export function createGame({ seed, players }) {
     if (Array.isArray(startDeck)) {
       for (const cardId of startDeck) player.drawPile.push(createCardInstance(game, cardId));
     } else {
-      for (let k = 0; k < 6; k++) player.drawPile.push(createCardInstance(game, 'stone'));
-      for (let k = 0; k < 4; k++) player.drawPile.push(createCardInstance(game, 'pistol'));
+      for (let k = 0; k < 7; k++) player.drawPile.push(createCardInstance(game, 'stone'));
+      for (let k = 0; k < 3; k++) player.drawPile.push(createCardInstance(game, 'pistol'));
     }
     shuffleInPlace(game, player.drawPile);
     drawCards(game, i, 5);

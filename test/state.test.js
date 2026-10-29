@@ -37,8 +37,8 @@ test('시작 덱 구성', () => {
     assert.equal(player.discard.length, 0);
     const all = [...player.hand, ...player.drawPile, ...player.discard];
     assert.equal(all.length, 10);
-    assert.equal(all.filter((c) => c.cardId === 'stone').length, 6);
-    assert.equal(all.filter((c) => c.cardId === 'pistol').length, 4);
+    assert.equal(all.filter((c) => c.cardId === 'stone').length, 7);
+    assert.equal(all.filter((c) => c.cardId === 'pistol').length, 3);
     assert.equal(player.hp, player.maxHp);
     assert.equal(player.stars, 0);
   }
