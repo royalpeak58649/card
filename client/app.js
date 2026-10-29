@@ -8,6 +8,7 @@ import { showGuide, confirmLeave } from './dialogs.js';
 import { showCodex } from './codex.js';
 import { createMusicControls } from './music.js';
 import { renderBattle } from './battle.js';
+import { createAiSpeedControls } from './aiSpeed.js';
 
 const app = document.getElementById('app');
 
@@ -46,6 +47,7 @@ function render() {
     renderBattle(app, state, net);
   }
   const leaveButton = document.getElementById('return-lobby');
+  aiSpeedControls.update(state);
   if (leaveButton) leaveButton.hidden = !state.room;
   if (state.error) showToast(state.error);
 }
@@ -88,6 +90,7 @@ function onMessage(msg) {
       state.view = msg.view;
       state.campaign = msg.campaign || null;
       state.opponent = msg.opponent || null;
+      state.aiSpeed = msg.aiSpeed ?? null;
       if (typeof msg.view?.you === 'number') state.you = msg.view.you;
       // 단계가 바뀌면 입고 화면의 임시 선택을 초기화한다.
       if (msg.view?.stage !== prevStage) {
@@ -115,6 +118,7 @@ function onMessage(msg) {
 }
 
 const net = connect(onMessage);
+const aiSpeedControls = createAiSpeedControls(net);
 state.leaveLobby = () => net.send({ t: 'leave' });
 const toolbar = document.createElement('nav');
 toolbar.className = 'game-toolbar';
@@ -131,7 +135,7 @@ for (const [label, action, id] of [
   button.addEventListener('click', action);
   toolbar.appendChild(button);
 }
-toolbar.appendChild(createMusicControls());
+toolbar.append(aiSpeedControls.element, createMusicControls());
 app.before(toolbar);
 
 render();

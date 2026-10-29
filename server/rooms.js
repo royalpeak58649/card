@@ -9,9 +9,11 @@ import {
   getCampaign,
   createCampaign,
   applyCampaignAction,
-  runEnemy,
+  applyAction,
+  settle,
 } from '../engine/index.js';
 import { chooseSmartAction } from '../engine/aiSmart.js';
+import { DEFAULT_AI_SPEED, getAiSpeed } from '../engine/aiSpeed.js';
 
 /** @typedef {import('../engine/match.js').MatchState} MatchState */
 
@@ -25,7 +27,7 @@ import { chooseSmartAction } from '../engine/aiSmart.js';
  * @typedef {{
  *  code: string, match: MatchState|null, seats: [Seat|null, Seat|null],
  *  vsAi: boolean, createdAt: number, lastActivity: number,
- *  campaignId: string|null, campaign: any|null
+ *  campaignId: string|null, campaign: any|null, aiSpeed: string
  * }} Room
  */
 
@@ -70,7 +72,8 @@ function shuffled(items) {
  * 방 관리자. 방 목록은 메모리에만 둔다.
  */
 export class RoomManager {
-  constructor() {
+  constructor({ deferAi = false } = {}) {
+    this.deferAi = deferAi;
     /** @type {Map<string, Room>} */
     this.rooms = new Map();
   }
@@ -78,11 +81,12 @@ export class RoomManager {
   /**
    * 새 방을 만든다. vsAi 면 1번 자리에 AI 를 앉힌다.
    * campaignId 를 주면 모험 모드 방(1번 자리는 보스 AI)이 된다.
-   * @param {{ vsAi?: boolean, campaignId?: string|null }} [opts]
+   * @param {{ vsAi?: boolean, campaignId?: string|null, aiSpeed?: string }} [opts]
    * @returns {Room}
    */
-  createRoom({ vsAi = false, campaignId = null } = {}) {
+  createRoom({ vsAi = false, campaignId = null, aiSpeed = DEFAULT_AI_SPEED } = {}) {
     if (campaignId) getCampaign(campaignId);
+    getAiSpeed(aiSpeed);
     const now = Date.now();
     /** @type {Room} */
     const room = {
@@ -94,6 +98,7 @@ export class RoomManager {
       lastActivity: now,
       campaignId: campaignId ?? null,
       campaign: null,
+      aiSpeed,
     };
     if (room.vsAi) {
       room.seats[1] = { name: 'AI', token: null, connected: true, isAi: true };
@@ -147,8 +152,8 @@ export class RoomManager {
     if (room.campaign) {
       if (you !== 0) throw new Error('모험 모드에서는 조작할 수 없습니다');
       applyCampaignAction(room.campaign, action);
-      runEnemy(room.campaign, (game, p) => chooseSmartAction(game, p));
       room.match = room.campaign.match;
+      this.runAi(room);
       this.#touch(room);
       return room;
     }
@@ -165,46 +170,58 @@ export class RoomManager {
    * @returns {void}
    */
   runAi(room) {
-    const aiIndex = room.seats.findIndex((seat) => seat !== null && seat.isAi);
-    if (aiIndex < 0) return;
-    const match = room.match;
-    if (!match) return;
-
     for (let step = 0; step < MAX_AI_STEPS; step++) {
-      if (match.stage === 'select') {
-        if (match.picks[aiIndex].characterId !== null) return;
-        applyMatchAction(match, aiIndex, {
-          type: 'selectCharacter',
-          characterId: pickRandom(allCharacterIds()),
-        });
-        continue;
-      }
-
-      if (match.stage === 'draft') {
-        if (match.picks[aiIndex].cardIds !== null) return;
-        const candidates = getCandidates(match.picks[aiIndex].characterId);
-        applyMatchAction(match, aiIndex, {
-          type: 'draft',
-          cardIds: shuffled(candidates).slice(0, DRAFT_SIZE),
-        });
-        continue;
-      }
-
-      if (match.stage === 'playing' && match.game) {
-        const game = match.game;
-        const pending = game.pending;
-        const isAiTurn = pending
-          ? pending.playerIndex === aiIndex
-          : game.activeIndex === aiIndex;
-        if (!isAiTurn) return;
-        const action = chooseSmartAction(game, aiIndex);
-        if (!action) return;
-        applyMatchAction(match, aiIndex, { type: 'game', action });
-        continue;
-      }
-
-      return;
+      if (this.deferAi && room.match?.stage === 'playing') return;
+      if (!this.stepAi(room)) return;
     }
+  }
+
+  /** 실제 조작을 하나만 적용한다. 모험에서도 같은 속도 제어를 사용한다. */
+  stepAi(room) {
+    const aiIndex = room.seats.findIndex((seat) => seat !== null && seat.isAi);
+    if (aiIndex < 0) return false;
+    const match = room.match;
+    if (!match) return false;
+
+    if (match.stage === 'select') {
+      if (match.picks[aiIndex].characterId !== null) return false;
+      applyMatchAction(match, aiIndex, {
+        type: 'selectCharacter',
+        characterId: pickRandom(allCharacterIds()),
+      });
+      return true;
+    }
+
+    if (match.stage === 'draft') {
+      if (match.picks[aiIndex].cardIds !== null) return false;
+      const candidates = getCandidates(match.picks[aiIndex].characterId);
+      applyMatchAction(match, aiIndex, {
+        type: 'draft',
+        cardIds: shuffled(candidates).slice(0, DRAFT_SIZE),
+      });
+      return true;
+    }
+
+    if (match.stage === 'playing' && match.game) {
+      const game = match.game;
+      const pending = game.pending;
+      const isAiTurn = pending
+        ? pending.playerIndex === aiIndex
+        : game.activeIndex === aiIndex;
+      if (!isAiTurn) return false;
+      const action = chooseSmartAction(game, aiIndex);
+      if (!action) return false;
+      if (room.campaign) {
+        applyAction(game, aiIndex, action);
+        settle(room.campaign);
+      } else {
+        applyMatchAction(match, aiIndex, { type: 'game', action });
+      }
+      this.#touch(room);
+      return true;
+    }
+
+    return false;
   }
 
   /**

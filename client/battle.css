@@ -410,19 +410,38 @@ button.bt-tile:hover {
   line-height: 1;
 }
 
-.bt-upgrade-menu {
-  position: absolute;
-  top: 22px;
-  right: -6px;
-  z-index: 7;
+/* 겹친 손패에서도 다음 카드가 별 버튼을 가리지 않게 한다. */
+.bt-hand.crowded .bt-upgrade-btn { left: 4px; right: auto; }
+
+.bt-hand-layout { display: flex; gap: 14px; align-items: flex-start; min-width: 0; }
+.bt-hand-layout > .bt-hand { flex: 1 1 auto; min-width: 0; }
+.bt-hand-card.preview-open > .card { outline: 3px solid var(--gold); outline-offset: 1px; }
+.bt-upgrade-preview {
+  flex: 0 0 250px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   background: #2b2540;
   border: 2px solid var(--gold);
   border-radius: 10px;
-  padding: 6px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  padding: 12px;
+  overflow-wrap: anywhere;
+}
+.bt-upgrade-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.bt-upgrade-label { color: #cfc7e6; font-size: 12px; font-weight: 700; }
+.bt-upgrade-label.upgraded { color: var(--gold); }
+.bt-upgrade-preview p { margin: 0 0 4px; font-size: 13px; line-height: 1.65; white-space: pre-line; }
+.bt-upgrade-effect { background: #f0b42918; padding: 8px; border-radius: 8px; }
+.bt-upgrade-actions { display: flex; flex-direction: column; gap: 6px; }
+.bt-upgrade-preview small { font-size: 11px; color: #cfc7e6; line-height: 1.6; }
+.bt-upgrade-balance { border-top: 1px solid #ffffff30; padding-top: 8px; }
+.bt-ai-activity { background: #ffffff10; border-left: 3px solid var(--gold); border-radius: 8px; padding: 10px 12px; font-size: 14px; text-align: left; }
+.bt-ai-effect { margin-top: 5px; font-size: 13px; color: #e0d7f2; line-height: 1.6; white-space: pre-line; }
+@media (max-width: 1000px) {
+  .bt-hand-layout { flex-direction: column; }
+  .bt-hand-layout > .bt-hand { width: 100%; }
+  .bt-upgrade-preview { flex: 0 0 auto; width: 100%; }
 }
 
 .bt-menu-btn {
@@ -452,6 +471,8 @@ button.bt-tile:hover {
 
 .bt-me-bottom .bt-summary {
   margin-left: auto;
+  flex: 1 1 180px;
+  min-width: 0;
 }
 
 /* ── 조작 버튼 ────────────────────────────────────── */

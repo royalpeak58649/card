@@ -353,7 +353,7 @@ function opponentArea(g, opp, opponent, oppTurn, ongoing) {
  * @param {boolean} myTurn
  * @returns {HTMLElement}
  */
-function centerBoard(g, you, myTurn) {
+function centerBoard(g, you, myTurn, isAi) {
   const board = el('div', 'bt-center');
 
   const phases = el('div', 'bt-phases');
@@ -364,6 +364,29 @@ function centerBoard(g, you, myTurn) {
     phases.appendChild(cell);
   }
   board.appendChild(phases);
+
+  if (isAi) {
+    const activity = el('div', 'bt-ai-activity');
+    activity.setAttribute('role', 'status');
+    activity.setAttribute('aria-live', 'polite');
+    const last = g.log?.at(-1);
+    let message = myTurn ? '내 차례입니다' : '상대가 다음 행동을 준비하고 있습니다…';
+    if (last && last.p !== you) {
+      if (last.type === 'endPhase') {
+        message = myTurn ? '상대 차례 종료 · 내 차례입니다' : `상대: ${PHASES.find((p) => p.id === g.phase)?.label ?? ''} 시작`;
+      } else {
+        message = logText(last, you);
+      }
+    }
+    activity.appendChild(el('strong', '', message));
+    if (last?.p !== you && last?.cardId) {
+      const def = safeCardDef(last.cardId);
+      const played = g.players[last.p].inPlay?.findLast((c) => c.cardId === last.cardId);
+      const upgraded = last.type === 'upgrade' || (last.type === 'playCard' && played?.upgraded);
+      activity.appendChild(el('div', 'bt-ai-effect', (upgraded ? def?.upgradedText : def?.text) ?? ''));
+    }
+    board.appendChild(activity);
+  }
 
   const activePlayer = g.players[g.activeIndex];
   const inPlay = (activePlayer && activePlayer.inPlay) || [];
@@ -457,29 +480,44 @@ function handCard(g, me, card, ctx) {
       ctx.rerender();
     });
     starBtn.title = '강화';
+    starBtn.setAttribute('aria-label', `${cardName(card)} 강화 미리보기`);
+    starBtn.setAttribute('aria-expanded', String(upgradeMenuUid === card.uid));
+    starBtn.setAttribute('aria-controls', 'bt-upgrade-preview');
     wrap.appendChild(starBtn);
-
-    if (upgradeMenuUid === card.uid) {
-      const menu = el('div', 'bt-upgrade-menu');
-      const tempOk = me.stars >= TEMP_UPGRADE_COST && (g.turnState?.tempUpgrades ?? 0) < MAX_TEMP_UPGRADES;
-      const permCost = safeCharacter(me.characterId)?.ability?.permUpgradeCost ?? PERM_UPGRADE_COST;
-      const permOk = me.stars >= permCost;
-      menu.appendChild(
-        button(`일시 강화 ★${TEMP_UPGRADE_COST}`, 'bt-menu-btn', () => {
-          upgradeMenuUid = null;
-          sendGame(ctx.net, { type: 'upgrade', uid: card.uid, mode: 'temp' });
-        }, !tempOk),
-      );
-      menu.appendChild(
-        button(`영구 강화 ★${permCost}`, 'bt-menu-btn', () => {
-          upgradeMenuUid = null;
-          sendGame(ctx.net, { type: 'upgrade', uid: card.uid, mode: 'perm' });
-        }, !permOk),
-      );
-      wrap.appendChild(menu);
-    }
+    if (upgradeMenuUid === card.uid) wrap.classList.add('preview-open');
   }
   return wrap;
+}
+
+/** 별을 눌러도 자원은 쓰지 않는다. 비교를 읽고 강화 종류를 골라 확정한다. */
+function upgradePreview(g, me, card, ctx) {
+  const def = safeCardDef(cardIdOf(card));
+  const panel = el('aside', 'bt-upgrade-preview');
+  panel.id = 'bt-upgrade-preview';
+  panel.setAttribute('aria-label', `${def.name} 강화 미리보기`);
+  const head = el('div', 'bt-upgrade-head');
+  const close = button('닫기', 'bt-menu-btn', () => {
+    upgradeMenuUid = null;
+    ctx.rerender();
+  });
+  head.append(el('strong', '', `★ ${def.name}`), close);
+  panel.append(head, el('div', 'bt-upgrade-label', '현재 효과'), el('p', '', def.text));
+  panel.append(el('div', 'bt-upgrade-label upgraded', '강화 후 효과'), el('p', 'bt-upgrade-effect', def.upgradedText));
+  const tempLimit = (g.turnState?.tempUpgrades ?? 0) >= MAX_TEMP_UPGRADES;
+  const permCost = safeCharacter(me.characterId)?.ability?.permUpgradeCost ?? PERM_UPGRADE_COST;
+  const confirm = (mode) => {
+    upgradeMenuUid = null;
+    sendGame(ctx.net, { type: 'upgrade', uid: card.uid, mode });
+  };
+  const actions = el('div', 'bt-upgrade-actions');
+  actions.append(
+    button(`일시 강화 ★${TEMP_UPGRADE_COST}`, 'bt-menu-btn', () => confirm('temp'), me.stars < TEMP_UPGRADE_COST || tempLimit),
+    el('small', '', tempLimit ? '이번 차례 일시 강화 3장 사용 완료' : '이번 차례에만 적용 · 한 차례 최대 3장'),
+    button(`영구 강화 ★${permCost}`, 'bt-menu-btn', () => confirm('perm'), me.stars < permCost),
+    el('small', '', '이 카드에 경기 내내 적용'),
+  );
+  panel.append(actions, el('small', 'bt-upgrade-balance', `보유 별 ★${me.stars} · 강화 버튼을 누르면 별을 사용합니다`));
+  return panel;
 }
 
 /**
@@ -498,7 +536,12 @@ function myArea(g, me, ctx) {
   if (cards.length > 8) hand.classList.add('very-crowded');
   if (cards.length === 0) hand.appendChild(el('div', 'bt-muted', '손패 없음'));
   for (const card of cards) hand.appendChild(handCard(g, me, card, ctx));
-  area.appendChild(hand);
+  const handLayout = el('div', 'bt-hand-layout');
+  handLayout.appendChild(hand);
+  const previewCard = cards.find((card) => card.uid === upgradeMenuUid && canUpgradeCard(card));
+  if (ctx.canAct && previewCard) handLayout.appendChild(upgradePreview(g, me, previewCard, ctx));
+  else upgradeMenuUid = null;
+  area.appendChild(handLayout);
 
   const bottom = el('div', 'bt-me-bottom');
 
@@ -909,7 +952,7 @@ export function renderBattle(root, state, net) {
 
   const main = el('div', 'bt-main');
   main.appendChild(opponentArea(g, opp, state.opponent, !myTurn, ongoing));
-  main.appendChild(centerBoard(g, you, myTurn));
+  main.appendChild(centerBoard(g, you, myTurn, state.opponent?.isAi));
 
   const middle = el('div', 'bt-middle');
   middle.appendChild(leftColumn(g, me, () => {

@@ -10,8 +10,9 @@
 |---|---|---|
 | `create` | `name` | 새 방을 만들고 0번 플레이어로 들어간다 |
 | `join` | `room`, `name` | 방 코드로 1번 플레이어로 들어간다 |
-| `vsAi` | `name` | AI 상대 방을 만들고 0번 플레이어로 들어간다(1번은 AI) |
-| `campaign` | `campaignId`, `name` | 모험 모드 방을 만들고 0번으로 들어간다(1번은 보스 AI). 조작은 `action` 으로 같은 방식 |
+| `vsAi` | `name`, `aiSpeed?` | AI 상대 방을 만들고 0번 플레이어로 들어간다(1번은 AI) |
+| `campaign` | `campaignId`, `name`, `aiSpeed?` | 모험 모드 방을 만들고 0번으로 들어간다(1번은 보스 AI). 조작은 `action` 으로 같은 방식 |
+| `aiSpeed` | `speed` | AI 연습·모험에서 진행 속도 변경. `slow`·`normal`·`fast`·`veryFast` |
 | `rejoin` | `room`, `token` | 새로고침·재접속. 예전에 받은 token 으로 같은 자리에 다시 앉는다 |
 | `action` | `action` | 경기 조작. `action` 은 engine 의 applyMatchAction 에 그대로 넘어간다 |
 | `leave` | — | 방을 종료하고 참가자 모두 로비로 이동한다. 대기·대전·모험에서 공통 |
@@ -37,7 +38,7 @@
 | t | 필드 | 설명 |
 |---|---|---|
 | `joined` | `room`, `you`, `token` | 방에 들어갔다. `you` 는 0 또는 1. `token` 은 localStorage 에 저장해 rejoin 에 쓴다 |
-| `state` | `view`, `opponent` | 상태가 바뀔 때마다. `view` = engine 의 `viewFor(match, you)`. `opponent` = `{ name, connected, isAi }` 또는 아직 없으면 `null` |
+| `state` | `view`, `opponent`, `aiSpeed` | 상태가 바뀔 때마다. `view` = engine 의 `viewFor(match, you)`. `opponent` = `{ name, connected, isAi }` 또는 아직 없으면 `null`. `aiSpeed`는 AI 방의 속도, 온라인 방은 `null` |
 | `error` | `message` | 잘못된 요청·조작. 한국어 문장 |
 | `left` | `message?` | 방 종료 확인. 클라이언트는 저장된 세션과 현재 화면 상태를 지우고 로비로 이동한다 |
 | `pong` | — | ping 응답 |
@@ -72,7 +73,8 @@
   - `{ "type": "chooseAugment", "augmentId": "field_rations" }` — `stageWon` 에서 서버가 제시한 증강 하나 선택
   - `{ "type": "nextStage" }` — `stageWon` 에서 증강 선택을 마친 뒤 다음 스테이지로
   - `{ "type": "restart" }` — `lost`·`cleared` 에서 1스테이지부터 다시
-- 보스 차례는 서버가 조작 직후 바로 진행한다.
+- AI 연습·보스 차례는 서버가 행동 하나씩 진행하고 매번 가려진 `state`를 보낸다. 기본 `normal`은 행동 간 850ms, `slow` 1400ms, `fast` 350ms. `veryFast`는 기존처럼 한 차례를 즉시 처리한 뒤 전송한다. 대기 시간에 AI 판단 시간이 더해질 수 있다.
+- 속도를 바꾸면 대기 중인 다음 행동부터 적용한다. 연결이 끊기면 멈추고 재접속하면 이어서 진행한다. 퇴장·서버 종료 시 타이머를 취소한다. 브라우저는 마지막으로 확정된 속도를 저장해 새 AI 연습·모험 방에도 사용한다.
 
 - `augments` 는 보유 증강 id 배열, `augmentChoices` 는 미선택 후보 id 배열(선택 후 빈 배열)이다. 증강 이름·등급·문구는 `/engine/index.js` 의 `getAugment(id)` 로 읽는다.
 - 보유 증강은 다음 전투의 `players[0].augmentIds` 에 반영한다. 후보는 서버에서 한 번 확정하며 재접속 시 유지한다.

@@ -8,6 +8,7 @@ import { WebSocketServer } from 'ws';
 
 import { viewFor, campaignView } from '../engine/index.js';
 import { RoomManager } from './rooms.js';
+import { getAiSpeed } from '../engine/aiSpeed.js';
 
 /** @typedef {import('./rooms.js').Room} Room */
 
@@ -124,7 +125,8 @@ async function handleHttp(req, res) {
  * @returns {Promise<{ server: import('node:http').Server, close: () => Promise<void> }>}
  */
 export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
-  const rooms = new RoomManager();
+  const rooms = new RoomManager({ deferAi: true });
+  const aiTimers = new Map();
   const server = createServer((req, res) => {
     handleHttp(req, res).catch(() => {
       if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -164,6 +166,7 @@ export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
           view: match,
           campaign,
           opponent: { name: match.players[1].name, connected: true, isAi: true },
+          aiSpeed: room.aiSpeed,
         });
         continue;
       }
@@ -171,6 +174,7 @@ export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
         t: 'state',
         view: room.match ? viewFor(room.match, you) : null,
         opponent: other ? { name: other.name, connected: other.connected, isAi: other.isAi } : null,
+        aiSpeed: room.vsAi ? room.aiSpeed : null,
       });
     }
   };
@@ -180,10 +184,48 @@ export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
   /** @type {Map<import('ws').WebSocket, { code: string, you: number, token: string }>} */
   const sessions = new Map();
 
+  const cancelAi = (code) => {
+    clearTimeout(aiTimers.get(code));
+    aiTimers.delete(code);
+  };
+
+  // 다음 행동 전에 현재 상태를 읽을 시간을 준다. 방마다 타이머는 하나만 둔다.
+  const scheduleAi = (room) => {
+    if (aiTimers.has(room.code) || rooms.rooms.get(room.code) !== room) return;
+    const game = room.match?.game;
+    if (room.match?.stage !== 'playing' || !game) return;
+    const actor = game.pending?.playerIndex ?? game.activeIndex;
+    if (!room.seats[actor]?.isAi || !room.seats.some((seat) => seat && !seat.isAi && seat.connected)) return;
+    const delay = getAiSpeed(room.aiSpeed).delay;
+    const timer = setTimeout(() => {
+      aiTimers.delete(room.code);
+      if (rooms.rooms.get(room.code) !== room) return;
+      try {
+        if (delay === 0) {
+          // 기존 속도: 한 차례를 한 번에 처리한다.
+          for (let step = 0; step < 500; step++) {
+            if (!rooms.stepAi(room)) break;
+          }
+        } else {
+          rooms.stepAi(room);
+        }
+        broadcast(room);
+        scheduleAi(room);
+      } catch (err) {
+        for (const seat of room.seats) {
+          const socket = seat?.token && sockets.get(seat.token);
+          if (socket) send(socket, { t: 'error', message: err instanceof Error ? err.message : String(err) });
+        }
+      }
+    }, delay);
+    aiTimers.set(room.code, timer);
+  };
+
   // 명시적 퇴장은 방을 끝낸다. 단순 연결 끊김은 기존 재접속 동작을 유지한다.
   const leave = (socket) => {
     const session = sessions.get(socket);
     if (session) {
+      cancelAi(session.code);
       rooms.rooms.delete(session.code);
       for (const [peer, member] of sessions) {
         if (member.code !== session.code) continue;
@@ -211,6 +253,7 @@ export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
     }
     send(socket, { t: 'joined', room: room.code, you, token });
     broadcast(room);
+    scheduleAi(room);
   };
 
   /**
@@ -237,13 +280,13 @@ export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
           return;
         }
         case 'vsAi': {
-          const room = rooms.createRoom({ vsAi: true });
+          const room = rooms.createRoom({ vsAi: true, aiSpeed: msg.aiSpeed });
           const { you, token } = rooms.join(room.code, msg.name);
           enter(socket, room, you, token);
           return;
         }
         case 'campaign': {
-          const room = rooms.createRoom({ campaignId: String(msg.campaignId ?? '') });
+          const room = rooms.createRoom({ campaignId: String(msg.campaignId ?? ''), aiSpeed: msg.aiSpeed });
           const { you, token } = rooms.join(room.code, msg.name);
           enter(socket, room, you, token);
           return;
@@ -263,6 +306,18 @@ export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
           if (!session) throw new Error('먼저 방에 들어가야 합니다');
           const room = rooms.act(session.code, session.you, msg.action);
           broadcast(room);
+          scheduleAi(room);
+          return;
+        }
+        case 'aiSpeed': {
+          const session = sessions.get(socket);
+          const room = session && rooms.rooms.get(session.code);
+          if (!room?.vsAi) throw new Error('AI 대전에서만 속도를 변경할 수 있습니다');
+          getAiSpeed(msg.speed);
+          room.aiSpeed = msg.speed;
+          cancelAi(room.code);
+          broadcast(room);
+          scheduleAi(room);
           return;
         }
         case 'ping': {
@@ -293,12 +348,15 @@ export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
       const session = sessions.get(socket);
       sessions.delete(socket);
       if (!session) return;
-      if (sockets.get(session.token) === socket) sockets.delete(session.token);
+      // 재접속을 마친 뒤 이전 소켓이 닫혀도 새 연결의 AI 진행을 멈추지 않는다.
+      if (sockets.get(session.token) !== socket) return;
+      sockets.delete(session.token);
       const room = rooms.rooms.get(session.code);
       if (!room) return;
       const seat = room.seats[session.you];
       if (!seat || seat.token !== session.token) return;
       seat.connected = false;
+      cancelAi(room.code);
       broadcast(room);
     });
   });
@@ -320,6 +378,7 @@ export async function startServer({ port = 8080, host = '0.0.0.0' } = {}) {
    */
   const close = async () => {
     clearInterval(sweeper);
+    for (const code of aiTimers.keys()) cancelAi(code);
     for (const socket of wss.clients) socket.terminate();
     await new Promise((resolve) => wss.close(() => resolve(undefined)));
     await new Promise((resolve) => server.close(() => resolve(undefined)));

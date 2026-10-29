@@ -661,6 +661,8 @@ body {
 .game-toolbar [hidden] { display: none; }
 .music-controls { display: flex; gap: 10px; align-items: center; margin-left: auto; }
 .music-controls input { width: 90px; accent-color: var(--purple-dark); }
+.ai-speed-controls { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+.ai-speed-controls .input { font-size: 13px; padding: 5px 8px; }
 .lobby-intro { padding: 20px 0 4px; }
 .lobby-intro h1 { font-size: clamp(23px, 5vw, 32px); line-height: 1.3; color: var(--purple-dark); margin: 0 0 12px; }
 .lobby-intro p { color: #655d77; line-height: 1.8; margin: 0; }

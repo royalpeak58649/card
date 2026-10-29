@@ -236,7 +236,7 @@ test('vsAi: AI 가 자동으로 고르고 자기 차례를 진행한다', async 
   const { wsUrl, close } = await boot();
   const a = await connect(wsUrl);
   try {
-    a.send({ t: 'vsAi', name: '가' });
+    a.send({ t: 'vsAi', name: '가', aiSpeed: 'veryFast' });
     const joined = await a.next('joined');
     assert.equal(joined.you, 0);
     const initial = await a.next('state');
@@ -265,6 +265,100 @@ test('vsAi: AI 가 자동으로 고르고 자기 차례를 진행한다', async 
     }
     assert.equal(back.view.game.activeIndex, 0);
     assert.equal(back.view.stage, 'playing');
+  } finally {
+    a.close();
+    await close();
+  }
+});
+
+test('AI 속도: 모험 행동별 전송, 잘못된 속도 거절, 즉시 속도 변경, 재접속·퇴장 시 타이머 정리', async () => {
+  const { wsUrl, close } = await boot();
+  const a = await connect(wsUrl);
+  let again;
+  try {
+    a.send({ t: 'campaign', campaignId: 'silverbeast', name: '나' });
+    const joined = await a.next('joined');
+    assert.equal((await a.next('state')).aiSpeed, 'normal');
+    a.send({ t: 'aiSpeed', speed: 'invalid' });
+    assert.match((await a.next('error')).message, /올바른 AI 진행 속도/);
+    a.send({ t: 'action', action: { type: 'selectCharacter', characterId: 'hayun' } });
+    await a.next('state');
+    a.send({ t: 'action', action: { type: 'draft', cardIds: getCandidates('hayun').slice(0, 4) } });
+    await a.next('state');
+    let before;
+    for (let i = 0; i < 3; i++) {
+      a.send({ t: 'action', action: { type: 'game', action: { type: 'endPhase' } } });
+      before = await a.next('state');
+    }
+    assert.equal(before.view.game.activeIndex, 1);
+    const firstStep = await a.next('state');
+    assert.equal(firstStep.view.game.log.length, before.view.game.log.length + 1);
+    assert.equal(firstStep.view.game.activeIndex, 1);
+    assert.deepEqual(firstStep.view.game.players[1].hand, []);
+
+    a.close();
+    await closed(a.socket);
+    // 대기 중이던 다음 행동은 연결이 끊기면 취소한다.
+    await sleep(950);
+    again = await connect(wsUrl);
+    again.send({ t: 'rejoin', room: joined.room, token: joined.token });
+    await again.next('joined');
+    const resumed = await again.next('state');
+    assert.equal(resumed.view.game.log.length, firstStep.view.game.log.length);
+    assert.equal(resumed.aiSpeed, 'normal');
+    again.send({ t: 'aiSpeed', speed: 'veryFast' });
+    assert.equal((await again.next('state')).aiSpeed, 'veryFast');
+    const done = await again.next('state');
+    assert.equal(done.view.game.activeIndex, 0);
+    assert.ok(done.view.game.log.length > resumed.view.game.log.length + 1);
+
+    again.send({ t: 'aiSpeed', speed: 'slow' });
+    await again.next('state');
+    for (let i = 0; i < 3; i++) {
+      again.send({ t: 'action', action: { type: 'game', action: { type: 'endPhase' } } });
+      await again.next('state');
+    }
+    again.send({ t: 'leave' });
+    await again.next('left');
+    again.send({ t: 'create', name: '새 방' });
+    await again.next('joined');
+    assert.equal((await again.next('state')).view, null);
+    // 이전 AI 타이머가 새 방에 상태를 보내지 않는다.
+    await assert.rejects(again.next('state'), /시간 초과/);
+    again.send({ t: 'aiSpeed', speed: 'fast' });
+    assert.match((await again.next('error')).message, /AI 대전에서만/);
+  } finally {
+    a.close();
+    again?.close();
+    await close();
+  }
+});
+
+test('vsAi: 선택한 속도로 상대 차례를 보여 주고 도중에 속도를 바꾼다', async () => {
+  const { wsUrl, close } = await boot();
+  const a = await connect(wsUrl);
+  try {
+    a.send({ t: 'vsAi', name: '나', aiSpeed: 'veryFast' });
+    await a.next('joined');
+    await a.next('state');
+    a.send({ t: 'action', action: { type: 'selectCharacter', characterId: 'hayun' } });
+    await a.next('state');
+    a.send({ t: 'action', action: { type: 'draft', cardIds: getCandidates('hayun').slice(0, 4) } });
+    let msg = await a.next('state');
+    if (msg.view.game.activeIndex === 1) msg = await a.next('state');
+    a.send({ t: 'aiSpeed', speed: 'fast' });
+    await a.next('state');
+    for (let i = 0; i < 3; i++) {
+      a.send({ t: 'action', action: { type: 'game', action: { type: 'endPhase' } } });
+      msg = await a.next('state');
+    }
+    assert.equal(msg.view.game.activeIndex, 1);
+    const step = await a.next('state');
+    assert.equal(step.view.game.log.length, msg.view.game.log.length + 1);
+    assert.equal(step.aiSpeed, 'fast');
+    a.send({ t: 'aiSpeed', speed: 'veryFast' });
+    await a.next('state');
+    assert.equal((await a.next('state')).view.game.activeIndex, 0);
   } finally {
     a.close();
     await close();

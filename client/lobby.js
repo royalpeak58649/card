@@ -1,5 +1,6 @@
 // 로비 화면: 이름 입력, 방 만들기 / AI 연습 / 방 코드로 참가.
 import { loadSession } from './net.js';
+import { loadAiSpeed } from './aiSpeed.js';
 import { showGuide } from './dialogs.js';
 import { allCampaignIds, getCampaign } from '/engine/index.js';
 
@@ -110,7 +111,7 @@ export function renderLobby(root, net, state = {}) {
   aiBtn.className = 'btn';
   aiBtn.textContent = 'AI 와 연습';
   aiBtn.addEventListener('click', () => {
-    showGuide({ mode: 'vsAi', onStart: () => net.send({ t: 'vsAi', name: currentName() }) });
+    showGuide({ mode: 'vsAi', onStart: () => net.send({ t: 'vsAi', name: currentName(), aiSpeed: loadAiSpeed() }) });
   });
 
   createRow.append(createBtn, aiBtn);
@@ -168,7 +169,7 @@ export function renderLobby(root, net, state = {}) {
     start.className = 'btn primary';
     start.textContent = '작전 시작';
     start.addEventListener('click', () => {
-      showGuide({ mode: 'campaign', onStart: () => net.send({ t: 'campaign', campaignId: id, name: currentName() }) });
+      showGuide({ mode: 'campaign', onStart: () => net.send({ t: 'campaign', campaignId: id, name: currentName(), aiSpeed: loadAiSpeed() }) });
     });
     card.append(name, desc, start);
     adventure.appendChild(card);
