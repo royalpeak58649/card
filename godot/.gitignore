@@ -1,0 +1,6 @@
+# Godot 가 만드는 캐시·가져오기 결과
+.godot/
+/android/
+*.tmp
+# 큰 교차 검증 기록은 필요할 때 tools/make_trace.mjs 로 다시 만든다
+tests/trace*.json
