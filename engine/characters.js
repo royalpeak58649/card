@@ -2,14 +2,19 @@
 /** @typedef {{ flat?: number, perWeapon?: number, perAction?: number,
  *  perStat?: { stat: string, per: number }, cap?: number, cond?: Cond }} AttackBonus */
 /** @typedef {{
- *  id: string, name: string, cardIds: string[], characterIds: string[]
+ *  id: string, name: string, cardIds: string[], characterIds: string[],
+ *  enemy?: boolean
  * }} FactionDef */
 /** @typedef {{
  *  id: string, name: string, factionId: string, maxHp: number, cardIds: string[],
+ *  enemy?: boolean,
+ *  startDeck?: string[],
  *  ability: {
  *    attackBonuses?: AttackBonus[],
  *    opponentActionStar?: { threshold: number, stars: number },
  *    permUpgradeCost?: number,
+ *    noBuy?: boolean,
+ *    startTriggers?: { cond?: Cond, effects: import('./effects.js').Effect[] }[],
  *    endTriggers?: { cond?: Cond, effects: import('./effects.js').Effect[] }[],
  *    activeAbility?: { oncePerGame?: boolean, maxUses?: number, minOwnTurn?: number, effects: import('./effects.js').Effect[], text?: string }
  *  },
@@ -49,19 +54,25 @@ export function getFaction(id) {
 }
 
 /**
- * 등록된 모든 캐릭터 id.
+ * 등록된 모든 캐릭터 id. 기본은 적(enemy) 캐릭터를 뺀다.
+ * @param {boolean} [includeEnemies]
  * @returns {string[]}
  */
-export function allCharacterIds() {
-  return Object.keys(characters);
+export function allCharacterIds(includeEnemies = false) {
+  const ids = Object.keys(characters);
+  if (includeEnemies) return ids;
+  return ids.filter((id) => characters[id].enemy !== true);
 }
 
 /**
- * 등록된 모든 진영 id.
+ * 등록된 모든 진영 id. 기본은 적(enemy) 진영을 뺀다.
+ * @param {boolean} [includeEnemies]
  * @returns {string[]}
  */
-export function allFactionIds() {
-  return Object.keys(factions);
+export function allFactionIds(includeEnemies = false) {
+  const ids = Object.keys(factions);
+  if (includeEnemies) return ids;
+  return ids.filter((id) => factions[id].enemy !== true);
 }
 
 /**

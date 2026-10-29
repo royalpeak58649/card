@@ -21,7 +21,10 @@ import { evalCond, getStat } from './conditions.js';
  *  playedActionIds: string[],
  *  lastAction: { cardId: string, upgraded: boolean } | null,
  *  prevAction: { cardId: string, upgraded: boolean } | null,
- *  echoUsed: boolean
+ *  echoUsed: boolean,
+ *  actionDamage: number,
+ *  bleedOnHit: boolean,
+ *  bleedTriggered: number
  * }} TurnState */
 /** @typedef {{ type: 'playCard', uid: string }
  *  | { type: 'playAllMoney' }
@@ -74,6 +77,9 @@ function createTurnState() {
     lastAction: null,
     prevAction: null,
     echoUsed: false,
+    actionDamage: 0,
+    bleedOnHit: false,
+    bleedTriggered: 0,
   };
 }
 
@@ -208,6 +214,7 @@ function playCard(game, playerIndex, uid) {
   const actionDamageBonus = game.turnState.mods.actionDamageBonus ?? 0;
   if (def.type === 'action' && def.dealsDamage === true && actionDamageBonus > 0) {
     game.turnState.attackDamage += actionDamageBonus;
+    game.turnState.actionDamage = (game.turnState.actionDamage ?? 0) + actionDamageBonus;
   }
 }
 
@@ -260,6 +267,7 @@ function triggerOpponentActionStar(game, playerIndex) {
 function buy(game, playerIndex, cardId) {
   if (game.phase !== 'buy') throw new Error('구매는 구매단계에만 할 수 있습니다');
   const player = game.players[playerIndex];
+  if (!canBuyCards(game, playerIndex)) throw new Error('이 플레이어는 구매할 수 없습니다');
   if ((player.debt ?? 0) > 0 && (game.turnState.mods?.ignoreDebt ?? 0) <= 0) {
     throw new Error('빚을 다 갚기 전에는 구매할 수 없습니다');
   }
@@ -284,6 +292,18 @@ function buy(game, playerIndex, cardId) {
     player.coins += refund;
     game.turnState.mods.weaponBuyRefund = 0;
   }
+}
+
+/**
+ * 그 플레이어가 카드를 살 수 있는지(캐릭터 ability.noBuy 가 true 면 false).
+ * @param {GameState} game
+ * @param {number} playerIndex
+ * @returns {boolean}
+ */
+export function canBuyCards(game, playerIndex) {
+  const characterId = game.players[playerIndex]?.characterId;
+  if (!characterId) return true;
+  return getCharacter(characterId).ability?.noBuy !== true;
 }
 
 /**
@@ -403,6 +423,8 @@ function resolveAttack(game, playerIndex) {
   const weaponsPlayed = turnState.weaponsPlayed;
   const actionsPlayed = turnState.actionsPlayed;
   const condCtx = { playerIndex, cardUid: '' };
+  // 행동카드가 만든 보너스의 합(출혈 추가 피해 판정용).
+  let actionPart = 0;
   for (const bonus of bonuses) {
     if (bonus.cond !== undefined && !evalCond(game, condCtx, bonus.cond)) {
       continue;
@@ -415,14 +437,29 @@ function resolveAttack(game, playerIndex) {
     }
     if (bonus.cap !== undefined) amount = Math.min(amount, bonus.cap);
     total += amount;
+    if (bonus.fromAction === true) actionPart += amount;
   }
 
   const opponentIndex = 1 - playerIndex;
   const opponent = game.players[opponentIndex];
   const defense = opponent.defense ?? 0;
-  const damage = Math.max(0, total - defense);
+  let damage = Math.max(0, total - defense);
   // 공격이 해결되면 상대 방어는 소모된다(무기를 내지 않았어도).
   opponent.defense = 0;
+
+  // 출혈: 피해를 입으면 추가 피해를 받고 출혈이 사라진다.
+  // 그 피해에 행동카드로 준 피해가 섞여 있으면 추가 피해는 2.
+  if (damage >= 1 && opponent.bleed === true) {
+    const actionDamage = (turnState.actionDamage ?? 0) + actionPart;
+    const extra = actionDamage > 0 ? 2 : 1;
+    damage += extra;
+    opponent.bleed = false;
+    turnState.bleedTriggered = extra;
+  }
+  // 이번 차례 공격으로 실제 피해를 줬으면 상대에게 출혈을 건다.
+  if (turnState.bleedOnHit === true && damage >= 1) {
+    opponent.bleed = true;
+  }
 
   turnState.damageDealt = damage;
   // 승패는 라운드 끝(후공 차례 종료)에만 판정하므로 hp 는 음수 그대로 둔다.

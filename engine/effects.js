@@ -3,7 +3,7 @@ import { getCardDef } from './cards/registry.js';
 import { getCharacter, getFaction } from './characters.js';
 import { requestChoice, registerChoice } from './choices.js';
 import { evalCond, getStat } from './conditions.js';
-import { shuffleInPlace } from './rng.js';
+import { shuffleInPlace, randomInt } from './rng.js';
 
 /** @typedef {{ op: string, n?: number }} Effect */
 /** @typedef {{ playerIndex: number, cardUid: string }} EffectContext */
@@ -213,8 +213,44 @@ registerOp('gainCoinsPerStat', (game, ctx, effect) => {
   game.players[ctx.playerIndex].coins += Math.min(max, per * value);
 });
 
+/**
+ * 효과를 낸 카드(ctx.cardUid)가 행동카드인지 검사한다.
+ * 두 플레이어의 hand·inPlay·discard·drawPile 과 game.trash 에서 찾는다(못 찾으면 false).
+ * @param {import('./state.js').GameState} game
+ * @param {EffectContext} ctx
+ * @returns {boolean}
+ */
+function sourceIsAction(game, ctx) {
+  if (!ctx || !ctx.cardUid) return false;
+  const zones = [];
+  for (const player of game.players) {
+    zones.push(player.hand, player.inPlay, player.discard, player.drawPile);
+  }
+  zones.push(game.trash);
+  for (const zone of zones) {
+    for (const card of zone ?? []) {
+      if (card.uid === ctx.cardUid) return getCardDef(card.cardId).type === 'action';
+    }
+  }
+  return false;
+}
+
+/**
+ * 공격 피해를 더한다. 행동카드로 준 피해면 turnState.actionDamage 에도 더한다(출혈 판정용).
+ * @param {import('./state.js').GameState} game
+ * @param {EffectContext} ctx
+ * @param {number} amount
+ * @returns {void}
+ */
+function addAttackDamage(game, ctx, amount) {
+  game.turnState.attackDamage += amount;
+  if (sourceIsAction(game, ctx)) {
+    game.turnState.actionDamage = (game.turnState.actionDamage ?? 0) + amount;
+  }
+}
+
 registerOp('damage', (game, ctx, effect) => {
-  game.turnState.attackDamage += effect.n ?? 0;
+  addAttackDamage(game, ctx, effect.n ?? 0);
 });
 
 registerOp('draw', (game, ctx, effect) => {
@@ -397,6 +433,7 @@ registerOp('addAttackBonus', (game, ctx, effect) => {
   if (effect.perStat !== undefined) bonus.perStat = effect.perStat;
   if (effect.cap !== undefined) bonus.cap = effect.cap;
   if (effect.cond !== undefined) bonus.cond = effect.cond;
+  if (sourceIsAction(game, ctx)) bonus.fromAction = true;
   game.turnState.attackBonuses.push(bonus);
 });
 
@@ -448,7 +485,7 @@ registerOp('debtToDamage', (game, ctx, effect) => {
   const amount = Math.min(effect.max ?? Infinity, player.debt ?? 0);
   if (amount <= 0) return;
   player.debt = (player.debt ?? 0) - amount;
-  game.turnState.attackDamage += amount * (effect.per ?? 1);
+  addAttackDamage(game, ctx, amount * (effect.per ?? 1));
 });
 
 registerOp('heal', (game, ctx, effect) => {
@@ -476,7 +513,7 @@ registerOp('damagePerStat', (game, ctx, effect) => {
   const per = effect.per ?? 1;
   const value = getStat(game, ctx.playerIndex, effect.stat);
   const amount = Math.min(effect.max ?? Infinity, per * value) + (effect.plus ?? 0);
-  game.turnState.attackDamage += amount;
+  addAttackDamage(game, ctx, amount);
 });
 
 registerOp('discardFromHand', (game, ctx, effect) => {
@@ -629,5 +666,28 @@ registerOp('opponentMillTop', (game, ctx, effect) => {
       opponent.discard = [];
     }
     opponent.discard.push(opponent.drawPile.pop());
+  }
+});
+
+registerOp('applyBleed', (game, ctx, effect) => {
+  const timing = effect.timing ?? 'now';
+  if (timing === 'now') {
+    // 출혈은 중첩되지 않는다.
+    game.players[1 - ctx.playerIndex].bleed = true;
+  } else if (timing === 'afterAttack') {
+    game.turnState.bleedOnHit = true;
+  } else {
+    throw new Error(`알 수 없는 출혈 시점: ${timing}`);
+  }
+});
+
+registerOp('gainRandomCard', (game, ctx, effect) => {
+  const pool = effect.pool ?? [];
+  if (!Array.isArray(pool) || pool.length === 0) return;
+  const n = effect.n ?? 1;
+  const to = effect.to ?? 'discard';
+  for (let i = 0; i < n; i++) {
+    const cardId = pool[randomInt(game, pool.length)];
+    putCard(game, ctx.playerIndex, createCardInstance(game, cardId), to);
   }
 });
