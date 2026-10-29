@@ -15,7 +15,7 @@
 
 1. 온라인 대전(방 코드) — Godot WebSocket 클라이언트로 기존 Node 서버에 붙이거나 Godot 서버로 새로 구성
 2. 도감, BGM(「별의 돌격」 MP3 재사용 가능), 카드 일러스트·애니메이션
-3. 모바일 세로 화면 배치
+2. 모바일 세로 화면 배치
 
 ## 폴더
 
@@ -23,10 +23,19 @@
 |---|---|
 | `engine/` | 순수 규칙. `rules.gd`(상태·효과·선택·차례·증강 적용), `match_rules.gd`(선택→입고→대전, view), `campaign_rules.gd`(모험), `ai_basic.gd`·`ai_smart.gd`(AI), `game_data.gd`(데이터 읽기) |
 | `data/game_data.json` | 카드·캐릭터·진영·증강·캠페인·AI 가치·추천 구성. **JS 엔진에서 내보낸 것**이다 |
-| `ui/` | 화면. `main.gd`(로비·선택·입고), `battle_screen.gd`(대전), `campaign_ui.gd`(모험 진행 막대·보스 소개·결과·증강 보상), `card_view.gd`(카드), `session.gd`(AI 연습·모험 진행), `ui_kit.gd`(테마), `dialogs.gd`, `settings.gd`(자동 로드) |
-| `tests/` | `cross_check.gd`(JS 와 단계별 비교), `sim.gd`(AI 대전), `ui_smoke.gd`(AI 연습 화면 자동 진행·스크린샷), `campaign_smoke.gd`(모험 화면 자동 진행, `--lose` 로 실패 화면) |
+| `ui/` | 화면. `main.gd`(로비·선택·입고·온라인 대기실), `battle_screen.gd`(대전), `campaign_ui.gd`(모험 진행 막대·보스 소개·결과·증강 보상), `card_view.gd`(카드), `session.gd`(AI 연습·모험 진행), `online_session.gd`(서버 WebSocket 연결·재접속), `ui_kit.gd`(테마), `dialogs.gd`, `settings.gd`(자동 로드) |
+| `tests/` | `cross_check.gd`(JS 와 단계별 비교), `sim.gd`(AI 대전), `ui_smoke.gd`(AI 연습 화면 자동 진행·스크린샷), `campaign_smoke.gd`(모험 화면 자동 진행, `--lose` 로 실패 화면), `run_online.sh`·`online_smoke.gd`·`web_bot.mjs`(로컬 서버로 온라인 대전 완주·재접속·웹 클라이언트 호환), `online_unreachable.gd`(서버 연결 실패 처리) |
 | `tools/` | `export_data.mjs`(데이터 내보내기), `make_trace.mjs`(교차 검증 기록 만들기) |
 | `fonts/` | Pretendard(OFL-1.1). 웹 내보내기에서도 한글이 보이도록 글꼴을 넣었다 |
+
+## 한 컴퓨터에서 온라인 시험하기
+
+```bash
+npm start                                                     # 웹판 서버(8080)
+godot --path godot -- --settings user://a.cfg                 # 창 1: 서버 주소 ws://localhost:8080/ws → 방 만들기
+godot --path godot -- --settings user://b.cfg                 # 창 2: 같은 주소 → 방 코드로 참가 (브라우저 http://localhost:8080 도 가능)
+```
+`--settings` 로 설정 파일을 나눠야 두 창이 서로의 재접속 정보를 덮어쓰지 않는다.
 
 ## 원칙 (웹판과 같다)
 
@@ -54,6 +63,9 @@ godot --headless --path godot -s res://tests/cross_check.gd         # 조작마�
 godot --headless --path godot -s res://tests/sim.gd -- --games 20   # AI 끼리 끝까지 도는지, 판단 시간
 xvfb-run godot --path godot -s res://tests/ui_smoke.gd -- --shots /tmp/shots   # AI 연습 화면 자동 진행 + 스크린샷
 xvfb-run godot --path godot -s res://tests/campaign_smoke.gd -- --shots /tmp/cshots [--lose]   # 모험 화면 자동 진행
+bash godot/tests/run_online.sh [/tmp/oshots]      # 로컬 서버 + Godot 둘: 방 만들기·참가·완주·6턴에 끊고 재접속·방 종료
+GUEST=web bash godot/tests/run_online.sh           # 참가자를 웹판과 같은 메시지를 쓰는 봇으로(웹 ↔ Godot)
+godot --headless --path godot -s res://tests/online_unreachable.gd   # 서버에 못 붙을 때 로비 복귀
 ```
 
 `cross_check` 는 JS 엔진이 남긴 기록을 같은 순서로 다시 적용해 **조작 하나하나의 오류 문구·상태 해시·가려진 화면 해시·AI 가 고른 조작**을 비교한다.

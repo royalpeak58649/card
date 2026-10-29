@@ -7,7 +7,8 @@ const KEYWORD_LABELS := {"trash": "제거", "discard": "버리기", "pay": "★ 
 const PHASES := [["action", "행동단계"], ["buy", "구매단계"], ["attack", "공격단계"]]
 
 var app
-var session: GameSession
+## GameSession(AI 연습·모험) 또는 OnlineSession(온라인 대전)
+var session
 
 var _upgrade_uid := ""
 var _choice_selection: Array = []
@@ -17,7 +18,7 @@ var _overlay_layer: Control
 var _last_ai_action: Dictionary = {}
 
 
-func setup(app_node, s: GameSession) -> void:
+func setup(app_node, s) -> void:
 	app = app_node
 	session = s
 	session.ai_acted.connect(func(a): _last_ai_action = a)
@@ -31,7 +32,7 @@ func _send(action: Dictionary) -> void:
 
 func render() -> void:
 	UiKit.clear(self)
-	var v := session.view()
+	var v: Dictionary = session.view()
 	var g: Dictionary = v["game"]
 	var you: int = v["you"]
 	var me: Dictionary = g["players"][you]
@@ -41,8 +42,8 @@ func render() -> void:
 	var my_turn: bool = int(g["activeIndex"]) == you and not finished
 	var can_act: bool = session.human_can_act() and pending == null and my_turn
 
-	var title := "AI 연습 · %d턴 · %s" % [int(g["turn"]), "선공" if int(g["firstPlayerIndex"]) == you else "후공"]
-	var cv := session.campaign_view()
+	var title: String = session.mode_label() + " · %d턴 · %s" % [int(g["turn"]), "선공" if int(g["firstPlayerIndex"]) == you else "후공"]
+	var cv: Dictionary = session.campaign_view()
 	if not cv.is_empty():
 		var st: Dictionary = cv["stages"][int(cv["stageIndex"])]
 		title = "스테이지 %d · %s · %d턴" % [int(cv["stageIndex"]) + 1, st["name"], int(g["turn"])]
@@ -161,7 +162,13 @@ func _opponent_area(g: Dictionary, opp: Dictionary, my_turn: bool, finished: boo
 	if count == 0:
 		hand.add_child(UiKit.label("손패 없음", "MutedLabel"))
 	row.add_child(hand)
-	if not my_turn and not finished:
+	var info: Dictionary = session.opponent_info()
+	if info.get("connected") == false and not finished:
+		row.add_child(_stat_chip("연결 끊김 · 재접속 기다리는 중", UiKit.RED, Color.WHITE, 14, "상대가 다시 접속하면 이어서 진행합니다"))
+	var pending = g.get("pending")
+	if pending != null and pending.get("waiting") == true and not finished:
+		row.add_child(_stat_chip("상대가 선택하는 중…", UiKit.GOLD, UiKit.INK, 14))
+	elif not my_turn and not finished:
 		var tag := _stat_chip("상대 차례 진행중" + (" · 생각 중…" if session.is_thinking() else ""), UiKit.PURPLE, Color.WHITE, 14)
 		row.add_child(tag)
 	return p
@@ -678,7 +685,8 @@ func _finished_overlay(v: Dictionary, g: Dictionary, you: int) -> void:
 	col.add_child(hp)
 	var row := UiKit.hbox(12)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_child(UiKit.button("다시 하기", func(): session.start_vs_ai(UiKit.settings().player_name)))
+	if session.can_restart():
+		row.add_child(UiKit.button("다시 하기", func(): session.start_vs_ai(UiKit.settings().player_name)))
 	row.add_child(UiKit.button("로비로", app.go_lobby, true))
 	col.add_child(row)
 	_modal("", col, 520)

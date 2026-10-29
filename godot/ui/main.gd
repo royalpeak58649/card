@@ -3,7 +3,10 @@ extends Control
 
 const BattleScreen := preload("res://ui/battle_screen.gd")
 
-var session: GameSession
+## 지금 쓰는 세션: local(AI 연습·모험, GameSession) 또는 online(온라인 대전, OnlineSession)
+var session
+var local: GameSession
+var online: OnlineSession
 var screen_root: Control
 var toast_layer: VBoxContainer
 var _screen_key := ""
@@ -31,11 +34,37 @@ func _ready() -> void:
 	toast_layer.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	add_child(toast_layer)
 
-	session = GameSession.new()
-	add_child(session)
-	session.changed.connect(_refresh)
-	session.toast.connect(show_toast)
+	local = GameSession.new()
+	add_child(local)
+	online = OnlineSession.new()
+	add_child(online)
+	local.changed.connect(func(): _changed_from(local))
+	online.changed.connect(func(): _changed_from(online))
+	local.toast.connect(show_toast)
+	online.toast.connect(show_toast)
+	online.left.connect(_on_online_left)
+	session = local
 	_show_lobby()
+	# 저장된 온라인 자리가 있으면(앱을 다시 켠 경우) 같은 자리로 다시 접속한다.
+	var saved: Dictionary = UiKit.settings().online_session
+	if not saved.is_empty():
+		show_toast("저장된 방(%s)에 다시 접속합니다" % saved["room"])
+		session = online
+		online.resume(saved["url"], saved["room"], saved["token"])
+
+
+## 지금 화면에 보이는 세션에서 온 변경만 그린다.
+func _changed_from(source) -> void:
+	if session == source:
+		_refresh()
+
+
+func _on_online_left(message: String) -> void:
+	if session == online:
+		session = local
+		_show_lobby()
+	if message != "":
+		show_toast(message)
 
 
 func show_toast(message: String) -> void:
@@ -59,12 +88,17 @@ func _set_screen(node: Control, key: String) -> void:
 
 
 func _refresh() -> void:
+	if session.waiting():
+		_show_waiting()
+		return
 	if session.is_campaign() and session.campaign_status() != "battle":
 		_show_campaign_result()
 		return
 	match session.stage():
 		"":
-			if _screen_key != "lobby":
+			if session == online and online.active():
+				_show_waiting()
+			elif _screen_key != "lobby":
 				_show_lobby()
 		"select":
 			_show_select()
@@ -81,6 +115,7 @@ func _refresh() -> void:
 
 func go_lobby() -> void:
 	session.stop()
+	session = local
 	_show_lobby()
 
 
@@ -94,7 +129,10 @@ func confirm_leave() -> void:
 	if session.stage() == "" or session.stage() == "finished":
 		go_lobby()
 		return
-	Dialogs.confirm(self, "로비로 돌아갈까요?", "진행 중인 경기를 종료하고 로비로 돌아갑니다.", "로비로", go_lobby)
+	var msg := "진행 중인 경기를 종료하고 로비로 돌아갑니다."
+	if session == online:
+		msg = "방을 종료하고 로비로 돌아갑니다. 상대도 로비로 이동합니다."
+	Dialogs.confirm(self, "로비로 돌아갈까요?", msg, "로비로", go_lobby)
 
 
 func _save_name(edit: LineEdit) -> void:
@@ -104,11 +142,15 @@ func _save_name(edit: LineEdit) -> void:
 
 
 func _show_campaign_result() -> void:
-	var cv := session.campaign_view()
+	var cv: Dictionary = session.campaign_view()
 	_set_screen(CampaignUi.result_screen(cv, func(a): session.act(a), confirm_leave, _top_right_buttons()), "campaign_result")
 
 
 func _top_right_buttons() -> Array:
+	if session == online:
+		var conn := UiKit.label("● 연결됨" if online.is_connected_to_server() else "● 다시 연결하는 중…", "", 14,
+			Color("#c9ffd9") if online.is_connected_to_server() else Color("#ffd2d2"))
+		return [conn, UiKit.button("플레이 가이드", func(): Dialogs.guide(self)), UiKit.button("로비로", confirm_leave)]
 	return [UiKit.settings().make_speed_picker(),
 		UiKit.button("플레이 가이드", func(): Dialogs.guide(self)),
 		UiKit.button("로비로", confirm_leave)]
@@ -122,41 +164,52 @@ func _show_lobby() -> void:
 	var center := CenterContainer.new()
 	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(center)
-	var col := UiKit.vbox(18)
-	col.custom_minimum_size.x = 560
+	var col := UiKit.vbox(16)
 	center.add_child(col)
 
-	var title := UiKit.label("카드 대전", "TitleLabel", 54, UiKit.PURPLE_DARK)
+	var title := UiKit.label("카드 대전", "TitleLabel", 50, UiKit.PURPLE_DARK)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(title)
 	var sub := UiKit.label("카드를 모으고, 별로 강화하고, 결정적인 한 차례를 만드세요.", "MutedLabel", 17)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(sub)
 
-	var card := UiKit.panel("WhitePanel")
-	col.add_child(card)
-	var inner := UiKit.vbox(12)
-	card.add_child(inner)
-	inner.add_child(UiKit.bold("내 이름", 15, UiKit.MUTED))
+	var name_row := UiKit.hbox(10)
+	name_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	name_row.add_child(UiKit.bold("내 이름", 15, UiKit.MUTED))
 	var name_edit := LineEdit.new()
 	name_edit.text = UiKit.settings().player_name
 	name_edit.max_length = 12
 	name_edit.placeholder_text = "이름"
-	inner.add_child(name_edit)
+	name_edit.custom_minimum_size.x = 260
+	name_row.add_child(name_edit)
+	col.add_child(name_row)
 
+	var columns := UiKit.hbox(18)
+	col.add_child(columns)
+	var left := UiKit.vbox(16)
+	left.custom_minimum_size.x = 520
+	columns.add_child(left)
+
+	# AI 연습
+	var card := UiKit.panel("WhitePanel")
+	left.add_child(card)
+	var inner := UiKit.vbox(10)
+	card.add_child(inner)
+	inner.add_child(UiKit.label("AI 연습", "HeaderLabel", 20, UiKit.PURPLE_DARK))
 	var start := UiKit.button("AI와 연습하기", func():
 		_save_name(name_edit)
 		Dialogs.guide(self, "AI를 상대로 차례의 흐름을 익혀 보세요. 시간에 쫓기지 않고 카드 효과와 강화 조합을 연습할 수 있습니다.",
-			func(): session.start_vs_ai(UiKit.settings().player_name), "연습 시작"), true)
-	start.custom_minimum_size.y = 56
+			func():
+				session = local
+				local.start_vs_ai(UiKit.settings().player_name), "연습 시작"), true)
+	start.custom_minimum_size.y = 54
 	start.add_theme_font_size_override("font_size", 20)
 	inner.add_child(start)
 
-	inner.add_child(_disabled_mode("친구와 대전 (준비 중)"))
-
 	# 모험 모드
 	var adv := UiKit.panel("WhitePanel")
-	col.add_child(adv)
+	left.add_child(adv)
 	var ac := UiKit.vbox(8)
 	adv.add_child(ac)
 	ac.add_child(UiKit.label("모험 모드", "HeaderLabel", 20, UiKit.PURPLE_DARK))
@@ -172,15 +225,116 @@ func _show_lobby() -> void:
 		var go := UiKit.button("작전 시작", func():
 			_save_name(name_edit)
 			Dialogs.guide(self, "카드를 모으고, 별로 강화하고, 결정적인 한 차례를 만드세요.",
-				func(): session.start_campaign(id, UiKit.settings().player_name), "작전 시작",
+				func():
+					session = local
+					local.start_campaign(id, UiKit.settings().player_name), "작전 시작",
 				cdef["name"], CampaignUi.STORY_TITLE, CampaignUi.STORY), true)
 		go.custom_minimum_size = Vector2(130, 48)
 		go.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(go)
 		ac.add_child(row)
-	var note := UiKit.wrap_label("Godot 이식판: AI 연습과 모험 모드를 지원합니다. 온라인 대전·도감은 다음 단계에서 옮깁니다.", 13, UiKit.MUTED)
+
+	# 친구와 대전(온라인)
+	var on := UiKit.panel("WhitePanel")
+	on.custom_minimum_size.x = 440
+	columns.add_child(on)
+	var oc := UiKit.vbox(10)
+	on.add_child(oc)
+	oc.add_child(UiKit.label("친구와 대전 (온라인)", "HeaderLabel", 20, UiKit.PURPLE_DARK))
+	oc.add_child(UiKit.wrap_label("방을 만들고 방 코드를 알려 주세요. 웹판(브라우저) 사용자와도 같은 서버에서 대전할 수 있습니다.", 13, UiKit.MUTED))
+	oc.add_child(UiKit.bold("서버 주소", 14, UiKit.MUTED))
+	var url_edit := LineEdit.new()
+	url_edit.text = UiKit.settings().server_url
+	url_edit.placeholder_text = "ws://서버주소/ws"
+	url_edit.tooltip_text = "웹판 서버의 WebSocket 주소. HTTPS 도메인이면 wss://도메인/ws"
+	oc.add_child(url_edit)
+	var save_inputs := func():
+		_save_name(name_edit)
+		var u := url_edit.text.strip_edges()
+		if u != "":
+			UiKit.settings().server_url = u
+			UiKit.settings()._save()
+	var create := UiKit.button("방 만들기", func():
+		save_inputs.call()
+		Dialogs.guide(self, "방 코드를 공유해 두 명이 대전합니다. 로비로 돌아가면 방이 종료되고 상대도 로비로 이동합니다.",
+			func():
+				session = online
+				online.create_room(UiKit.settings().server_url, UiKit.settings().player_name)
+				_show_waiting(), "방 만들기", "친구와 대전하기"), true)
+	create.custom_minimum_size.y = 48
+	oc.add_child(create)
+	oc.add_child(UiKit.bold("방 코드로 참가", 14, UiKit.MUTED))
+	var join_row := UiKit.hbox(8)
+	var code_edit := LineEdit.new()
+	code_edit.placeholder_text = "방 코드"
+	code_edit.max_length = 8
+	code_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	join_row.add_child(code_edit)
+	var join := func():
+		var code := code_edit.text.strip_edges().to_upper()
+		if code == "":
+			show_toast("방 코드를 입력하세요")
+			return
+		save_inputs.call()
+		Dialogs.guide(self, "방 코드를 공유해 두 명이 대전합니다. 로비로 돌아가면 방이 종료되고 상대도 로비로 이동합니다.",
+			func():
+				session = online
+				online.join_room(UiKit.settings().server_url, code, UiKit.settings().player_name)
+				_show_waiting(), "참가하기", "방 코드로 참가하기")
+	code_edit.text_submitted.connect(func(_t): join.call())
+	var join_btn := UiKit.button("참가", join, true)
+	join_btn.custom_minimum_size.x = 100
+	join_row.add_child(join_btn)
+	oc.add_child(join_row)
+
+	var note := UiKit.wrap_label("Godot 이식판: AI 연습·모험 모드·온라인 대전을 지원합니다. 도감은 다음 단계에서 옮깁니다.", 13, UiKit.MUTED)
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(note)
 	_set_screen(root, "lobby")
+
+
+## 온라인: 방에 들어갔고 상대를 기다리는 중(또는 서버에 접속하는 중)
+func _show_waiting() -> void:
+	var root := UiKit.vbox(0)
+	root.add_child(UiKit.top_bar("친구와 대전", _top_right_buttons()))
+	var center := CenterContainer.new()
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(center)
+	var box := UiKit.panel("WhitePanel")
+	box.custom_minimum_size.x = 520
+	center.add_child(box)
+	var col := UiKit.vbox(14)
+	box.add_child(col)
+	var connected := online.is_connected_to_server()
+	if online.room == "":
+		var l := UiKit.label("서버에 접속하는 중…" if not connected else "방에 들어가는 중…", "HeaderLabel", 22, UiKit.PURPLE_DARK)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(l)
+		var u := UiKit.label(online.url, "MutedLabel", 14)
+		u.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(u)
+	else:
+		var l := UiKit.label("방 코드", "MutedLabel", 16)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(l)
+		var code := UiKit.label(online.room, "TitleLabel", 56, UiKit.PURPLE)
+		code.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(code)
+		var w := UiKit.label("상대를 기다리는 중…" if connected else "서버에 다시 연결하는 중…", "HeaderLabel", 20)
+		w.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(w)
+		var hint := UiKit.wrap_label("친구에게 방 코드를 알려 주세요. 친구는 같은 서버 주소로 '방 코드로 참가'에 이 코드를 넣으면 됩니다. 웹판에서는 로비의 방 코드 칸에 넣습니다.", 14, UiKit.MUTED)
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(hint)
+	var row := UiKit.hbox(10)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	if online.room != "":
+		row.add_child(UiKit.button("코드 복사", func():
+			DisplayServer.clipboard_set(online.room)
+			show_toast("방 코드를 복사했습니다")))
+	row.add_child(UiKit.button("취소하고 로비로", go_lobby, true))
+	col.add_child(row)
+	_set_screen(root, "waiting")
 
 
 func _disabled_mode(text: String) -> Button:
@@ -216,7 +370,13 @@ func _character_card(ch: Dictionary, on_pick: Callable, chosen := false) -> Pane
 
 
 func _show_select() -> void:
-	if _screen_key == "select":
+	var v: Dictionary = session.view()
+	var you: int = int(v.get("you", 0))
+	var my_char = v["picks"][you]["characterId"] if v.has("picks") else null
+	var opp_char = v["picks"][1 - you]["characterId"] if v.has("picks") else null
+	# 온라인에서는 내가 먼저 고르면 상대를 기다리는 표시로 바꿔 그린다.
+	var key := "select:%s:%s" % [str(my_char), str(opp_char != null)]
+	if _screen_key == key:
 		return
 	var root := UiKit.vbox(0)
 	root.add_child(UiKit.top_bar("캐릭터 선택", _top_right_buttons()))
@@ -233,6 +393,13 @@ func _show_select() -> void:
 	margin.add_child(col)
 	if session.is_campaign():
 		col.add_child(CampaignUi.header(session.campaign_view()))
+	if my_char != null and not session.is_campaign():
+		var wait := UiKit.panel("", UiKit.box(Color("#f8eafc"), UiKit.PURPLE, 2, 12, 14))
+		var wr := UiKit.hbox(12)
+		wait.add_child(wr)
+		wr.add_child(UiKit.bold("%s 선택 완료 · %s" % [GameData.character(my_char)["name"],
+			"상대도 캐릭터를 골랐습니다" if opp_char != null else "상대 선택을 기다리는 중…"], 18, UiKit.PURPLE_DARK))
+		col.add_child(wait)
 	for fid in GameData.all_faction_ids():
 		var f := GameData.faction(fid)
 		col.add_child(UiKit.label(f["name"], "HeaderLabel", 22, UiKit.PURPLE_DARK))
@@ -242,10 +409,10 @@ func _show_select() -> void:
 		grid.add_theme_constant_override("v_separation", 14)
 		for cid in f["characterIds"]:
 			var id: String = cid
-			grid.add_child(_character_card(GameData.character(id), func():
-				session.act({"type": "selectCharacter", "characterId": id})))
+			var pick := Callable() if my_char != null else func(): session.act({"type": "selectCharacter", "characterId": id})
+			grid.add_child(_character_card(GameData.character(id), pick, my_char == id))
 		col.add_child(grid)
-	_set_screen(root, "select")
+	_set_screen(root, key)
 
 
 # ─────────────────────────── 입고 ───────────────────────────
@@ -254,7 +421,7 @@ func _show_draft() -> void:
 	if _screen_key != "draft":
 		_draft_selection = []
 		_draft_preview_upgraded = false
-	var v := session.view()
+	var v: Dictionary = session.view()
 	var you: int = v["you"]
 	var my_pick: Dictionary = v["picks"][you]
 	var opp_pick: Dictionary = v["picks"][1 - you]

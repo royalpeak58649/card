@@ -213,3 +213,25 @@ func stop() -> void:
 	_thinking = false
 	match_state = {}
 	campaign = {}
+
+
+# ─────────────────────────── 화면 공용 인터페이스(OnlineSession 과 같은 이름) ───────────────────────────
+
+func waiting() -> bool:
+	return false
+
+
+func mode_label() -> String:
+	return "AI 연습"
+
+
+func can_restart() -> bool:
+	return not is_campaign()
+
+
+func opponent_info() -> Dictionary:
+	return {"name": "AI", "connected": true, "isAi": true}
+
+
+func active() -> bool:
+	return not match_state.is_empty()

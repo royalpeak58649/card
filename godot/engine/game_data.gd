@@ -24,9 +24,23 @@ static func _ensure() -> void:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		push_error("게임 데이터를 읽지 못했습니다: %s" % DATA_PATH)
 		return
-	_d = intify(parsed)
+	_d = _display_safe(intify(parsed))
 	for a in _d["augments"]:
 		_augments_by_id[a["id"]] = a
+
+
+## 글꼴(Pretendard)에 없는 기호를 글자로 바꾼다. 화면 문구에만 쓰이는 기호다(예: 에코 능력의 ⚡1 → 행동력 1).
+static func _display_safe(v):
+	match typeof(v):
+		TYPE_STRING:
+			return v.replace("⚡", "행동력 ")
+		TYPE_DICTIONARY:
+			for k in v:
+				v[k] = _display_safe(v[k])
+		TYPE_ARRAY:
+			for i in v.size():
+				v[i] = _display_safe(v[i])
+	return v
 
 
 ## JSON 숫자는 모두 float 로 읽히므로 정수 값은 int 로 바꾼다(JS 와 같은 정수 연산을 위해).
