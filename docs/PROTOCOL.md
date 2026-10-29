@@ -23,6 +23,7 @@
 { "t": "action", "action": { "type": "draft", "cardIds": ["s8_supplyOrder", "s8_logistics", "s8_opFunds", "s8_budget"] } }
 { "t": "action", "action": { "type": "game", "action": { "type": "playCard", "uid": "c12" } } }
 { "t": "action", "action": { "type": "game", "action": { "type": "playAllMoney" } } }
+{ "t": "action", "action": { "type": "game", "action": { "type": "playAllWeapons" } } }
 { "t": "action", "action": { "type": "game", "action": { "type": "buy", "cardId": "rifle" } } }
 { "t": "action", "action": { "type": "game", "action": { "type": "upgrade", "uid": "c12", "mode": "temp" } } }
 { "t": "action", "action": { "type": "game", "action": { "type": "endPhase" } } }
@@ -30,6 +31,8 @@
 ```
 
 ## 서버 → 클라이언트
+
+`playAllWeapons`는 공격단계에 손패 순서대로 무기를 낸다. 선택형 효과가 나오면 즉시 멈춘다. 선택을 해결한 뒤 다시 요청하면 남은 무기를 낸다. 공격 종료는 별도 `endPhase`로 한다.
 
 | t | 필드 | 설명 |
 |---|---|---|

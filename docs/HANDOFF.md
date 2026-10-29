@@ -95,7 +95,7 @@ docs/              GAME_DESIGN.md(규칙·카드 표) PROTOCOL.md(통신 규격)
 `[차례 시작: 별 +1(선공 첫 차례 제외), 캐릭터 startTriggers] → 행동단계 → 구매단계 → 공격단계 → [공격 해결 → endTriggers → 정리(5장 뽑기) → 후공 차례 끝이면 라운드 끝 판정]`
 
 ### 조작 종류(`action.type`)
-`playCard {uid}` · `playAllMoney` · `buy {cardId}` · `upgrade {uid, mode:'temp'|'perm'}` · `endPhase` ·
+`playCard {uid}` · `playAllMoney` · `playAllWeapons` · `buy {cardId}` · `upgrade {uid, mode:'temp'|'perm'}` · `endPhase` ·
 `choose {selection}` · `payDebt {amount?}` · `activateAbility`
 
 ### 효과 op 목록(`engine/effects.js`)
@@ -220,3 +220,10 @@ AI 의 한계: 상대 차례는 예측하지 않는다(방어 가치는 근사).
 - 운영법과 평가 조건: `docs/RECOMMENDATIONS.md`. 원본 수치: `docs/recommendation-results.json`. 새 평가: `node tools/recommend.js --out /tmp/card-recommendations-fresh.json`. 출력 파일이 있으면 완료한 캐릭터를 건너뛰므로 카드/능력/AI가 바뀐 뒤에는 반드시 새 파일을 사용한다. 데이터가 바뀌면 추천과 설명도 재검토한다.
 - 모의 실행 AI는 상대 차례를 예측하지 않고 자신의 덱 순서를 활용할 수 있다. 기존 AI 가치표는 그대로다. 1차 비교는 기본 AI라 좋은 조합을 놓칠 수 있고, 검증 수치가 사람 상대·모험 모드 승률을 뜻하지 않는다. 보스·증강에 맞춘 추천은 아니다. 엔진·카드·능력·AI 수치 변경 없음.
 - 검증: 전체 `npm test` 289개 통과. Playwright 실제 Chromium에서 12명·24개 추천 적용, 수동 수정, 효과 펼치기, 확정 전 전송 없음, 확정 시 단일 전송, 제출 후 비활성화, AI 대전 시작, PC·390px 모바일 가로 넘침 없음 확인. 기존 중립 카드 기본/강화 효과 표시도 재확인.
+
+## 12. 무기 일괄 내기 · 강화 증원 요청 확인
+
+- 공격단계의 ‘무기 모두 내기’는 `playAllWeapons` 조작 하나로 서버에 요청한다. 손패 순서대로 기존 `playCard` 처리를 호출하므로 강화·무기 수 보너스·캐릭터 능력을 개별 사용과 동일하게 계산한다.
+- 유성 낙하 등 선택형 효과가 생기면 즉시 멈춘다. 선택 해결 뒤 버튼을 다시 눌러 나머지를 낸다. 공격 종료는 별도 버튼이다. 선택 대기·상대 차례에는 비활성화하고 손에 무기가 없으면 숨긴다.
+- 사용자 보고 ‘일시 강화 증원 요청으로 손패가 5장 증가’는 에코 모험 플레이였다. 에코의 내 4번째 차례 이후 첫 행동력 비용 1 카드 두 번 발동으로 3장 × 2 = 6장 뽑고 사용 카드 1장이 빠져 순증 5장이다. 기본+강화 중복 실행 버그가 아니므로 강화 처리와 능력은 변경하지 않았다.
+- `test/play-all-weapons.test.js`: 개별 사용과 동일한 피해·강화·강진 보너스, 연속 선택 중단/재사용, 잘못된 차례·단계 거절, 일반 강화 증원 요청 3장/에코 6장 회귀 검증. 전체 테스트 293개 통과. 실제 Chromium에서 PC·390px 모바일 버튼·선택·재사용·단일 메시지 전송·로그·자동 차례 종료 없음 확인.

@@ -29,6 +29,7 @@ import { augmentTurnStart, augmentExtraActionRuns, augmentAttackBonuses, hasAugm
  * }} TurnState */
 /** @typedef {{ type: 'playCard', uid: string }
  *  | { type: 'playAllMoney' }
+ *  | { type: 'playAllWeapons' }
  *  | { type: 'buy', cardId: string }
  *  | { type: 'payDebt', amount?: number }
  *  | { type: 'upgrade', uid: string, mode: 'temp'|'perm' }
@@ -697,6 +698,18 @@ export function applyAction(game, playerIndex, action) {
           .filter((c) => getCardDef(c.cardId).type === 'money')
           .map((c) => c.uid);
         for (const uid of uids) playCard(game, playerIndex, uid);
+        break;
+      }
+      case 'playAllWeapons': {
+        if (game.phase !== 'attack') throw new Error('무기카드는 공격단계에만 낼 수 있습니다');
+        // 손패 순서대로 낸다. 별 사용 등 선택이 생기면 멈춰 선택을 덮어쓰지 않는다.
+        const uids = game.players[playerIndex].hand
+          .filter((c) => getCardDef(c.cardId).type === 'weapon')
+          .map((c) => c.uid);
+        for (const uid of uids) {
+          playCard(game, playerIndex, uid);
+          if (game.pending) break;
+        }
         break;
       }
       case 'buy': {

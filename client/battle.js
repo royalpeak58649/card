@@ -245,6 +245,8 @@ function logText(entry, you) {
       return `${entry.turn}턴 · ${who}: ${name} 강화(${entry.mode === 'perm' ? '영구' : '일시'})`;
     case 'playAllMoney':
       return `${entry.turn}턴 · ${who}: 재화 모두 내기`;
+    case 'playAllWeapons':
+      return `${entry.turn}턴 · ${who}: 무기 모두 내기`;
     case 'choose':
       return `${entry.turn}턴 · ${who}: 선택 완료`;
     case 'payDebt':
@@ -547,6 +549,12 @@ function actionButtons(g, me, ctx) {
     }
   } else if (g.phase === 'attack') {
     box.appendChild(button('차례 끝내기', 'btn small primary', () => sendGame(ctx.net, { type: 'endPhase' }), !canAct));
+    const hasWeapons = (me.hand || []).some((c) => safeCardDef(cardIdOf(c))?.type === 'weapon');
+    if (hasWeapons) {
+      const playAll = button('무기 모두 내기', 'btn small', () => sendGame(ctx.net, { type: 'playAllWeapons' }), !canAct);
+      playAll.title = '손패 순서대로 냅니다. 선택 효과가 나오면 선택을 마친 뒤 다시 눌러주세요.';
+      box.appendChild(playAll);
+    }
   }
   const character = safeCharacter(me.characterId);
   const active = character?.ability?.activeAbility;
