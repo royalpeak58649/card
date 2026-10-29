@@ -97,6 +97,9 @@ test('startGame 후 첫 차례 상태', () => {
     lastAction: null,
     prevAction: null,
     echoUsed: false,
+    actionDamage: 0,
+    bleedOnHit: false,
+    bleedTriggered: 0,
   });
 });
 

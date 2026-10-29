@@ -11,7 +11,8 @@ import { randomInt, shuffleInPlace } from './rng.js';
  *  drawPile: CardInstance[], hand: CardInstance[], discard: CardInstance[],
  *  inPlay: CardInstance[], actions: number, buys: number, coins: number,
  *  debt: number,
- *  defense: number, abilityUsed: boolean, abilityUses: number, turnsTaken: number
+ *  defense: number, abilityUsed: boolean, abilityUses: number, turnsTaken: number,
+ *  bleed: boolean
  * }} PlayerState */
 /** @typedef {{
  *  seed: number, rngState: number, nextUid: number, turn: number,
@@ -76,6 +77,7 @@ export function createGame({ seed, players }) {
         abilityUsed: false,
         abilityUses: 0,
         turnsTaken: 0,
+        bleed: false,
       };
     }),
     market: {},
@@ -92,8 +94,14 @@ export function createGame({ seed, players }) {
 
   for (let i = 0; i < game.players.length; i++) {
     const player = game.players[i];
-    for (let k = 0; k < 6; k++) player.drawPile.push(createCardInstance(game, 'stone'));
-    for (let k = 0; k < 4; k++) player.drawPile.push(createCardInstance(game, 'pistol'));
+    // 캐릭터에 startDeck 이 있으면 그 카드들로 시작 덱을 만든다.
+    const startDeck = player.characterId !== null ? getCharacter(player.characterId).startDeck : undefined;
+    if (Array.isArray(startDeck)) {
+      for (const cardId of startDeck) player.drawPile.push(createCardInstance(game, cardId));
+    } else {
+      for (let k = 0; k < 6; k++) player.drawPile.push(createCardInstance(game, 'stone'));
+      for (let k = 0; k < 4; k++) player.drawPile.push(createCardInstance(game, 'pistol'));
+    }
     shuffleInPlace(game, player.drawPile);
     drawCards(game, i, 5);
   }

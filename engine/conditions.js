@@ -56,7 +56,7 @@ function maxSameAction(cardIds) {
 
 /**
  * stat 값을 읽는다. turnState 숫자 필드, 'boughtWeapons', 'stars', 'upgradedOwned',
- * 'maxSameAction', 'debt', 'debtHalf'.
+ * 'maxSameAction', 'debt', 'debtHalf', 'bleed', 'oppBleed'.
  * @param {GameState} game
  * @param {number} playerIndex
  * @param {string} stat
@@ -83,6 +83,12 @@ export function getStat(game, playerIndex, stat) {
     if (!player) throw new Error(`알 수 없는 플레이어: ${playerIndex}`);
     const debt = player.debt ?? 0;
     return stat === 'debt' ? debt : Math.floor(debt / 2);
+  }
+  if (stat === 'bleed' || stat === 'oppBleed') {
+    const index = stat === 'bleed' ? playerIndex : 1 - playerIndex;
+    const player = game.players[index];
+    if (!player) throw new Error(`알 수 없는 플레이어: ${index}`);
+    return player.bleed === true ? 1 : 0;
   }
   if (!STAT_KEYS.includes(stat)) throw new Error(`알 수 없는 조건 stat: ${stat}`);
   return turnState[stat] ?? 0;
