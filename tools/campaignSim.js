@@ -1,5 +1,5 @@
 // 모험 모드 스테이지별 난이도 측정.
-// 사용법: node tools/campaignSim.js --campaign silverbeast --games 200 --seed 1 [--stages 1,2,3]
+// 사용법: node tools/campaignSim.js --campaign silverbeast --games 200 --seed 1 [--stages 1,2,3] [--no-augments]
 // 플레이어·보스 모두 모의 실행 AI. 플레이어 캐릭터와 입고 4종은 판마다 무작위(덱은 매판 새로).
 import {
   allCharacterIds,
@@ -10,6 +10,8 @@ import {
   runEnemy,
 } from '../engine/index.js';
 import { createStageMatch } from '../engine/campaign.js';
+import { rollAugmentChoices } from '../engine/augments.js';
+import { randomInt } from '../engine/rng.js';
 import { chooseSmartAction } from '../engine/aiSmart.js';
 
 function arg(name, fallback) {
@@ -32,9 +34,16 @@ function mulberry32(seed) {
  * 한 스테이지를 한 판 둔다.
  * @returns {{ result: 'win'|'lose'|'draw', turns: number, hpLeft: number, characterId: string }}
  */
-export function playStage(campaignId, stageIndex, seed) {
+export function playStage(campaignId, stageIndex, seed, { augments = true } = {}) {
   const rand = mulberry32(seed);
   const campaign = createCampaign({ seed, campaignId, playerName: 'AI' });
+  // 앞선 스테이지를 통과했다고 가정한 보상 표본. 증강 선택은 후보 중 무작위다.
+  if (augments) {
+    for (let i = 0; i < stageIndex; i++) {
+      const choices = rollAugmentChoices(campaign);
+      campaign.augments.push(choices[randomInt(campaign, choices.length)]);
+    }
+  }
   campaign.stageIndex = stageIndex;
   campaign.match = createStageMatch(campaign);
 
@@ -66,10 +75,12 @@ async function main() {
   const campaignId = arg('campaign', 'silverbeast');
   const games = Number(arg('games', '200'));
   const seed = Number(arg('seed', '1'));
+  const augments = !process.argv.includes('--no-augments');
   const def = getCampaign(campaignId);
   const stages = arg('stages', def.stages.map((_, i) => i + 1).join(','))
     .split(',')
     .map((s) => Number(s) - 1);
+  console.log(augments ? '증강 포함: 앞선 스테이지 보상을 무작위 선택한 표본 (연속 클리어 확률과 다름)' : '증강 없이 측정');
   for (const s of stages) {
     let wins = 0;
     let turns = 0;
@@ -77,7 +88,7 @@ async function main() {
     /** @type {Record<string, [number, number]>} */
     const byChar = {};
     for (let i = 0; i < games; i++) {
-      const r = playStage(campaignId, s, seed + s * 100000 + i);
+      const r = playStage(campaignId, s, seed + s * 100000 + i, { augments });
       if (r.result === 'win') {
         wins += 1;
         hp += r.hpLeft;

@@ -1,5 +1,5 @@
 // 모험 모드 화면: 스테이지 진행 표시, 스테이지 결과(승리·패배·클리어).
-import { getCharacter, getCardDef } from '/engine/index.js';
+import { getCharacter, getCardDef, getAugment } from '/engine/index.js';
 import { renderCard } from './cards.js';
 
 let cssLoaded = false;
@@ -25,6 +25,51 @@ function el(tag, className, text) {
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
+}
+
+const RARITY_LABELS = { 1: '소소한 증강', 2: '강력한 증강', 3: '매우 강력한 증강' };
+
+/** 선택 화면·전투 화면에서 공통으로 쓰는 보유 증강 목록. */
+export function renderOwnedAugments(campaign) {
+  ensureCss();
+  const box = el('details', 'cp-owned');
+  const ids = campaign.augments ?? [];
+  box.appendChild(el('summary', '', `보유 증강 ${ids.length}개`));
+  if (!ids.length) box.appendChild(el('div', 'cp-note', '스테이지 돌파 후 증강을 얻습니다.'));
+  for (const id of ids) {
+    const a = getAugment(id);
+    const item = el('div', `cp-owned-item rarity-${a.rarity}`);
+    item.append(el('strong', '', `${'★'.repeat(a.rarity)} ${a.name}`), el('span', '', a.text));
+    box.appendChild(item);
+  }
+  return box;
+}
+
+function renderAugmentChoices(campaign, net) {
+  const box = el('div', 'cp-reward');
+  const choices = campaign.augmentChoices ?? [];
+  const rarity = getAugment(choices[0]).rarity;
+  box.appendChild(el('h2', '', `${'★'.repeat(rarity)} ${RARITY_LABELS[rarity]}`));
+  box.appendChild(el('p', '', '하나를 고르세요. 남은 모험의 모든 전투에 적용됩니다.'));
+  const grid = el('div', 'cp-augment-grid');
+  for (const id of choices) {
+    const a = getAugment(id);
+    const button = el('button', `cp-augment rarity-${a.rarity}`);
+    button.append(
+      el('span', 'cp-augment-stars', '★'.repeat(a.rarity)),
+      el('strong', 'cp-augment-name', a.name),
+      el('span', 'cp-augment-text', a.text),
+      el('span', 'cp-augment-pick', '선택하기'),
+    );
+    button.addEventListener('click', () => {
+      grid.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+      net.send({ t: 'action', action: { type: 'chooseAugment', augmentId: id } });
+    });
+    grid.appendChild(button);
+  }
+  box.appendChild(grid);
+  box.appendChild(el('div', 'cp-reward-odds', '보상 등급 확률 · 1성 92% · 2성 7.8% · 3성 0.2%'));
+  return box;
 }
 
 /**
@@ -78,6 +123,7 @@ export function renderCampaignHeader(campaign) {
     }
   }
   box.appendChild(bossBox);
+  box.appendChild(renderOwnedAugments(campaign));
   box.appendChild(
     el('div', 'cp-note', '스테이지마다 캐릭터와 입고 카드를 새로 고릅니다. 지면 1스테이지부터 다시 시작합니다.'),
   );
@@ -134,6 +180,14 @@ export function renderCampaignResult(root, state, net) {
     box.appendChild(el('div', 'cp-result-hp', `내 체력 ${me.hp} / ${me.maxHp} · ${stage.bossName} ${boss.hp} / ${boss.maxHp} · ${g.turn}턴`));
   }
 
+  if (status === 'stageWon' && campaign.augmentChoices?.length) {
+    box.appendChild(renderAugmentChoices(campaign, net));
+  } else if (status === 'stageWon') {
+    const latest = getAugment(campaign.augments[campaign.augments.length - 1]);
+    box.appendChild(el('div', 'cp-reward-picked', `${'★'.repeat(latest.rarity)} ${latest.name} 획득!`));
+  }
+  box.appendChild(renderOwnedAugments(campaign));
+
   // 지금까지의 기록
   if (campaign.history.length > 0) {
     const list = el('div', 'cp-history');
@@ -153,7 +207,9 @@ export function renderCampaignResult(root, state, net) {
     return b;
   };
   if (status === 'stageWon') {
-    buttons.appendChild(btn('다음 스테이지 ▶', 'btn primary', () => net.send({ t: 'action', action: { type: 'nextStage' } })));
+    const next = btn('다음 스테이지 ▶', 'btn primary', () => net.send({ t: 'action', action: { type: 'nextStage' } }));
+    next.disabled = Boolean(campaign.augmentChoices?.length);
+    buttons.appendChild(next);
   } else {
     buttons.appendChild(btn('처음부터 다시', 'btn primary', () => net.send({ t: 'action', action: { type: 'restart' } })));
   }

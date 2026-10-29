@@ -38,6 +38,8 @@ test('모험 모드 방: 캐릭터·입고 후 대전, 보스를 쓰러뜨리면
   rooms.act(room.code, 0, { type: 'game', action: { type: 'endPhase' } });
   assert.equal(room.campaign.status, 'stageWon');
 
+  assert.throws(() => rooms.act(room.code, 0, { type: 'nextStage' }), /증강/);
+  rooms.act(room.code, 0, { type: 'chooseAugment', augmentId: room.campaign.augmentChoices[0] });
   rooms.act(room.code, 0, { type: 'nextStage' });
   assert.equal(room.campaign.stageIndex, 1);
   assert.equal(room.match.picks[1].characterId, 'sb_wolfpack');

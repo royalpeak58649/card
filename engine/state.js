@@ -12,7 +12,7 @@ import { randomInt, shuffleInPlace } from './rng.js';
  *  inPlay: CardInstance[], actions: number, buys: number, coins: number,
  *  debt: number,
  *  defense: number, abilityUsed: boolean, abilityUses: number, turnsTaken: number,
- *  bleed: boolean
+ *  bleed: boolean, augmentIds?: string[]
  * }} PlayerState */
 /** @typedef {{
  *  seed: number, rngState: number, nextUid: number, turn: number,

@@ -60,10 +60,14 @@
 
 - 시작: `{ "t": "campaign", "campaignId": "silverbeast", "name": "나" }`
 - `state` 메시지에 `campaign` 필드가 붙는다(`view` 는 지금 스테이지 경기, 형식은 일반 대전과 같음):
-  `{ campaignId, name, description, stageIndex, stageCount, status, augments, history, stages: [{ name, intro, bossId, bossName, bossMaxHp, cleared }] }`
+  `{ campaignId, name, description, stageIndex, stageCount, status, augments, augmentChoices, history, stages: [{ name, intro, bossId, bossName, bossMaxHp, cleared }] }`
 - `status`: `'battle'`(스테이지 진행 중) → `'stageWon'` / `'cleared'`(마지막 스테이지 승리) / `'lost'`(패배·무승부)
 - 조작(`action`):
   - 스테이지 안: `selectCharacter`, `draft`, `game` — 일반 대전과 같다(플레이어는 항상 0번, 선공)
-  - `{ "type": "nextStage" }` — `stageWon` 에서 다음 스테이지로
+  - `{ "type": "chooseAugment", "augmentId": "field_rations" }` — `stageWon` 에서 서버가 제시한 증강 하나 선택
+  - `{ "type": "nextStage" }` — `stageWon` 에서 증강 선택을 마친 뒤 다음 스테이지로
   - `{ "type": "restart" }` — `lost`·`cleared` 에서 1스테이지부터 다시
 - 보스 차례는 서버가 조작 직후 바로 진행한다.
+
+- `augments` 는 보유 증강 id 배열, `augmentChoices` 는 미선택 후보 id 배열(선택 후 빈 배열)이다. 증강 이름·등급·문구는 `/engine/index.js` 의 `getAugment(id)` 로 읽는다.
+- 보유 증강은 다음 전투의 `players[0].augmentIds` 에 반영한다. 후보는 서버에서 한 번 확정하며 재접속 시 유지한다.

@@ -8,6 +8,7 @@ import { randomInt, shuffleInPlace } from './rng.js';
 import { addMarketPile, createGame } from './state.js';
 import { applyAction, startGame } from './turn.js';
 import { viewFor } from './view.js';
+import { applyAugments, rollAugmentChoices } from './augments.js';
 
 /** @typedef {import('./match.js').MatchState} MatchState */
 /** @typedef {import('./state.js').GameState} GameState */
@@ -15,7 +16,7 @@ import { viewFor } from './view.js';
 /** @typedef {{ id: string, name: string, description: string, stages: CampaignStage[] }} CampaignDef */
 /** @typedef {{
  *  campaignId: string, seed: number, rngState: number, stageIndex: number,
- *  status: string, augments: any[], history: any[], playerName: string,
+ *  status: string, augments: string[], augmentChoices: string[], history: any[], playerName: string,
  *  match: MatchState
  * }} CampaignState */
 
@@ -130,6 +131,7 @@ export function createCampaign({ seed, campaignId, playerName }) {
     stageIndex: 0,
     status: 'battle',
     augments: [],
+    augmentChoices: [],
     history: [],
     playerName: playerName ?? '플레이어',
     match: null,
@@ -146,6 +148,7 @@ export function createCampaign({ seed, campaignId, playerName }) {
  *  | { type: 'draft', cardIds: string[] }
  *  | { type: 'game', action: any }
  *  | { type: 'nextStage' }
+ *  | { type: 'chooseAugment', augmentId: string }
  *  | { type: 'restart' }} action
  * @returns {void}
  */
@@ -208,10 +211,19 @@ export function applyCampaignAction(campaign, action) {
       settle(campaign);
       return;
     }
+    case 'chooseAugment': {
+      if (campaign.status !== 'stageWon' || !campaign.augmentChoices.includes(action.augmentId)) {
+        throw new Error('제시된 증강 중 하나를 고르세요');
+      }
+      campaign.augments.push(action.augmentId);
+      campaign.augmentChoices = [];
+      return;
+    }
     case 'nextStage': {
       if (campaign.status !== 'stageWon') {
         throw new Error(`다음 스테이지로 갈 수 없는 상태: ${campaign.status}`);
       }
+      if (campaign.augmentChoices.length > 0) throw new Error('먼저 증강을 고르세요');
       campaign.stageIndex += 1;
       campaign.match = createStageMatch(campaign);
       campaign.status = 'battle';
@@ -223,6 +235,7 @@ export function applyCampaignAction(campaign, action) {
       }
       campaign.stageIndex = 0;
       campaign.augments = [];
+      campaign.augmentChoices = [];
       campaign.history = [];
       campaign.match = createStageMatch(campaign);
       campaign.status = 'battle';
@@ -263,6 +276,7 @@ function startBattle(campaign) {
     addMarketPile(game, cardId, PILE_SIZE);
   }
 
+  applyAugments(game, campaign.augments);
   startGame(game);
   match.game = game;
   match.stage = 'playing';
@@ -276,7 +290,7 @@ function startBattle(campaign) {
 export function settle(campaign) {
   const match = campaign.match;
   const game = match.game;
-  if (!game || game.phase !== 'gameOver') return;
+  if (!game || game.phase !== 'gameOver' || match.stage === 'finished') return;
 
   match.stage = 'finished';
   match.winner = game.winner;
@@ -293,6 +307,7 @@ export function settle(campaign) {
   if (result === 'win') {
     const def = getCampaign(campaign.campaignId);
     campaign.status = campaign.stageIndex >= def.stages.length - 1 ? 'cleared' : 'stageWon';
+    if (campaign.status === 'stageWon') campaign.augmentChoices = rollAugmentChoices(campaign);
   } else {
     campaign.status = 'lost';
   }
@@ -339,6 +354,7 @@ export function campaignView(campaign) {
     stageCount: def.stages.length,
     status,
     augments: JSON.parse(JSON.stringify(campaign.augments)),
+    augmentChoices: [...campaign.augmentChoices],
     history: JSON.parse(JSON.stringify(campaign.history)),
     stages: def.stages.map((stage, i) => {
       const boss = getCharacter(stage.bossId);

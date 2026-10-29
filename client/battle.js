@@ -1,6 +1,7 @@
 // 대전 화면(stage 'playing' / 'finished'). 서버가 보낸 view 를 그리기만 하고 조작은 action 으로 보낸다.
 import { getCardDef, getCharacter } from '/engine/index.js';
 import { renderCard, cardTypeLabel } from './cards.js';
+import { renderOwnedAugments } from './campaign.js';
 
 /** battle.css 를 한 번만 불러오기 위한 표시 */
 const CSS_HREF = '/client/battle.css';
@@ -904,6 +905,7 @@ export function renderBattle(root, state, net) {
   root.appendChild(el('div', 'topbar', title));
 
   const screen = el('div', 'screen bt-screen');
+  if (cp) screen.appendChild(renderOwnedAugments(cp));
   const board = el('div', 'bt-board');
 
   const main = el('div', 'bt-main');

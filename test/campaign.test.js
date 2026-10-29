@@ -148,6 +148,7 @@ test('승리하면 stageWon, nextStage 로 다음 보스', () => {
   assert.equal(campaign.history[0].characterId, 'hayun');
   assert.equal(typeof campaign.history[0].turns, 'number');
 
+  applyCampaignAction(campaign, { type: 'chooseAugment', augmentId: campaign.augmentChoices[0] });
   applyCampaignAction(campaign, { type: 'nextStage' });
   assert.equal(campaign.stageIndex, 1);
   assert.equal(campaign.status, 'battle');
@@ -161,6 +162,7 @@ test('마지막 스테이지 승리 → cleared, restart 로 초기화', () => {
   const campaign = campaignAtPlaying();
   setupQuickWin(campaign);
   playerAttackAndPass(campaign);
+  applyCampaignAction(campaign, { type: 'chooseAugment', augmentId: campaign.augmentChoices[0] });
   applyCampaignAction(campaign, { type: 'nextStage' });
 
   applyCampaignAction(campaign, { type: 'selectCharacter', characterId: 'hayun' });
@@ -236,6 +238,7 @@ test('JSON 왕복 후에도 이어서 진행된다', () => {
   playerAttackAndPass(restored);
   assert.equal(restored.status, 'stageWon');
 
+  applyCampaignAction(restored, { type: 'chooseAugment', augmentId: restored.augmentChoices[0] });
   applyCampaignAction(restored, { type: 'nextStage' });
   assert.equal(restored.stageIndex, 1);
   applyCampaignAction(restored, { type: 'selectCharacter', characterId: 'hayun' });

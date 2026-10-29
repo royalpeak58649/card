@@ -27,11 +27,13 @@ npm test                                   # 엔진·서버·클라이언트 테
 npm run sim -- --games 3000                # AI 끼리 대전시켜 승률 집계 (기본: 모의 실행 AI, 코어 수만큼 병렬)
 npm run sim -- --games 3000 --ai basic     # 규칙 기반 AI 로 비교
 npm run tune -- --chars all --iters 12 --games 120 --write   # 캐릭터별 카드 가치 재조정(약 50분)
-npm run campaign-sim -- --games 200        # 모험 모드 스테이지별 플레이어 승률
+npm run campaign-sim -- --games 200        # 증강 포함 스테이지별 승률(앞선 보상 무작위 선택)
+npm run campaign-sim -- --games 200 --no-augments # 증강 없이 비교
 ```
 
 ### 모험 모드
 
+- `engine/augments.js` — 모험 증강 19종. 보상 등급 확률 1성 92% / 2성 7.8% / 3성 0.2%, 승리 후 3개 중 1개 선택.
 - `engine/campaign.js` — 캠페인 진행(스테이지 → 캐릭터·입고 → 보스전 → 다음 스테이지 / 실패 시 처음부터).
 - `engine/campaigns/*.js` — 캠페인 정의(스테이지·보스). 보스는 `enemy: true` 캐릭터로 `engine/cards/*.js` 에 정의.
 - 보스 전용 규칙: `startDeck`(시작 덱), `ability.noBuy`(구매 불가), 차례 시작 시 `gainRandomCard`.

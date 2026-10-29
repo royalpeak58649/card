@@ -5,6 +5,7 @@ import { getCharacter } from './characters.js';
 import { maxStarsOf, runEffects } from './effects.js';
 import { resolveChoice } from './choices.js';
 import { evalCond, getStat } from './conditions.js';
+import { augmentTurnStart, augmentExtraActionRuns, augmentAttackBonuses, hasAugment } from './augments.js';
 
 /** @typedef {import('./state.js').GameState} GameState */
 /** @typedef {import('./state.js').CardInstance} CardInstance */
@@ -102,6 +103,7 @@ function startTurn(game) {
   game.turnState = createTurnState();
   game.phase = 'action';
   runCharacterStartTriggers(game, game.activeIndex);
+  augmentTurnStart(game, game.activeIndex);
 }
 
 /**
@@ -208,7 +210,9 @@ function playCard(game, playerIndex, uid) {
   const effects = card.upgraded && def.upgradedEffects ? def.upgradedEffects : def.effects;
   const doubled = shouldDoubleFirstCostlyAction(game, playerIndex, def, actionCost);
   if (doubled) game.turnState.echoUsed = true;
-  runEffects(game, { playerIndex, cardUid: card.uid }, doubled ? effects.concat(effects) : effects);
+  const extraRuns = augmentExtraActionRuns(game, playerIndex, def);
+  const runs = 1 + (doubled ? 1 : 0) + extraRuns;
+  runEffects(game, { playerIndex, cardUid: card.uid }, Array.from({ length: runs }, () => effects).flat());
 
   // 피해를 주는 행동카드는 차례 보정만큼 공격 피해를 더한다.
   const actionDamageBonus = game.turnState.mods.actionDamageBonus ?? 0;
@@ -283,7 +287,12 @@ function buy(game, playerIndex, cardId) {
   player.buys -= 1;
   slot.count -= 1;
   slot.bought += 1;
-  player.discard.push(createCardInstance(game, cardId));
+  const boughtCard = createCardInstance(game, cardId);
+  const def = getCardDef(cardId);
+  if (hasAugment(game, playerIndex, 'celestial_forge') && !def.basic && def.upgradedEffects) {
+    boughtCard.upgraded = true;
+  }
+  player.discard.push(boughtCard);
   game.turnState.bought.push(cardId);
 
   // 무기 구매 환급은 한 차례에 한 번만 적용된다.
@@ -418,7 +427,9 @@ function characterAttackBonuses(game, playerIndex) {
 function resolveAttack(game, playerIndex) {
   const turnState = game.turnState;
   let total = turnState.attackDamage;
-  const bonuses = (turnState.attackBonuses ?? []).concat(characterAttackBonuses(game, playerIndex));
+  const bonuses = (turnState.attackBonuses ?? []).concat(
+    characterAttackBonuses(game, playerIndex), augmentAttackBonuses(game, playerIndex),
+  );
   // 캐릭터 능력의 조건은 '이번 공격단계에 낸 무기 수'를 기준으로 본다.
   const weaponsPlayed = turnState.weaponsPlayed;
   const actionsPlayed = turnState.actionsPlayed;
@@ -439,6 +450,8 @@ function resolveAttack(game, playerIndex) {
     total += amount;
     if (bonus.fromAction === true) actionPart += amount;
   }
+
+  if (hasAugment(game, playerIndex, 'apocalypse')) total *= 2;
 
   const opponentIndex = 1 - playerIndex;
   const opponent = game.players[opponentIndex];
