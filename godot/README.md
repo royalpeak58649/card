@@ -11,6 +11,9 @@
 - AI: 웹판과 같은 모의 실행 AI. 판단은 별도 스레드에서 계산하고, 상단 'AI 속도'(느림·보통·빠름·매우 빠름)로 한 행동씩 보여 준다.
 - 모험 모드 「은빛 야수 소탕 작전」: 로비의 '작전 시작' → 이야기·규칙 안내 → 스테이지마다 진행 막대·보스 소개(능력·야수 카드)를 보며 캐릭터 선택·입고 → 보스전(보유 증강 표시) → 스테이지 결과(증강 3택 보상 · 다음 스테이지) / 실패·완료(기록 · 처음부터 다시).
 
+- 대전 화면 구도(2026-10-30 사용자 참고 화면 반영): 어두운 판, 오른쪽 기둥에 상대·내 초상과 체력·별(초상 왼쪽 세로), 가운데에 단계 막대와 차례 진행 버튼, 왼쪽에 거래소 탭·제거 수·행동력/구매/원, 가운데 반투명 판에 현재 단계와 낸 카드, 아래에 덱·손패·버린 더미.
+  손패는 **가운데 판으로 끌어다 놓아서** 낸다(판 밖에 놓으면 제자리로). 누르면 카드 상세(사용하기·일시/영구 강화) 창. 초상은 `art/characters/<캐릭터id>.png` 가 있으면 그 그림을 쓰고, 없으면 진영 색 실루엣.
+
 ## 아직 안 된 것 (다음 단계 후보)
 
 1. 온라인 대전(방 코드) — Godot WebSocket 클라이언트로 기존 Node 서버에 붙이거나 Godot 서버로 새로 구성
@@ -23,7 +26,7 @@
 |---|---|
 | `engine/` | 순수 규칙. `rules.gd`(상태·효과·선택·차례·증강 적용), `match_rules.gd`(선택→입고→대전, view), `campaign_rules.gd`(모험), `ai_basic.gd`·`ai_smart.gd`(AI), `game_data.gd`(데이터 읽기) |
 | `data/game_data.json` | 카드·캐릭터·진영·증강·캠페인·AI 가치·추천 구성. **JS 엔진에서 내보낸 것**이다 |
-| `ui/` | 화면. `main.gd`(로비·선택·입고·온라인 대기실), `battle_screen.gd`(대전), `campaign_ui.gd`(모험 진행 막대·보스 소개·결과·증강 보상), `card_view.gd`(카드), `session.gd`(AI 연습·모험 진행), `online_session.gd`(서버 WebSocket 연결·재접속), `ui_kit.gd`(테마), `dialogs.gd`, `codex.gd`(도감), `settings.gd`·`music.gd`(자동 로드: 설정·BGM) |
+| `ui/` | 화면. `main.gd`(로비·선택·입고·온라인 대기실), `battle_screen.gd`(대전 판), `hand_card.gd`(끌어서 내는 손패), `board_art.gd`(초상·카드 그림·하트·별), `campaign_ui.gd`(모험 진행 막대·보스 소개·결과·증강 보상), `card_view.gd`(카드), `session.gd`(AI 연습·모험 진행), `online_session.gd`(서버 WebSocket 연결·재접속), `ui_kit.gd`(테마), `dialogs.gd`, `codex.gd`(도감), `settings.gd`·`music.gd`(자동 로드: 설정·BGM) |
 | `tests/` | `cross_check.gd`(JS 와 단계별 비교), `sim.gd`(AI 대전), `ui_smoke.gd`(AI 연습 화면 자동 진행·스크린샷), `campaign_smoke.gd`(모험 화면 자동 진행, `--lose` 로 실패 화면), `run_online.sh`·`online_smoke.gd`·`web_bot.mjs`(로컬 서버로 온라인 대전 완주·재접속·웹 클라이언트 호환), `online_unreachable.gd`(서버 연결 실패 처리), `extras_smoke.gd`(도감 항목 수·검색·필터, BGM 재생·저장·일시 정지) |
 | `tools/` | `export_data.mjs`(데이터 내보내기), `make_trace.mjs`(교차 검증 기록 만들기) |
 | `audio/` | BGM 「별의 돌격」(웹판 `client/audio` 와 같은 파일, 다시 만들려면 `node tools/makeBgm.js`) |

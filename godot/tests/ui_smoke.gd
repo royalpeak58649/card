@@ -63,6 +63,60 @@ func _find_button(node: Node, text_part: String) -> Button:
 	return null
 
 
+func _mouse(pos: Vector2, pressed := false, button := true) -> void:
+	if button:
+		var e := InputEventMouseButton.new()
+		e.button_index = MOUSE_BUTTON_LEFT
+		e.pressed = pressed
+		e.position = pos
+		e.global_position = pos
+		Input.parse_input_event(e)
+	else:
+		var m := InputEventMouseMotion.new()
+		m.position = pos
+		m.global_position = pos
+		m.button_mask = MOUSE_BUTTON_MASK_LEFT
+		Input.parse_input_event(m)
+	await process_frame
+
+
+## 손패 uid 를 마우스로 끌어 판 가운데(into=true) 또는 판 밖(왼쪽 아래 빈곳)에 놓는다.
+## 돌려주는 값: 1 기대대로 됨, 0 시험할 수 없음, -1 실패
+func _drag_card(uid: String, into: bool) -> int:
+	var battle = main._battle
+	if battle == null:
+		return 0
+	var hc: Control = battle._board.find_child("Hand_" + uid, true, false)
+	var area: Control = battle._play_area
+	if hc == null or area == null:
+		return 0
+	var hand_before: int = main.session.game()["players"][0]["hand"].size()
+	var start := hc.get_global_rect().get_center()
+	var target := area.get_global_rect().get_center() if into else Vector2(60, 760)
+	await _mouse(start, false, false)
+	await _mouse(start, true)
+	for i in range(1, 9):
+		await _mouse(start.lerp(target, i / 8.0), false, false)
+	if into and _shots_mid_drag == false:
+		_shots_mid_drag = true
+		await _shot("dragging")
+	await _mouse(target, false)
+	await _wait(12)
+	var hand_after: int = main.session.game()["players"][0]["hand"].size()
+	if into:
+		if hand_after >= hand_before and main.session.game()["players"][0]["inPlay"].filter(func(c): return c["uid"] == uid).is_empty():
+			_fail("드래그로 카드를 내지 못했습니다(%s)" % uid)
+			return -1
+		return 1
+	if hand_after != hand_before:
+		_fail("판 밖에 놓았는데 카드가 나갔습니다")
+		return -1
+	return 1
+
+
+var _shots_mid_drag := false
+
+
 func _run() -> void:
 	await _shot("lobby")
 	var session: GameSession = main.session
@@ -105,6 +159,8 @@ func _run() -> void:
 	await _shot("battle_start")
 
 	var took_market := false
+	var drags_ok := 0
+	var drag_back_ok := false
 	var took_choice := false
 	var took_upgrade := false
 	var steps := 0
@@ -118,6 +174,23 @@ func _run() -> void:
 			continue
 		var g := session.game()
 		var action = AiBasic.choose_action(g, 0)
+		# 손패를 실제 마우스 드래그로 내 본다(처음 몇 번).
+		if action != null and action["type"] == "playCard" and drags_ok < 3:
+			var res: int = await _drag_card(action["uid"], true)
+			if res < 0:
+				return
+			if res == 1:
+				drags_ok += 1
+				steps += 1
+				if drags_ok == 1:
+					await _shot("after_drag")
+				continue
+		# 판 밖에 놓으면 제자리로 돌아오는지 한 번 확인
+		if action != null and action["type"] == "playCard" and not drag_back_ok and drags_ok >= 1:
+			var r2: int = await _drag_card(action["uid"], false)
+			if r2 < 0:
+				return
+			drag_back_ok = r2 == 1
 		if action == null:
 			await _wait(1)
 			continue
@@ -132,12 +205,41 @@ func _run() -> void:
 		if action["type"] == "buy" and not took_market and int(g["turn"]) >= 5:
 			took_market = true
 			await _shot("buy_phase")
+			var b = main._battle
+			b._menu_open = true
+			b.render()
+			await _shot("menu")
+			b._menu_open = false
+			b._log_open = true
+			b.render()
+			await _shot("log")
+			b._log_open = false
+			b._market_open = true
+			b.render()
+			await _shot("market_drawer")
+			# 거래소 줄을 눌러 실제로 산다(버튼 클릭)
+			var row: Button = null
+			for n in b._board.find_children("*", "Button", true, false):
+				if n.tooltip_text.begins_with(GameData.card(action["cardId"])["name"] + " ("):
+					row = n
+			b._market_open = false
+			if row != null and not row.disabled:
+				row.pressed.emit()
+				await _wait(3)
+				print("거래소 줄 눌러 구매: %s" % GameData.card(action["cardId"])["name"])
+				steps += 1
+				continue
+			b.render()
 		var err := session.act_game(action)
 		if err != "":
 			_fail("사람 자리 조작 실패: %s %s" % [err, JSON.stringify(action)])
 			return
 		steps += 1
 		await _wait(1)
+	if drags_ok == 0:
+		_fail("드래그로 카드를 한 번도 내지 못했습니다")
+		return
+	print("드래그로 카드 내기 %d회 확인, 판 밖에 놓으면 제자리 %s" % [drags_ok, "확인" if drag_back_ok else "미확인"])
 	if session.stage() != "finished":
 		_fail("경기가 끝나지 않았습니다(%d 조작)" % steps)
 		return

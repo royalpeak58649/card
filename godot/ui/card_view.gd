@@ -7,6 +7,8 @@ signal star_pressed(card_view: CardView)
 
 const SIZE_NORMAL := Vector2(128, 176)
 const SIZE_MINI := Vector2(98, 136)
+## 대전 화면 손패용 큰 카드
+const SIZE_LARGE := Vector2(150, 212)
 
 var card_id := ""
 var uid := ""
@@ -19,6 +21,9 @@ var badge := ""
 var show_star := false
 var clickable := true
 var extra_note := ""
+var large := false
+## 지금 낼 수 없는 손패: 흐리게(누를 수는 있다)
+var dim := false
 
 
 static func make(id: String, opts := {}) -> CardView:
@@ -34,6 +39,8 @@ static func make(id: String, opts := {}) -> CardView:
 	v.show_star = opts.get("star", false)
 	v.clickable = opts.get("clickable", true)
 	v.extra_note = opts.get("note", "")
+	v.large = opts.get("large", false)
+	v.dim = opts.get("dim", false)
 	v._build()
 	return v
 
@@ -41,7 +48,7 @@ static func make(id: String, opts := {}) -> CardView:
 func _build() -> void:
 	var cdef := GameData.card(card_id)
 	var type: String = cdef.get("type", "money")
-	custom_minimum_size = SIZE_MINI if mini else SIZE_NORMAL
+	custom_minimum_size = SIZE_MINI if mini else (SIZE_LARGE if large else SIZE_NORMAL)
 	size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	if clickable and not disabled:
@@ -61,6 +68,8 @@ func _build() -> void:
 	add_theme_stylebox_override("panel", style)
 	if disabled:
 		modulate = Color(1, 1, 1, 0.5)
+	elif dim:
+		self_modulate = Color(0.86, 0.86, 0.9)
 
 	var col := UiKit.vbox(3 if mini else 5)
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -99,15 +108,16 @@ func _build() -> void:
 	name_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(name_l)
 
-	var sep := HSeparator.new()
-	sep.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_child(sep)
+	# 종류 그림(동전·단검·두루마리)
+	var icon := BoardArt.CardIcon.new(type)
+	icon.custom_minimum_size = Vector2(0, 30 if mini else (54 if large else 40))
+	col.add_child(icon)
 
 	var text: String = cdef.get("upgradedText", cdef.get("text", "")) if upgraded else cdef.get("text", "")
-	var text_l := UiKit.wrap_label(text, 11 if mini else 12, UiKit.INK)
+	var text_l := UiKit.wrap_label(text, 11 if mini else (13 if large else 12), UiKit.INK)
 	text_l.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	text_l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	text_l.max_lines_visible = 5 if mini else 6
+	text_l.max_lines_visible = 3 if mini else (4 if large else 4)
 	text_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(text_l)
 
