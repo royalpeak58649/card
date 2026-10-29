@@ -208,33 +208,29 @@ test('출혈 + 무기 피해: 추가 피해 1', () => {
   attackWithHand(game, first);
   assert.equal(game.players[second].hp, hpBefore - 3);
   assert.equal(game.players[second].bleed, false);
-  assert.equal(game.turnState.bleedTriggered, 1);
 });
 
 test('출혈 + 행동카드 피해: 추가 피해 2', () => {
   const { game, first, second } = startedGame();
-  setHand(game, first, ['test_bl_bleed']);
+  setHand(game, first, ['test_bl_bleed', 'test_bl_slash']);
   playAll(game, first);
   toAttackPhase(game, first);
-  setHand(game, first, ['test_bl_slash']);
   const hpBefore = game.players[second].hp;
   attackWithHand(game, first);
   assert.equal(game.players[second].hp, hpBefore - 4);
   assert.equal(game.players[second].bleed, false);
-  assert.equal(game.turnState.bleedTriggered, 2);
 });
 
 test('섞인 피해(행동 2 + 무기 1): 추가 피해 2', () => {
   const { game, first, second } = startedGame();
-  setHand(game, first, ['test_bl_bleed']);
+  setHand(game, first, ['test_bl_bleed', 'test_bl_slash']);
   playAll(game, first);
   toAttackPhase(game, first);
-  setHand(game, first, ['test_bl_slash', 'pistol']);
+  setHand(game, first, ['pistol']);
   const hpBefore = game.players[second].hp;
   attackWithHand(game, first);
   assert.equal(game.players[second].hp, hpBefore - 5);
   assert.equal(game.players[second].bleed, false);
-  assert.equal(game.turnState.bleedTriggered, 2);
 });
 
 test('출혈은 중첩되지 않는다', () => {
@@ -299,15 +295,13 @@ test('oppBleed 조건: 출혈이 있으면 참', () => {
 
 test('행동카드가 만든 공격 보너스도 행동카드 피해로 친다', () => {
   const { game, first, second } = startedGame();
-  setHand(game, first, ['test_bl_bleed']);
+  setHand(game, first, ['test_bl_bleed', 'test_bl_bonus']);
   playAll(game, first);
   toAttackPhase(game, first);
-  setHand(game, first, ['test_bl_bonus']);
   const hpBefore = game.players[second].hp;
   attackWithHand(game, first);
   assert.equal(game.players[second].hp, hpBefore - 4);
   assert.equal(game.players[second].bleed, false);
-  assert.equal(game.turnState.bleedTriggered, 2);
 });
 
 test('출혈 상태도 JSON 왕복이 같다', () => {

@@ -5,6 +5,8 @@ import './cards/neuro.js';
 import './cards/ligand.js';
 import './cards/vincent.js';
 import './cards/neutral.js';
+import './cards/silverbeast.js';
+import './campaigns/silverbeast.js';
 
 export {
   createGame,
